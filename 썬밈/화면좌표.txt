@@ -1,0 +1,39 @@
+-타이틀-
+                       x1   y1   x2   y2
+타이틀	Rectangle(hDC, 120, 120, 750, 370);
+play	Rectangle(hDC, 600, 480, 750, 550);
+exit	Rectangle(hDC, 600, 600, 750, 670);
+
+-게임화면-
+무기
+	       x1   y1   x2   y2
+Rectangle(hDC, 220, 680, 270, 730);
+Rectangle(hDC, 300, 680, 350, 730);
+Rectangle(hDC, 380, 660, 430, 710);	선택된 무기는 20만큼 위로
+Rectangle(hDC, 460, 680, 510, 730);
+Rectangle(hDC, 540, 680, 590, 730);
+Rectangle(hDC, 620, 680, 670, 730);
+
+-게임오버화면-
+			       x1   y1   x2   y2
+게임오버	Rectangle(hDC, 220, 50, 620, 150);
+랭킹박스	Rectangle(hDC, 100, 200, 745, 600);
+버튼1(replay)	Rectangle(hDC, 150, 640, 300, 710);
+버튼2(exit)	Rectangle(hDC, 530, 640, 680, 710);
+
+체력바
+x1 : charX-5
+y1 : charY-12
+x2 : x1+50
+y2 : y1+7
+
+(x1,y1)
+  ┌─────┐
+  │          │
+  │          │
+  │          │
+  │          │
+  │          │
+  └─────┘
+            (x2,y2) 
+

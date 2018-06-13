@@ -85,7 +85,8 @@ void Char_Deathcheck(HWND hWnd);
 void Stage_start(HWND hWnd);
 void Reset_weapon_setting();
 void Reset_weapon_upgrade();
-
+void Spawn_monster();
+void Spawn_boss();
 /*********************************************void()함수 최고*****************************************************/
 
 /*********************************************사랑합니다 전역변수*****************************************************/
@@ -232,7 +233,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	PAINTSTRUCT ps;
 
 	CImage img;
-	HBITMAP hbitmap,membitmap1,membitmap2;
+	CImage dc;
 
 	TCHAR str[500] = {};
 
@@ -247,9 +248,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_CREATE:
 		/*********************************************이미지 로드*****************************************************/
 		
-		play_button_img.Load(TEXT("C:\\Users\\우찬희\\Documents\\Visual Studio 2017\\Projects\\agari\\resource\\PLAY.png"));
-		exit_button_img.Load(TEXT("C:\\Users\\우찬희\\Documents\\Visual Studio 2017\\Projects\\agari\\resource\\EXIT.png"));
-		start_page_bk_img.Load(TEXT("C:\\Users\\우찬희\\Documents\\Visual Studio 2017\\Projects\\agari\\resource\\startBack.png"));
+		play_button_img.Load(TEXT("..\\agari\\resource\\PLAY.png"));
+		exit_button_img.Load(TEXT("..\\agari\\resource\\EXIT.png"));
+		start_page_bk_img.Load(TEXT("..\\agari\\resource\\startBack.png"));
 
 		/*********************************************이미지 로드*****************************************************/
 
@@ -268,25 +269,28 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);
 
-
 		if (current_page == start_page)
 		{
-			memdc1 = CreateCompatibleDC(hdc);
-			membitmap1 = CreateCompatibleBitmap(hdc, win_x_size, win_y_size);
-			SelectObject(memdc1, membitmap1);
+			dc.Create(win_x_size, win_y_size, 24);	// == CreateCompatibleBitmap
+			memdc1 = dc.GetDC();					// == CreateComaptibleDC
 
 			start_page_bk_img.Draw(memdc1, 0,0,win_x_size,win_y_size);
 			play_button_img.Draw(memdc1, play_button_rect);
 			exit_button_img.Draw(memdc1, exit_button_rect);
 
-			BitBlt(hdc, 0, 0, win_x_size, win_y_size, memdc1, 0, 0, SRCCOPY);
-			DeleteObject(membitmap1);
-			DeleteObject(memdc1);
+			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	// 아래에 Bitblt랑 동일
+			dc.ReleaseDC();		// dc 해제
+			dc.Destroy();		// 썼던 dc 삭제
+
+			// 아래랑 같은 작업임 (이해되면 삭제해)
+			//BitBlt(hdc, 0, 0, win_x_size, win_y_size, memdc1, 0, 0, SRCCOPY);
+			//DeleteObject(membitmap1);
+			//DeleteObject(memdc1);
 		}
 		else if (current_page == game_page)
 		{
-			memdc1 = CreateCompatibleDC(hdc);
-			membitmap1 = CreateCompatibleBitmap(hdc, win_x_size, win_y_size);
+			dc.Create(win_x_size, win_y_size, 24);	// == CreateCompatibleBitmap
+			memdc1 = dc.GetDC();					// == CreateComaptibleDC
 			//배경 출력
 
 			//아이템박스 출력
@@ -301,9 +305,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			//ui 출력
 
-			BitBlt(hdc, 0, 0, win_x_size, win_y_size, memdc1, 0, 0, SRCCOPY);
-			DeleteObject(membitmap1);
-			DeleteObject(memdc1);
+			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	// 아래에 Bitblt랑 동일
+			dc.ReleaseDC();		// dc 해제
+			dc.Destroy();		// 썼던 dc 삭제
 		}
 		else if (current_page == end_page)
 		{
