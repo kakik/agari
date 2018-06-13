@@ -90,7 +90,7 @@ int win_x_size = 900;      //윈도우 x사이즈
 int win_y_size = 800;      //윈도우 y사이즈
 int block_size = 50;       //블록 크기
 
-BLOCK block[36][32];       //36*32 블록 
+BLOCK block[32][36];       //36*32 블록 
 
 int mx;                    //마우스 x위치값	
 int my;                    //마우스 y위치값
@@ -242,9 +242,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		current_page = start_page;  //현재 페이지를 시작페이지로
 
-		for (int i = 0; i < 36; i++)
+		for (int i = 0; i < 32; i++)
 		{
-			for (int j = 0; j < 32; j++)
+			for (int j = 0; j < 36; j++)
 			{
 				block[i][j].rect = { 50 * j,50 * i,50 * j + 50,50 * i + 50 };  //36*32 블록 좌표 입력
 			}
@@ -258,7 +258,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		if (current_page == start_page)
 		{
-
 			memdc1 = CreateCompatibleDC(hdc);
 			membitmap1 = CreateCompatibleBitmap(hdc, win_x_size, win_y_size);
 			SelectObject(memdc1, membitmap1);
@@ -273,6 +272,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (current_page == game_page)
 		{
+			memdc1 = CreateCompatibleDC(hdc);
+			membitmap1 = CreateCompatibleBitmap(hdc, win_x_size, win_y_size);
 			//배경 출력
 
 			//아이템박스 출력
@@ -286,6 +287,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//총알 출력
 
 			//ui 출력
+
+			BitBlt(hdc, 0, 0, win_x_size, win_y_size, memdc1, 0, 0, SRCCOPY);
+			DeleteObject(membitmap1);
+			DeleteObject(memdc1);
 		}
 		else if (current_page == end_page)
 		{
@@ -351,8 +356,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				current_page = game_page;   //게임화면으로 이동
 				play_button = false;
-
-
 
 				InvalidateRect(hWnd, NULL, false);
 			}
@@ -659,7 +662,7 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 
 	aquired_itembox_num = 0;      //습득한 아이템 박스 개수 초기화
 	//for (int i = 0; i < 5; i++)   //아이템박스 5개 생성  //무한로프 돌아서 꺼놨음
-	//	Spawn_itembox();
+		//Spawn_itembox();
 
 	player.max_health = 1000;     //캐릭터 최대체력 1000으로 설정
 	player.health = player.max_health;
@@ -667,9 +670,9 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	//player.y=
 	player.direction = S;
 
-	for (int i = 0; i < 18; i++)  //구조물 초기화
+	for (int i = 0; i < 32; i++)  //구조물 초기화
 	{
-		for (int j = 0; j < 16; j++)
+		for (int j = 0; j < 36; j++)
 		{
 			block[i][j].iswall = false;
 			block[i][j].isinvinciblewall = false;       //파괴 불가능한 벽 (지형) 설정하려면 여기서! 랜덤생성도 괜찮을듯?
@@ -679,6 +682,9 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 		}
 	}
 	aquired_itembox_num = 0;
+	aquired_itembox_num = 0;      //습득한 아이템 박스 개수 초기화
+	for (int i = 0; i < 5; i++)   //아이템박스 5개 생성  //무한로프 돌아서 꺼놨음
+		Spawn_itembox();
 
 	{   /*                           무기별 설정, 밸런싱 필요                                */
 		Reset_weapon_upgrade();
@@ -735,7 +741,7 @@ void Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 
 	for (int i = 5; i > -1; i--)
 	{
-		if (weapon[i].open = true)
+		if (weapon[i].open == true)
 		{
 			opened_weapon_num = i;
 			break;
@@ -816,8 +822,8 @@ void Spawn_itembox()     //18*16 블록에서 비어있는 블록에서 랜덤으로 아이템 박스
 
 		while (true)     //비어있는 칸을 찾아봅시다!
 		{
-			temp_x = rand() % (win_x_size / block_size);    //0 ~ 가로 블록 개수(18)-1 에서 랜덤
-			temp_y = rand() % (win_y_size / block_size);    //0 ~ 가로 블록 개수(16)-1 에서 랜덤
+			temp_x = rand() % 36;    //0 ~ 가로 블록 개수(36)-1 에서 랜덤
+			temp_y = rand() % 32;    //0 ~ 가로 블록 개수(32)-1 에서 랜덤
 
 			if (block[temp_y][temp_x].isempty == true)
 				break;
