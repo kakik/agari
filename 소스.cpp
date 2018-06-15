@@ -9,6 +9,9 @@
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = _T("agari!");
 
+#define character_width 18
+#define character_height 30
+
 enum direction  //방향 N=0,NE=1,E=2,SE=3,S=4,SW=5,W=6,NW=7
 {
 	N = 0, NE = 1, E = 2, SE = 3, S = 4, SW = 5, W = 6, NW = 7
@@ -24,10 +27,9 @@ enum weapom     //무기번호 pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 
 enum timer      //타이머 넘버에 숫자 대신 이걸 써줍시다 
 {
 	rest_time,
-	move_player,
+	move_player,atk_player,
 	spawn_monster, move_monster,
 	spawn_itembox,
-	pistol_delay, uzi_delay, shotgun_delay, rocket_delay
 };
 
 typedef struct CHARACTER   //플레이어, 몬스터, 보스몬스터 정보
@@ -41,7 +43,7 @@ typedef struct CHARACTER   //플레이어, 몬스터, 보스몬스터 정보
 	int sprite_num;
 	bool ismoving;         //이동중인지 (타이머 돌아가고있는지)
 	bool isattacking;      //공격중인지 (타이머 돌아가고있는지)
-	 
+
 	CHARACTER* next;       //몬스터, 보스몬스터용 next좌표
 }CHARACTER;
 
@@ -54,7 +56,7 @@ typedef struct WEAPON       //무기 정보
 	int damage;             //무기별 데미지        
 	int range;              //무기별 사정거리
 	int delay;              //무기 사용 딜레이 
-	bool isdelay;           //현재 딜레이 여부
+	bool isfiring;          //현재 사격 여부
 
 	CImage img;              //무기 이미지
 }WEAPON;
@@ -79,7 +81,7 @@ typedef struct BLOCK         //50*50크기 블록
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
 void Game_start_setting(HWND hWnd);  //게임 시작 셋팅(변수 초기화 등등)
-void Aquire_itembox();      //아이템 박스를 먹어부려쪄!
+bool Aquire_itembox();      //아이템 박스를 먹어부려쪄!
 void Spawn_itembox();
 void Char_Deathcheck(HWND hWnd);
 void Stage_start(HWND hWnd);
@@ -87,6 +89,7 @@ void Reset_weapon_setting();
 void Reset_weapon_upgrade();
 void Spawn_monster();
 void Spawn_boss();
+bool Remaining_bullet_check();  //남은 총알 확인  남았으면 false 없으면 true
 /*********************************************void()함수 최고*****************************************************/
 
 /*********************************************사랑합니다 전역변수*****************************************************/
@@ -140,7 +143,7 @@ bool rocket_maxammo_up2;
 int itembox_num;           //맵에 존재하는 아이템 박스 개수
 int aquired_itembox_num;   //현재까지 습득한 아이템 박스 개수
 
-bool isrest_time;           
+bool isrest_time;
 
 
 CHARACTER* monster_head;  //head노드는 삭제하지 않고 사용하기
@@ -149,23 +152,27 @@ CHARACTER* boss_head;     //head노드는 삭제하지 않고 사용하기
 int monster_num;          //현재 몬스터 숫자
 int boss_num;             //현재 보스몬스터 숫자
 
-
+RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
+{ { { 0,0,18,30 },{ 32,0,50,30 },{ 64,0,82,30 },{ 96,0,114,30 } }/*N*/,{ { 133,0,151,30 },{ 165,0,173,30 },{ 197,0,215,30 },{ 229,0,247,30 } }/*NE*/,
+{ { 264,0,282,30 },{ 296,0,314,30 },{ 328,0,346,30 },{ 360,0,388,30 } }/*E*/,{ { 397,0,415,30 },{ 428,0,446,30 },{ 460,0,488,30 },{ 492,0,510,30 } }/*SE*/,
+{ { 0,36,18,66 },{ 32,36,50,66 },{ 64,36,82,66 },{ 96,36,114,66 } }/*S*/,{ { 133,36,151,66 },{ 165,36,173,66 },{ 197,36,215,66 },{ 229,36,247,66 } }/*SW*/,
+{ { 264,36,282,66 },{ 296,36,314,66 },{ 328,36,346,66 },{ 360,36,388,66 } }/*W*/,{ { 397,36,415,66 },{ 428,36,446,66 },{ 460,36,488,66 },{ 492,36,510,66 } }/*NW*/ };
 
 RECT logo_rect = { 120,120,750,370 };          //로고 위치      (스타트화면)
 RECT play_button_rect = { 600,480,750,550 };   //play버튼 위치  (스타트화면)
 RECT exit_button_rect = { 600,600,750,670 };   //exit버튼 위치  (스타트화면)
-											   
-RECT weapon_image_rect[6] = { { 220,680,270,730 },{ 300,680,350,730 },{ 380,660,430,710 },{ 460,680,510,730 },{ 540,680,590,730 },{ 620,680,670,730 }};  //무기 6개 이미지 위치
+
+RECT weapon_image_rect[6] = { { 220,680,270,730 },{ 300,680,350,730 },{ 380,660,430,710 },{ 460,680,510,730 },{ 540,680,590,730 },{ 620,680,670,730 } };  //무기 6개 이미지 위치
 
 RECT GAMEOVER_rect = { 220,50,620,150 };       //게임오버 버튼 위치  (게임엔드화면)
 RECT rankingbox_rect = { 100,200,745,600 };    //랭킹박스 위치       (게임엔드화면)
 RECT replay_button_rect = { 150,640,300,710 }; //리플레이 버튼 위치  (게임엔드화면)
 RECT exit2_button_rect = { 530,640,680,710 };  //exit버튼 위치       (게임엔드화면)    //exit버튼이 두 종류라는걸 깨닫았을땐 이미 늦었다 정답은 exit2
 
-/*********************************************사랑합니다 에드가니이이이이이임*****************************************/
+											   /*********************************************사랑합니다 에드가니이이이이이임*****************************************/
 
 
-/*********************************************비트맵 이미지*****************************************************/
+											   /*********************************************비트맵 이미지*****************************************************/
 
 
 CImage start_page_bk_img;   //시작화면 배경
@@ -177,20 +184,26 @@ CImage play_button_img;     //play버튼
 CImage exit_button_img;     //exit버튼
 
 
-						/*         무기 이미지는 WEAPON 구조체 안에 있음!       */
+							/*         무기 이미지는 WEAPON 구조체 안에 있음!       */
 
-CImage char_move_sprite[10][8][4]; //캐릭터 이동 스프라이트 [캐릭터 번호][방향][이동 모션 4개]
-CImage char_atk_sprite[10][8][2];  //캐릭터 공격 스프라이트 [캐릭터 번호][방향][공격 모션 2개]
+//CImage char_move_sprite[10][8][4]; //캐릭터 이동 스프라이트 [캐릭터 번호][방향][이동 모션 4개]
+//CImage char_atk_sprite[10][8][2];  //캐릭터 공격 스프라이트 [캐릭터 번호][방향][공격 모션 2개]
 int current_char_num;              //선택한 캐릭터 번호  char_move_sprite[current_char_num][direction][n]같이 사용
+
+//////
+//////
+CImage charac_sprite;
+//////
+//////
 
 CImage monster_move_sprite[8][4]; //몬스터 이동 스프라이트 [방향][이동 모션 4개(?)]
 CImage monster_atk_sprite[8][2];  //보스 공격 스프라이트[방향][공격 모션 2개(?)]
 
-/*********************************************비트맵 이미지*****************************************************/
+								  /*********************************************비트맵 이미지*****************************************************/
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
-	HWND hWnd;
+	HWND hWnd;	
 	MSG Message;
 	WNDCLASSEX WndClass;
 	g_hInst = hInstance;
@@ -210,7 +223,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdPar
 
 	RegisterClassEx(&WndClass);
 
-	hWnd = CreateWindow(lpszClass, _T("agari!"), WS_OVERLAPPEDWINDOW, 0, 0, win_x_size + 25, win_y_size + 25, NULL, (HMENU)NULL, hInstance, NULL);
+	hWnd = CreateWindow(lpszClass, _T("agari!"), WS_OVERLAPPEDWINDOW, 0, 0, win_x_size + 14, win_y_size + 36, NULL, (HMENU)NULL, hInstance, NULL);
 
 	ShowWindow(hWnd, nCmdShow);
 	UpdateWindow(hWnd);
@@ -232,8 +245,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	HDC hdc, memdc1, memdc2;
 	PAINTSTRUCT ps;
 
+	HBRUSH hbrush, oldbrush;
+
 	CImage img;
-	CImage dc;
+	CImage dc,dc2;
 
 	TCHAR str[500] = {};
 
@@ -247,10 +262,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) {
 	case WM_CREATE:
 		/*********************************************이미지 로드*****************************************************/
-		
+
 		play_button_img.Load(TEXT("..\\agari\\resource\\PLAY.png"));
 		exit_button_img.Load(TEXT("..\\agari\\resource\\EXIT.png"));
 		start_page_bk_img.Load(TEXT("..\\agari\\resource\\startBack.png"));
+		charac_sprite.Load(TEXT("..\\agari\\resource\\Izuna_move.png"));
 
 		/*********************************************이미지 로드*****************************************************/
 
@@ -274,7 +290,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dc.Create(win_x_size, win_y_size, 24);	// == CreateCompatibleBitmap
 			memdc1 = dc.GetDC();					// == CreateComaptibleDC
 
-			start_page_bk_img.Draw(memdc1, 0,0,win_x_size,win_y_size);
+			start_page_bk_img.Draw(memdc1, 0, 0, win_x_size, win_y_size);
 			play_button_img.Draw(memdc1, play_button_rect);
 			exit_button_img.Draw(memdc1, exit_button_rect);
 
@@ -282,32 +298,133 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dc.ReleaseDC();		// dc 해제
 			dc.Destroy();		// 썼던 dc 삭제
 
-			// 아래랑 같은 작업임 (이해되면 삭제해)
-			//BitBlt(hdc, 0, 0, win_x_size, win_y_size, memdc1, 0, 0, SRCCOPY);
-			//DeleteObject(membitmap1);
-			//DeleteObject(memdc1);
+								// 아래랑 같은 작업임 (이해되면 삭제해)
+								//BitBlt(hdc, 0, 0, win_x_size, win_y_size, memdc1, 0, 0, SRCCOPY);
+								//DeleteObject(membitmap1);
+								//DeleteObject(memdc1);
 		}
 		else if (current_page == game_page)
 		{
-			dc.Create(win_x_size, win_y_size, 24);	// == CreateCompatibleBitmap
+			dc.Create(win_x_size*2, win_y_size*2, 24);	// == CreateCompatibleBitmap
 			memdc1 = dc.GetDC();					// == CreateComaptibleDC
-			//배경 출력
 
-			//아이템박스 출력
+			hbrush = CreateSolidBrush(RGB(200, 255, 255));
+			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
+			Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);	//배경 출력
+			SelectObject(memdc1, oldbrush);
+			DeleteObject(hbrush);
 
+			for (int i = 0; i < 33; i++)  //블록 구분선 출력
+			{
+				MoveToEx(memdc1, 0, i * 50, NULL);
+				LineTo(memdc1, win_x_size * 2, i * 50);
+			}
+			for (int i = 0; i < 37; i++)
+			{
+				MoveToEx(memdc1, i * 50, 0, NULL);
+				LineTo(memdc1, i * 50, win_y_size * 2);
+			}
+
+
+			for (int i = 0; i < 32; i++)//아이템박스 출력
+			{
+				for (int j = 0; j < 36; j++)
+				{
+					if (block[i][j].isitembox == true)
+					{
+						hbrush = CreateSolidBrush(RGB(0, 0, 255));
+						oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
+
+						Ellipse(memdc1, block[i][j].rect.left, block[i][j].rect.top, block[i][j].rect.right, block[i][j].rect.bottom);
+
+						SelectObject(memdc1, oldbrush);
+						DeleteObject(hbrush);
+					}
+					block[i][j].rect = { 50 * j,50 * i,50 * j + 50,50 * i + 50 }; 
+				}
+			}
+	
+			charac_sprite.Draw(memdc1, player.x - character_width/2, player.y - character_height/2, character_width, character_height,
+				char_move_sprite_rect[player.direction][player.sprite_num].left, char_move_sprite_rect[player.direction][player.sprite_num].top, character_width, character_height);
+
+			Rectangle(memdc1, player.x - 20, player.y - 30, player.x+20, player.y-23);  //체력바
+			hbrush = CreateSolidBrush(RGB(255-(int((float)player.health / (float)player.max_health*255.0)), int((float)player.health/(float)player.max_health*255.0) , 0));   //체력 퍼센트따라서 색 다르게
+			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
+			Rectangle(memdc1, player.x - 19, player.y - 29, int(player.x-19+((float)player.health / (float)player.max_health*38.0)), player.y - 24);
+			SelectObject(memdc1, oldbrush);
+			DeleteObject(hbrush);
 			//캐릭터, 몬스터 출력
 
-			//체력바 출력
+	
+
+			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d   %d"), stage, score, player.direction, player.x, player.y, selected_weapon, current_page);
+			TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2),str,_tcslen(str));
+
+													
+
+												
 
 			//오브젝트 출력(벽, 베럴)
 
 			//총알 출력
+            
+			
+			
+			/*             ui 출력 어렵넹            */
 
-			//ui 출력
+            /*	for (int i = 0; i < 6; i++)
+			{
+				hbrush = CreateSolidBrush(RGB(0, 0, 0));
+				oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
 
-			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	// 아래에 Bitblt랑 동일
+				RoundRect(memdc1, weapon_image_rect[i].left, weapon_image_rect[i].top, weapon_image_rect[i].right, weapon_image_rect[i].bottom, 10, 10);
+
+				SelectObject(memdc1, oldbrush);
+				DeleteObject(hbrush);
+			}*/
+		
+			/*             ui 출력             */
+
+			if ((win_x_size / 2 <= player.x) && (player.x <= win_x_size / 2 * 3) && (win_y_size / 2 <= player.y) && (player.y <= win_y_size / 2 * 3))  
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2), player.y - (win_y_size / 2), win_x_size, win_y_size);
+
+			else if ((player.x < win_x_size / 2) && (player.y < win_y_size / 2))
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, 0,0, win_x_size, win_y_size);
+			}
+			else if (( win_x_size / 2*3<player.x) && (player.y < win_y_size / 2))
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, win_x_size, 0, win_x_size, win_y_size);
+			}
+			else if ((win_x_size / 2 * 3 < player.x) && (win_y_size/2*3<player.y))
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, win_x_size, win_y_size, win_x_size, win_y_size);
+			}
+			else if ((player.x < win_x_size / 2) && (win_y_size / 2 * 3 < player.y))
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size,0,win_y_size, win_x_size, win_y_size);
+			}
+			else if (player.x < win_x_size / 2)
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, 0, player.y - (win_y_size / 2), win_x_size, win_y_size);
+			}
+			else if (player.y < win_y_size / 2)
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2),0, win_x_size, win_y_size);
+			}
+			else if (win_x_size / 2 * 3 < player.x)
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, win_x_size, player.y - (win_y_size / 2), win_x_size, win_y_size);
+			}
+			else if (win_y_size / 2 * 3 < player.y)
+			{
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2), win_y_size, win_x_size, win_y_size);
+			}
+
+
 			dc.ReleaseDC();		// dc 해제
 			dc.Destroy();		// 썼던 dc 삭제
+
 		}
 		else if (current_page == end_page)
 		{
@@ -422,7 +539,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 				SetTimer(hWnd, spawn_itembox, 15000, TimerProc);//15초마다 아이템박스 생성
 				Game_start_setting(hWnd);                       //게임 시작 셋팅(변수 초기화 등등)
-			
+
 
 				InvalidateRect(hWnd, NULL, false);
 			}
@@ -443,18 +560,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_KEYDOWN:
 	{
+		
 		if (current_page == game_page)
 		{
+			
 			switch (wParam)
 			{
 			case 'w':
+			case 'W':
 			{
-				if ((player.direction == N) || (player.direction == S))  //이동 방향을 북으로
+				if ((player.direction == N) || (player.direction == S)||(player.direction==SE)||(player.direction == SW))  //이동 방향을 북으로
 					player.direction = N;
 				else if (player.direction == W)  //이동 방향을 북서로
-					player.direction = NW;
+				{
+					if (player.ismoving == true)
+						player.direction = NW;
+					else
+						player.direction = N;
+				}		
 				else if (player.direction == E)  //이동 방향을 북동으로
-					player.direction = NE;
+				{
+					if (player.ismoving == true)
+						player.direction = NE;
+					else
+						player.direction = N;
+				}
 
 				if (player.ismoving == false)    //멈춰있었다면
 					player.ismoving = true;
@@ -463,13 +593,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case 'a':
+			case 'A':
 			{
-				if ((player.direction == E) || (player.direction == W))  //이동 방향을 서로
+				if ((player.direction == E) || (player.direction == W)||(player.direction ==NE )||(player.direction ==SE ))  //이동 방향을 서로
 					player.direction = W;
 				else if (player.direction == N)  //이동 방향을 북서로
-					player.direction = NW;
+				{
+					if (player.ismoving == true)
+						player.direction = NW;
+					else
+						player.direction = W;
+				}
 				else if (player.direction == S)  //이동 방향을 남서로
-					player.direction = SW;
+				{
+					if (player.ismoving == true)
+						player.direction = SW;
+					else
+						player.direction = W;
+				}
 
 				if (player.ismoving == false)    //멈춰있었다면
 					player.ismoving = true;
@@ -478,13 +619,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case 's':
+			case 'S':
 			{
-				if ((player.direction == N) || (player.direction == S))  //이동 방향을 남으로
+				if ((player.direction == N) || (player.direction == S) || (player.direction == NE) || (player.direction == NW))  //이동 방향을 남으로
 					player.direction = S;
 				else if (player.direction == W)  //이동 방향을 남서로
-					player.direction = SW;
+				{
+					if (player.ismoving == true)
+						player.direction = SW;
+					else
+						player.direction = S;
+				}
 				else if (player.direction == E)  //이동 방향을 남동으로
-					player.direction = SE;
+				{
+					if (player.ismoving == true)
+						player.direction = SE;
+					else
+						player.direction = S;
+				}
 
 				if (player.ismoving == false)    //멈춰있었다면
 					player.ismoving = true;
@@ -493,13 +645,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case 'd':
+			case 'D':
 			{
-				if ((player.direction == E) || (player.direction == W))  //이동 방향을 동으로
+				if ((player.direction == E) || (player.direction == W) || (player.direction == NW) || (player.direction == SW))  //이동 방향을 동으로
 					player.direction = E;
 				else if (player.direction == N)  //이동 방향을 북동으로
-					player.direction = NE;
+				{
+					if (player.ismoving == true)
+						player.direction = NE;
+					else
+						player.direction = E;
+				}
 				else if (player.direction == S)  //이동 방향을 남동으로
-					player.direction = SE;
+				{
+					if (player.ismoving == true)
+						player.direction = SE;
+					else
+						player.direction = E;
+				}
 
 				if (player.ismoving == false)    //멈춰있었다면
 					player.ismoving = true;
@@ -509,7 +672,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 
 			case 'q':  //이전 무기 선택
+			case 'Q':
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (selected_weapon == pistol)                    //pistol이 제일 처음 무기
 					break;
 				else if (weapon[selected_weapon - 1].open == true)     //이전 무기를 가지고있다면
@@ -521,7 +688,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 			case 'e':  //다음 무기 선택
+			case 'E':
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (selected_weapon == rocket)                     //rocket이 제일 마지막 무기
 					break;
 				else if (weapon[selected_weapon + 1].open == true) //다음 무기를 가지고있다면
@@ -534,6 +705,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case '1':  //pistol 선택
 			{
+
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (weapon[pistol].open == true)
 				{
 					selected_weapon = pistol;
@@ -544,6 +719,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case '2':  //uzi 선택
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (weapon[uzi].open == true)
 				{
 					selected_weapon = uzi;
@@ -553,6 +731,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case '3':  //shotgun 선택
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (weapon[shotgun].open == true)
 				{
 					selected_weapon = shotgun;
@@ -562,6 +743,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case '4':  //barrel 선택
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (weapon[barrel].open == true)
 				{
 					selected_weapon = barrel;
@@ -571,6 +755,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case '5':  //wall 선택
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (weapon[wall].open == true)
 				{
 					selected_weapon = wall;
@@ -580,6 +767,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case '6':  //rocket 선택
 			{
+				if (weapon[selected_weapon].isfiring == true)  //무기 사용중에는 무기 변경 불가
+					break;
+
 				if (weapon[rocket].open == true)
 				{
 					selected_weapon = rocket;
@@ -589,7 +779,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			case VK_SPACE:  //무기 사용
 			{
-				if (weapon[selected_weapon].bullet == 0)      //총알 없는 총은 총이 아니제
+				if (Remaining_bullet_check())      //총알 없는 총은 총이 아니제
 				{
 					//메세지를 띄운다던가... 총알이 없음을 알리는 무언가 
 					//귀찮다면 그냥 따로 뭐 없이 break로 탈출하자구?
@@ -597,29 +787,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				else
 				{
-					if (weapon[selected_weapon].isdelay == true)  //무기 사격 딜레이시 발사 불가!
-						break;
-
 
 					/*   주의! pistol은 총알이 무한이므로 pistol 발사시 총알 줄어들면 안댐!            */
 					/*   주의! 총마다 발사 딜레이가 있음! 발사후 타이머로 딜레이 생성하는거 잊지말기!  */  // wall과 barrel은 딜레이가 없다! 
 
 					if (selected_weapon == pistol)
 					{
-						//무기 발사
-						//딜레이 생성
+						weapon[selected_weapon].isfiring=true;
+						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay,TimerProc);
 					}
 					else if (selected_weapon == uzi)
 					{
-						//무기 발사
-						//딜레이 생성
+						weapon[selected_weapon].isfiring = true;
+						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
 					}
 					else if (selected_weapon == shotgun)
 					{
-						//무기 발사
-						//딜레이 생성
+						weapon[selected_weapon].isfiring = true;
+						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
 					}
-					/*완료*/else if (selected_weapon == barrel)
+					else if (selected_weapon == barrel)
 					{
 						/*               블록 충돌체크                */
 						int temp_x;
@@ -643,15 +830,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 						if (block[temp_y][temp_x].isempty == false)  //비어있지 않다면 break;
 							break;
-						else
+						else  //무기 사용
 						{
 							block[temp_y][temp_x].isbarrel = true;
 							block[temp_y][temp_x].isempty = false;
+							weapon[selected_weapon].bullet--;
 						}
-					
+
 						InvalidateRect(hWnd, NULL, false);
 					}
-					/*완료*/else if (selected_weapon == wall)
+					else if (selected_weapon == wall)
 					{
 						/*               블록 충돌체크                */
 						int temp_x;
@@ -675,20 +863,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						}
 						if (block[temp_y][temp_x].isempty == false)  //비어있지 않다면 break;
 							break;
-						else
+						else  //wall 사용
 						{
 							block[temp_y][temp_x].iswall = true;
 							block[temp_y][temp_x].isempty = false;
+							weapon[selected_weapon].bullet--;
 						}
 
 						InvalidateRect(hWnd, NULL, false);
 					}
 					else if (selected_weapon == rocket)
 					{
-						//무기 발사
-						//딜레이 생성
+						weapon[selected_weapon].isfiring = true;
+						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
 					}
-					
+
 				}
 				break;
 			}
@@ -698,7 +887,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (current_page == end_page)
 		{
-		
+
 		}
 		break;
 	}
@@ -709,6 +898,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (wParam)
 			{
 			case 'w':
+			case 'W':
 			{
 				if (player.direction == NE)       //이동 방향을 동으로
 					player.direction = E;
@@ -717,13 +907,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if (player.direction == N)   //이동을 멈춤
 				{
 					player.ismoving = false;
-					//공격중이 아닐경우 스프라이트를 기본으로 
+					player.sprite_num = 0;
 				}
 
 				InvalidateRect(hWnd, NULL, false);
 				break;
 			}
 			case 'a':
+			case 'A':
 			{
 				if (player.direction == NW)       //이동 방향을 북으로
 					player.direction = N;
@@ -732,13 +923,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if (player.direction == W)   //이동을 멈춤
 				{
 					player.ismoving = false;
-					//공격중이 아닐경우 스프라이트를 기본으로 
+					player.sprite_num = 0;
 				}
 
 				InvalidateRect(hWnd, NULL, false);
 				break;
 			}
 			case 's':
+			case 'S':
 			{
 				if (player.direction == SE)       //이동 방향을 동으로
 					player.direction = E;
@@ -747,13 +939,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if (player.direction == S)   //이동을 멈춤
 				{
 					player.ismoving = false;
-					//공격중이 아닐경우 스프라이트를 기본으로 
+					player.sprite_num = 0;
 				}
 
 				InvalidateRect(hWnd, NULL, false);
 				break;
 			}
 			case 'd':
+			case 'D':
 			{
 				if (player.direction == NE)       //이동 방향을 북으로
 					player.direction = N;
@@ -762,11 +955,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				else if (player.direction == E)   //이동을 멈춤
 				{
 					player.ismoving = false;
-					//공격중이 아닐경우 스프라이트를 기본으로 
+					player.sprite_num = 0;
 				}
 
 				InvalidateRect(hWnd, NULL, false);
 				break;
+			}
+			case VK_SPACE:  //무기 중지
+			{
+				if (weapon[selected_weapon].isfiring == true)
+				{
+					KillTimer(hWnd, atk_player);
+				}
 			}
 			break;
 			}
@@ -797,7 +997,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	{
 		if (isrest_time == false)  //스테이지 종료했을 때
 		{
-			
+
 			isrest_time = true;
 		}
 		else    //중간 휴식시간 끝났을 때
@@ -806,16 +1006,146 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			Stage_start(hWnd);
 
 			isrest_time = false;
-			KillTimer(hWnd, rest_time);  
+			KillTimer(hWnd, rest_time);
 		}
 		break;
 	}
 	case spawn_itembox:
 	{
 		Spawn_itembox();
+		InvalidateRect(hWnd, NULL, false);
 		break;
 	}
+	case atk_player: //무기 사용
+	{
+		if (selected_weapon == pistol)
+		{
+			//무기 발사
+			//캐릭터 스프라이트 변경
+		}
+		else if (selected_weapon == uzi)
+		{
+			
+			if (Remaining_bullet_check())   //남은 총알 확인 -> 없으면 killtimer, isfiring=false
+			{
+				KillTimer(hWnd, atk_player);
+				weapon[selected_weapon].isfiring = false;
+				//캐릭터 스프라이트 변경
+				
+			}	
+			else
+			{
+				//무기 발사
+				//캐릭터 스프라이트 변경
+				weapon[selected_weapon].bullet--;//총알 감소
+			}
+		}
+		else if (selected_weapon == shotgun)
+		{
+			if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
+			{
+				KillTimer(hWnd, atk_player);
+				weapon[selected_weapon].isfiring = false;
+				//캐릭터 스프라이트 변경
 
+			}
+			else
+			{
+				//무기 발사
+				//캐릭터 스프라이트 변경
+				weapon[selected_weapon].bullet--;//총알 감소
+			}
+		}
+		else if (selected_weapon == rocket)
+		{
+			if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
+			{
+				KillTimer(hWnd, atk_player);
+				weapon[selected_weapon].isfiring = false;
+				//캐릭터 스프라이트 변경
+			}
+			else
+			{
+				//무기 발사
+				//캐릭터 스프라이트 변경
+				weapon[selected_weapon].bullet--;//총알 감소
+			}
+		}
+
+		InvalidateRect(hWnd, NULL, false);
+		break;
+	}
+	case move_player:
+	{
+		if (player.ismoving == false)
+			break;
+
+		if (player.isattacking == true)
+		{
+			//이동하면서 공격할때
+		}
+		else
+		{
+			if (player.direction == N)
+			{
+				if (!(player.y - 15 - 5 < 0))  //맵 경계 충돌체크
+					player.y -= 5;
+			}
+			else if (player.direction == NE)
+			{
+				if (!(win_x_size * 2 < player.x + 8 + 5))  //맵 경계 충돌체크
+					player.x += 5;
+				if (!(player.y - 15 - 5 < 0))  //맵 경계 충돌체크
+					player.y -= 5;
+			}
+			else if (player.direction == E)
+			{
+				if (!(win_x_size * 2 < player.x + 8 + 5))  //맵 경계 충돌체크
+					player.x += 5;
+			}
+			else if (player.direction == SE)
+			{
+				if (!(win_x_size * 2 < player.x + 8 + 5))  //맵 경계 충돌체크
+					player.x += 5;
+				if (!(win_y_size * 2 < player.y + 15 + 5))  //맵 경계 충돌체크
+					player.y += 5;
+			}
+			else if (player.direction == S)
+			{
+				if (!(win_y_size * 2 < player.y + 15 + 5))  //맵 경계 충돌체크
+					player.y += 5;
+			}
+			else if (player.direction == SW)
+			{
+				if (!(player.x - 8 - 5 < 0))  //맵 경계 충돌체크
+					player.x -= 5;
+				if (!(win_y_size * 2 < player.y + 15 + 5))  //맵 경계 충돌체크
+					player.y += 5;
+			}
+			else if (player.direction == W)
+			{
+				if (!(player.x - 8 - 5 < 0))  //맵 경계 충돌체크
+					player.x -= 5;
+			}
+			else if (player.direction == NW)
+			{
+				if (!(player.x - 8 - 5 < 0))  //맵 경계 충돌체크
+					player.x -= 5;
+				if (!(player.y - 15 - 5 < 0))  //맵 경계 충돌체크
+					player.y -= 5;
+			}
+
+			if (player.sprite_num == 3)
+				player.sprite_num = 0;
+			else
+				player.sprite_num++;
+		}
+
+
+
+		InvalidateRect(hWnd, NULL, false);
+		break;
+	}
 	break;
 	}
 
@@ -832,12 +1162,13 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 
 	player.max_health = 1000;     //캐릭터 최대체력 1000으로 설정
 	player.health = player.max_health;
-	player.x = 900;  //위치 중앙
+	player.x = 900;               //위치 중앙
 	player.y = 800;
-	player.direction = S;  //아래쪽 바라봄
-	player.sprite_num = 0; //기본 이미지
+	player.direction = S;         //아래쪽 바라봄
+	player.sprite_num = 0;        //기본 이미지
 	player.ismoving = false;
 	player.isattacking = false;
+	SetTimer(hWnd, move_player, 50, TimerProc);   //플레이어 이동
 
 	monster_num = 0;
 	boss_num = 0;
@@ -859,16 +1190,17 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 		Spawn_itembox();
 
 	Reset_weapon_setting();
-
+	
 	isrest_time = true;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Aquire_itembox()             //아이템 박스를 먹어부려쪄!
+bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 {
-	int opened_weapon_num;        //추가 습득한 무기 개수 (pistol 제외)
+	/*  아이템 박스 삭제, itembox_num--따로 처리 필요  */
 
+	int opened_weapon_num;        //추가 습득한 무기 개수 (pistol 제외)
 	for (int i = 5; i > -1; i--)
 	{
 		if (weapon[i].open == true)
@@ -878,6 +1210,14 @@ void Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 		}
 	}
 
+	if ((2 <= stage) && (stage <= 6))  //2스테이지부터 무기 하나씩 풀림
+	{
+		if (weapon[stage - 1].open == false)
+		{
+			weapon[stage - 1].open = true;
+			return 0;
+		}
+	}
 	/*             특수 조건, 밸런싱? ㄴㄴ 기획 필요              */
 	/*                무기 업그레이드 해금 조건임                 */
 	//if ((aquired_itembox_num == ) || ())
@@ -938,7 +1278,6 @@ void Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 		weapon[rocket].bullet +=       ;*/
 	}
 
-
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -979,8 +1318,8 @@ void Char_Deathcheck(HWND hWnd)    //캐릭터 체력 0됐는지 확인 함수 무기발사, 몬�
 		//KillTimer(hWnd.);
 		//KillTimer(hWnd.);
 		//KillTimer(hWnd,);
-		KillTimer(hWnd,spawn_itembox);
-	
+		KillTimer(hWnd, spawn_itembox);
+
 		InvalidateRect(hWnd, NULL, false);
 	}
 
@@ -1099,18 +1438,18 @@ void Reset_weapon_setting()
 	weapon[4].range = 0;
 	weapon[5].range = 2000;  //사정거리 무한
 
-  /*            무기별 설정, 밸런싱 필요                              */
+							 /*            무기별 설정, 밸런싱 필요                              */
 
 	for (int i = 1; i < 6; i++)
 	{
 		weapon[i].open = false;
 		weapon[i].bullet = 0;
-		weapon[i].isdelay = false;
+		weapon[i].isfiring = false;
 	}
 
 	weapon[pistol].open = true;   //처음엔 권총밖에 엄서.. 야캐요..
 	weapon[pistol].bullet = weapon[pistol].max_bullet;
-	weapon[pistol].isdelay = false;
+	weapon[pistol].isfiring = false;
 
 	selected_weapon = pistol;     //권총 선택
 }
@@ -1145,3 +1484,17 @@ void Reset_weapon_upgrade()   //무기 업그레이드 초기화
 	rocket_maxammo_up2 = false;
 }
 
+ bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
+{
+	 if (weapon[selected_weapon].bullet != 0)
+	 {
+		 return false;
+	 }
+	 else
+		 return true;
+}
+ 
+ void Crash_check()
+ {
+
+ }
