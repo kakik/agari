@@ -148,7 +148,7 @@ bool isrest_time;
 CHARACTER* monster_head;  //head노드는 삭제하지 않고 사용하기
 CHARACTER* boss_head;     //head노드는 삭제하지 않고 사용하기
 
-int monster_num;          //현재 몬스터 숫자
+int monster_num;          //현재 몬스터 숫자(player.isattacking == true)
 int boss_num;             //현재 보스몬스터 숫자
 
 RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
@@ -158,8 +158,8 @@ RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
 { { 264,36,282,66 },{ 296,36,314,66 },{ 328,36,346,66 },{ 360,36,388,66 } }/*W*/,{ { 397,36,415,66 },{ 428,36,446,66 },{ 460,36,488,66 },{ 492,36,510,66 } }/*NW*/ };
 
 RECT char_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
-{ {{0,0,18,32}, {30,0,48,32} }/*N*/, {{ 60,0,78,32 }, {90,0,108,32} }/*NE*/,{{120,0,138,32},{150,0,168,32}}/*E*/,{{180,0,198,32},{210,0,228,32}}/*SE*/,
-{ { 0,32,18,64 },{ 30,32,48,64 } }/*S*/,{ { 60,32,78,64 },{ 90,32,108,64 } }/*SW*/,{ { 120,32,138,64 },{ 150,32,168,64 } }/*W*/,{ { 180,32,198,64 },{ 210,32,228,64 }/*NW*/ } };
+{ {{0,0,30,32}, {30,0,60,32} }/*N*/, {{ 60,0,90,32 }, {90,0,120,32} }/*NE*/,{{120,0,150,32},{150,0,180,32}}/*E*/,{{180,0,210,32},{210,0,240,32}}/*SE*/,
+{ { 0,32,30,64 },{ 30,32,60,64 } }/*S*/,{ { 60,32,90,64 },{ 90,32,120,64 } }/*SW*/,{ { 120,32,150,64 },{ 150,32,180,64 } }/*W*/,{ { 180,32,210,64 },{ 210,32,240,64 }/*NW*/ } };
 
 RECT logo_rect = { 120,120,750,370 };          //로고 위치      (스타트화면)
 RECT play_button_rect = { 600,480,750,550 };   //play버튼 위치  (스타트화면)
@@ -210,11 +210,11 @@ CImage monster_move_sprite[8][4]; //몬스터 이동 스프라이트 [방향][이동 모션 4개(
 CImage monster_atk_sprite[8][2];  //보스 공격 스프라이트[방향][공격 모션 2개(?)]
 
 								  /*********************************************비트맵 이미지*****************************************************/
-
+MSG Message;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
 	HWND hWnd;	
-	MSG Message;
+
 	WNDCLASSEX WndClass;
 	g_hInst = hInstance;
 
@@ -240,10 +240,12 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdPar
 
 	srand(GetTickCount());  //겟틱카운트! 랜덤시드~
 
-	while (GetMessage(&Message, 0, 0, 0)) {
-		TranslateMessage(&Message);
-		DispatchMessage(&Message);
+	while (GetMessage(&Message, 0, 0, 0)) 
+	{
+			TranslateMessage(&Message);
+			DispatchMessage(&Message);
 	}
+
 	return Message.wParam;
 }
 
@@ -294,6 +296,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		break;
 	case WM_PAINT:
+	
 		hdc = BeginPaint(hWnd, &ps);
 
 		if (current_page == start_page)
@@ -362,8 +365,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			else  //공격중일때
 			{
-				charac_atk_sprite.Draw(memdc1, player.x - character_width / 2, player.y - character_height / 2, character_width, character_height,
-					char_atk_sprite_rect[player.direction][player.sprite_num].left, char_atk_sprite_rect[player.direction][player.sprite_num].top, 18, 30);
+				charac_atk_sprite.Draw(memdc1, player.x -24, player.y -32, 64, 64,
+					char_atk_sprite_rect[player.direction][player.sprite_num].left, char_atk_sprite_rect[player.direction][player.sprite_num].top, 30, 32);
 
 			}
 
@@ -376,8 +379,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//캐릭터, 몬스터 출력
 
 	
+			int temp_atk;
+			if (player.isattacking == true)
+				temp_atk = 1;
+			else
+				temp_atk = 0;
 
-			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d   %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet,current_page);
+			int temp_mv;	
+			if (player.ismoving == true)
+				temp_mv = 1;
+			else
+				temp_mv = 0;
+			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d   ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet,temp_atk, temp_mv);
 			TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2),str,_tcslen(str));
 
 													
@@ -829,18 +842,27 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 					if (selected_weapon == pistol)
 					{
-						player.isattacking = true;
-						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay,TimerProc);
+						if (player.isattacking == false)
+						{
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							player.isattacking = true;
+						}
 					}
 					else if (selected_weapon == uzi)
 					{
-						player.isattacking = true;
-						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+						if (player.isattacking == false)
+						{
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							player.isattacking = true;
+						}
 					}
 					else if (selected_weapon == shotgun)
 					{
-						player.isattacking = true;
-						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+						if (player.isattacking == false)
+						{
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							player.isattacking = true;
+						}
 					}
 					else if (selected_weapon == barrel)
 					{
@@ -910,8 +932,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 					else if (selected_weapon == rocket)
 					{
-						player.isattacking = true;
-						SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+						
+						if (player.isattacking == false)
+						{
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							player.isattacking = true;
+						}
 					}
 
 				}
@@ -1001,6 +1027,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				if (player.isattacking == true)
 				{
+					player.sprite_num = 0;
 					player.isattacking = false;
 					KillTimer(hWnd, atk_player);
 					InvalidateRect(hWnd, NULL, false);
@@ -1057,68 +1084,71 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	}
 	case atk_player: //무기 사용
 	{
-		if (selected_weapon == pistol)
-		{
-			//무기 발사
-			//캐릭터 스프라이트 변경
-		}
-		else if (selected_weapon == uzi)
-		{
-			
-			if (Remaining_bullet_check())   //남은 총알 확인 -> 없으면 killtimer, isfiring=false
-			{
-				player.isattacking = false;
-				KillTimer(hWnd, atk_player);
-				//캐릭터 스프라이트 변경
-				
-			}	
-			else
-			{
-
-				//무기 발사
-				//캐릭터 스프라이트 변경
-				weapon[selected_weapon].bullet--;//총알 감소
-			}
-		}
-		else if (selected_weapon == shotgun)
-		{
-			if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
-			{
-				player.isattacking = false;
-				KillTimer(hWnd, atk_player);
-				//캐릭터 스프라이트 변경
-
-			}
-			else
+			if (selected_weapon == pistol)
 			{
 				//무기 발사
 				//캐릭터 스프라이트 변경
-				weapon[selected_weapon].bullet--;//총알 감소
 			}
-		}
-		else if (selected_weapon == rocket)
-		{
-			if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
+			else if (selected_weapon == uzi)
 			{
-				player.isattacking = false;
-				KillTimer(hWnd, atk_player);
-				//캐릭터 스프라이트 변경
+
+				if (Remaining_bullet_check())   //남은 총알 확인 -> 없으면 killtimer, isfiring=false
+				{
+					player.isattacking = false;
+					KillTimer(hWnd, atk_player);
+					//캐릭터 스프라이트 변경
+
+				}
+				else
+				{
+
+					//무기 발사
+					//캐릭터 스프라이트 변경
+					weapon[selected_weapon].bullet--;//총알 감소
+				}
 			}
-			else
+			else if (selected_weapon == shotgun)
 			{
-				//무기 발사
-				//캐릭터 스프라이트 변경
-				weapon[selected_weapon].bullet--;//총알 감소
+				if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
+				{
+					player.isattacking = false;
+					KillTimer(hWnd, atk_player);
+					//캐릭터 스프라이트 변경
+
+				}
+				else
+				{
+					//무기 발사
+					//캐릭터 스프라이트 변경
+					weapon[selected_weapon].bullet--;//총알 감소
+				}
 			}
-		}
+			else if (selected_weapon == rocket)
+			{
+				if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
+				{
+					player.isattacking = false;
+					KillTimer(hWnd, atk_player);
+					//캐릭터 스프라이트 변경
+				}
+				else
+				{
+					//무기 발사
+					//캐릭터 스프라이트 변경
+					weapon[selected_weapon].bullet--;//총알 감소
+				}
+			}
 
-		if (player.sprite_num == 0)
-			player.sprite_num = 1;
-		else if (player.sprite_num == 1)
-			player.sprite_num = 0;
+			if (player.isattacking == true)
+			{
+				if (player.sprite_num == 0)
+					player.sprite_num = 1;
+				else
+					player.sprite_num = 0;
+			}
 
-		
 		InvalidateRect(hWnd, NULL, false);
+	
 		break;
 	}
 	case move_player:
@@ -1126,66 +1156,78 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		if (player.ismoving == false)
 			break;
 
-		if (player.isattacking == true)
+		int x_crash_check;
+		int y_crash_check;
+
+		if (player.isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
 		{
-			//이동하면서 공격할때
+			x_crash_check=32;
+			y_crash_check=32;
 		}
 		else
 		{
-			if (player.direction == N)
-			{
-				if (!(player.y - 15 - 5 < 0))  //맵 경계 충돌체크
-					player.y -= 5;
-			}
-			else if (player.direction == NE)
-			{
-				if (!(win_x_size * 2 < player.x + 8 + 5))  //맵 경계 충돌체크
-					player.x += 5;
-				if (!(player.y - 15 - 5 < 0))  //맵 경계 충돌체크
-					player.y -= 5;
-			}
-			else if (player.direction == E)
-			{
-				if (!(win_x_size * 2 < player.x + 8 + 5))  //맵 경계 충돌체크
-					player.x += 5;
-			}
-			else if (player.direction == SE)
-			{
-				if (!(win_x_size * 2 < player.x + 8 + 5))  //맵 경계 충돌체크
-					player.x += 5;
-				if (!(win_y_size * 2 < player.y + 15 + 5))  //맵 경계 충돌체크
-					player.y += 5;
-			}
-			else if (player.direction == S)
-			{
-				if (!(win_y_size * 2 < player.y + 15 + 5))  //맵 경계 충돌체크
-					player.y += 5;
-			}
-			else if (player.direction == SW)
-			{
-				if (!(player.x - 8 - 5 < 0))  //맵 경계 충돌체크
-					player.x -= 5;
-				if (!(win_y_size * 2 < player.y + 15 + 5))  //맵 경계 충돌체크
-					player.y += 5;
-			}
-			else if (player.direction == W)
-			{
-				if (!(player.x - 8 - 5 < 0))  //맵 경계 충돌체크
-					player.x -= 5;
-			}
-			else if (player.direction == NW)
-			{
-				if (!(player.x - 8 - 5 < 0))  //맵 경계 충돌체크
-					player.x -= 5;
-				if (!(player.y - 15 - 5 < 0))  //맵 경계 충돌체크
-					player.y -= 5;
-			}
+			x_crash_check = 19;
+			y_crash_check = 30;
+		}
 
+		if (player.direction == N)
+		{
+			if (!(player.y - y_crash_check - 5 < 0))  //맵 경계 충돌체크
+				player.y -= 5;
+		}
+		else if (player.direction == NE)
+		{
+			if (!(win_x_size * 2 < player.x + x_crash_check + 5))  //맵 경계 충돌체크
+				player.x += 5;
+			if (!(player.y - y_crash_check - 5 < 0))  //맵 경계 충돌체크
+				player.y -= 5;
+		}
+		else if (player.direction == E)
+		{
+			if (!(win_x_size * 2 < player.x + x_crash_check + 5))  //맵 경계 충돌체크
+				player.x += 5;
+		}
+		else if (player.direction == SE)
+		{
+			if (!(win_x_size * 2 < player.x + x_crash_check + 5))  //맵 경계 충돌체크
+				player.x += 5;
+			if (!(win_y_size * 2 < player.y + y_crash_check + 5))  //맵 경계 충돌체크
+				player.y += 5;
+		}
+		else if (player.direction == S)
+		{
+			if (!(win_y_size * 2 < player.y + y_crash_check + 5))  //맵 경계 충돌체크
+				player.y += 5;
+		}
+		else if (player.direction == SW)
+		{
+			if (!(player.x - x_crash_check - 5 < 0))  //맵 경계 충돌체크
+				player.x -= 5;
+			if (!(win_y_size * 2 < player.y + y_crash_check + 5))  //맵 경계 충돌체크
+				player.y += 5;
+		}
+		else if (player.direction == W)
+		{
+			if (!(player.x - x_crash_check - 5 < 0))  //맵 경계 충돌체크
+				player.x -= 5;
+		}
+		else if (player.direction == NW)
+		{
+			if (!(player.x - x_crash_check - 5 < 0))  //맵 경계 충돌체크
+				player.x -= 5;
+			if (!(player.y - y_crash_check - 5 < 0))  //맵 경계 충돌체크
+				player.y -= 5;
+		}
+
+		if (player.isattacking == false)
+		{
 			if (player.sprite_num == 3)
 				player.sprite_num = 0;
 			else
 				player.sprite_num++;
 		}
+		
+
 
 
 
@@ -1244,7 +1286,7 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	
 	isrest_time = true;
 
-	SetTimer(hWnd, move_monster, 10, TimerProc);
+
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
