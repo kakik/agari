@@ -171,7 +171,7 @@ RECT logo_rect = { 120,120,750,370 };          //로고 위치      (스타트화면)
 RECT play_button_rect = { 650,480,800,550 };   //play버튼 위치  (스타트화면)
 RECT exit_button_rect = { 650,600,800,670 };   //exit버튼 위치  (스타트화면)
 
-RECT weapon_image_rect[6] = { { 220,680,270,730 },{ 300,680,350,730 },{ 380,680,430,730 },{ 460,680,510,730 },{ 540,680,590,730 },{ 620,680,670,730 } };  //무기 6개 이미지 위치
+RECT weapon_image_rect[6] = { { 220,730,270,780 },{ 300,730,350,780 },{ 380,730,430,780 },{ 460,730,510,780 },{ 540,730,590,780 },{ 620,730,670,780 } };  //무기 6개 이미지 위치
 
 RECT GAMEOVER_rect = { 220,50,620,150 };       //게임오버 버튼 위치  (게임엔드화면)
 RECT rankingbox_rect = { 100,200,745,600 };    //랭킹박스 위치       (게임엔드화면)
@@ -268,6 +268,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	TCHAR str[500] = {};
 
+	int play_size_left, play_size_top;
 
 	static bool play_button = false;  //시작화면 start버튼
 	static bool exit_button = false;  //시작화면 exit버튼
@@ -341,11 +342,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			memdc1 = dc.GetDC();							// == CreateComaptibleDC
 
 			//////////////////////////////////////////배경 출력///////////////////////////////////////////////
-			//hbrush = CreateSolidBrush(RGB(200, 255, 255));
-			//oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-			//Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);
-			//SelectObject(memdc1, oldbrush);
-			//DeleteObject(hbrush);
+
+			/* 
+			**배경 구좌표**
+			hbrush = CreateSolidBrush(RGB(200, 255, 255));
+			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
+			Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);
+			SelectObject(memdc1, oldbrush);
+			DeleteObject(hbrush);
+			*/
 
 			game_page_bk_img.BitBlt(memdc1, 0, 0, SRCCOPY);
 
@@ -436,20 +441,57 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			else
 				temp_mv = 0;
 			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d  itembox_num : %d  ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet, itembox_num, temp_atk, temp_mv);
-			TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2), str, _tcslen(str));
-
-
-
-
-
+			//TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2), str, _tcslen(str));
+			
 			//오브젝트 출력(벽, 베럴)
 
 			//총알 출력
 
 
 			//////////////////////////////////////하단 총 선택 출력//////////////////////////////////////////
+
+			dc2.Create(win_x_size, win_y_size, 24);		// 화면 출력용 DC
+			memdc2 = dc2.GetDC();						// 화면 출력용 DC
+
+			if (player.x <= (win_x_size / 2))
+			{ 
+				play_size_left = 0;
+			}
+			else if (player.x >= (win_x_size * 2) - (win_x_size / 2))
+			{
+				play_size_left = (win_x_size * 2) - win_x_size;
+			}
+			else
+			{
+				play_size_left = player.x - (win_x_size / 2);
+			}
+
+			if (player.y <= (win_y_size / 2))
+			{
+				play_size_top = 0;
+			}
+			else if (player.y >= (win_y_size * 2) - (win_y_size / 2))
+			{
+				play_size_top = (win_y_size * 2) - win_y_size;
+			}
+			else
+			{
+				play_size_top = player.y - (win_y_size / 2);
+			}
+			
+			dc.BitBlt(memdc2, 0, 0, win_x_size, win_y_size, play_size_left, play_size_top);
+			TextOut(memdc2, 0, 0, str, _tcslen(str));
+
+
 			hbrush = CreateSolidBrush(RGB(0, 0, 0));
-			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
+			oldbrush = (HBRUSH)SelectObject(memdc2, hbrush);
+			for (int i = 0; i < 6; ++i)
+				RoundRect(memdc2, weapon_image_rect[i].left, weapon_image_rect[i].top, weapon_image_rect[i].right, weapon_image_rect[i].bottom, 10, 10);
+			SelectObject(memdc2, oldbrush);
+			DeleteObject(hbrush);
+
+			/*
+			**ui 구좌표**
 
 			if ((win_x_size / 2 <= player.x) && (player.x <= win_x_size / 2 * 3) && (win_y_size / 2 <= player.y) && (player.y <= win_y_size / 2 * 3))
 			{
@@ -512,13 +554,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						weapon_image_rect[i].right + player.x - (win_x_size / 2), weapon_image_rect[i].bottom + win_y_size, 10, 10);
 				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2), win_y_size, win_x_size, win_y_size);
 			}
+			*/
 
-			SelectObject(memdc1, oldbrush);
-			DeleteObject(hbrush);
+
+			dc2.Draw(hdc, 0, 0);
 
 			dc.ReleaseDC();		// dc 해제
 			dc.Destroy();		// 썼던 dc 삭제
-
+			dc2.ReleaseDC();
+			dc2.Destroy();
 		}
 		else if (current_page == end_page)
 		{
