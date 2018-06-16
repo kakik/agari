@@ -90,6 +90,7 @@ void Spawn_monster();
 void Spawn_boss();
 bool Remaining_bullet_check();  //남은 총알 확인  남았으면 false 없으면 true
 bool Crash_check_character2object(int speed);
+bool Crash_check_monster2object(int speed, CHARACTER* monster);
 /*********************************************void()함수 최고*****************************************************/
 
 /*********************************************사랑합니다 전역변수*****************************************************/
@@ -352,9 +353,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			DeleteObject(hbrush);
 			*/
 
-			game_page_bk_img.BitBlt(memdc1, 0, 0, SRCCOPY);
+			game_page_bk_img.BitBlt(memdc1, 0, 0, SRCCOPY); //배경
 
-			for (int i = 0; i < 33; i++)  //블록 구분선 출력
+			for (int i = 0; i < 33; i++)                    //블록 구분선
 			{
 				MoveToEx(memdc1, 0, i * 50, NULL);
 				LineTo(memdc1, win_x_size * 2, i * 50);
@@ -428,19 +429,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			//////////////////////////////////////////보스몬스터 출력///////////////////////////////////////////////
 
+			//CHARACTER* p = boss_head->next;
 
-			int temp_atk;
-			if (player.isattacking == true)
-				temp_atk = 1;
-			else
-				temp_atk = 0;
+			//while (p != NULL)
+			//{
+			//	if (p->isattacking == false) //공격중 아닐때
+			//	{
 
-			int temp_mv;
-			if (player.ismoving == true)
-				temp_mv = 1;
-			else
-				temp_mv = 0;
-			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d  itembox_num : %d  ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet, itembox_num, temp_atk, temp_mv);
+			//	}
+			//	else                         //공격중일때
+			//	{
+
+			//	}
+			//	p = p->next;
+			//}
+
+
 			//TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2), str, _tcslen(str));
 			
 			//오브젝트 출력(벽, 베럴)
@@ -480,13 +484,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 			
 			dc.BitBlt(memdc2, 0, 0, win_x_size, win_y_size, play_size_left, play_size_top);
+
+			//////////////////////////////////////////DEBUG///////////////////////////////////////////////
+			int temp_atk;
+			if (player.isattacking == true)
+				temp_atk = 1;
+			else
+				temp_atk = 0;
+
+			int temp_mv;
+			if (player.ismoving == true)
+				temp_mv = 1;
+			else
+				temp_mv = 0;
+			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d  itembox_num : %d  ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet, itembox_num, temp_atk, temp_mv);
 			TextOut(memdc2, 0, 0, str, _tcslen(str));
 
+			//////////////////////////////////////////UI///////////////////////////////////////////////
+
+			TCHAR bullet_num[5] = {};   //총알개수
+			TCHAR weapon_num[2] = {};   //무기번호
 
 			hbrush = CreateSolidBrush(RGB(0, 0, 0));
 			oldbrush = (HBRUSH)SelectObject(memdc2, hbrush);
 			for (int i = 0; i < 6; ++i)
-				RoundRect(memdc2, weapon_image_rect[i].left, weapon_image_rect[i].top, weapon_image_rect[i].right, weapon_image_rect[i].bottom, 10, 10);
+			{
+				RECT print_rect = weapon_image_rect[i];
+				wsprintf(bullet_num, TEXT("%d"), weapon[i].bullet);
+				wsprintf(weapon_num, TEXT("%d"), i);		
+
+				if (selected_weapon == i)  //선택된 무기는 25픽셀 위에 출력
+				{
+					print_rect.top -= 25;
+					print_rect.bottom -= 25;
+				}
+				RoundRect(memdc2, print_rect.left, print_rect.top, print_rect.right, print_rect.bottom, 10, 10);
+
+				SetBkMode(memdc2, TRANSPARENT);  //투명배경
+
+				print_rect.top -= 20;
+				print_rect.bottom -= 20;
+				DrawText(memdc2, bullet_num, _tcslen(bullet_num), &print_rect, DT_CENTER | DT_VCENTER);
+				
+				print_rect.top += 70;
+				print_rect.bottom += 70;
+				DrawText(memdc2, weapon_num, _tcslen(weapon_num), &print_rect, DT_CENTER | DT_VCENTER);
+			}
 			SelectObject(memdc2, oldbrush);
 			DeleteObject(hbrush);
 
@@ -1265,14 +1308,16 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		{
 			if (player.direction == N)
 			{
-				if (!(player.y - y_crash_check - speed < 0))  //맵 경계 충돌체크
+				if (!(player.y - y_crash_check - speed < 50))  //맵 경계 충돌체크
+				{
 					player.y -= speed;
+				}
 			}
 			else if (player.direction == NE)
 			{
 				if (!(win_x_size * 2 < player.x + x_crash_check + speed))  //맵 경계 충돌체크
 					player.x += speed;
-				if (!(player.y - y_crash_check - speed < 0))  //맵 경계 충돌체크
+				if (!(player.y - y_crash_check - speed < 50))  //맵 경계 충돌체크
 					player.y -= speed;
 			}
 			else if (player.direction == E)
@@ -1284,19 +1329,19 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			{
 				if (!(win_x_size * 2 < player.x + x_crash_check + speed))  //맵 경계 충돌체크
 					player.x += speed;
-				if (!(win_y_size * 2 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
+				if (!(win_y_size * 2-50 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
 					player.y += speed;
 			}
 			else if (player.direction == S)
 			{
-				if (!(win_y_size * 2 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
+				if (!(win_y_size * 2-50 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
 					player.y += speed;
 			}
 			else if (player.direction == SW)
 			{
 				if (!(player.x - x_crash_check - speed < 0))  //맵 경계 충돌체크
 					player.x -= speed;
-				if (!(win_y_size * 2 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
+				if (!(win_y_size * 2-50 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
 					player.y += speed;
 			}
 			else if (player.direction == W)
@@ -1306,9 +1351,9 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			}
 			else if (player.direction == NW)
 			{
-				if (!(player.x - x_crash_check - speed < 0))  //맵 경계 충돌체크
+				if (!(player.x - x_crash_check - speed <0 ))  //맵 경계 충돌체크
 					player.x -= speed;
-				if (!(player.y - y_crash_check - speed < 0))  //맵 경계 충돌체크
+				if (!(player.y - y_crash_check - speed < 50))  //맵 경계 충돌체크
 					player.y -= speed;
 			}
 		}
@@ -1413,55 +1458,57 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 				if (p->isattacking == false)  //공격중엔 이동을 멈춤
 				{
-					if (p->direction == N)
+					if (Crash_check_monster2object(monster_speed, p) == false)
 					{
-						if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
-							p->y -= monster_speed;
+						if (p->direction == N)
+						{
+							if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+								p->y -= monster_speed;
+						}
+						else if (p->direction == NE)
+						{
+							if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
+								p->x += monster_speed;
+							if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+								p->y -= monster_speed;
+						}
+						else if (p->direction == E)
+						{
+							if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
+								p->x += monster_speed;
+						}
+						else if (p->direction == SE)
+						{
+							if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
+								p->x += monster_speed;
+							if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
+								p->y += monster_speed;
+						}
+						else if (p->direction == S)
+						{
+							if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
+								p->y += monster_speed;
+						}
+						else if (p->direction == SW)
+						{
+							if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+								p->x -= monster_speed;
+							if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
+								p->y += monster_speed;
+						}
+						else if (p->direction == W)
+						{
+							if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+								p->x -= monster_speed;
+						}
+						else if (p->direction == NW)
+						{
+							if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+								p->x -= monster_speed;
+							if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+								p->y -= monster_speed;
+						}
 					}
-					else if (p->direction == NE)
-					{
-						if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
-							p->x += monster_speed;
-						if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
-							p->y -= monster_speed;
-					}
-					else if (p->direction == E)
-					{
-						if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
-							p->x += monster_speed;
-					}
-					else if (p->direction == SE)
-					{
-						if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
-							p->x += monster_speed;
-						if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
-							p->y += monster_speed;
-					}
-					else if (p->direction == S)
-					{
-						if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
-							p->y += monster_speed;
-					}
-					else if (p->direction == SW)
-					{
-						if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
-							p->x -= monster_speed;
-						if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
-							p->y += monster_speed;
-					}
-					else if (p->direction == W)
-					{
-						if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
-							p->x -= monster_speed;
-					}
-					else if (p->direction == NW)
-					{
-						if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
-							p->x -= monster_speed;
-						if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
-							p->y -= monster_speed;
-					}
-
 					if (p->sprite_num == 3)
 						p->sprite_num = 0;
 					else
@@ -1653,8 +1700,8 @@ bool Spawn_itembox()     //18*16 블록에서 비어있는 블록에서 랜덤으로 아이템 박스
 
 		while (true)     //비어있는 칸을 찾아봅시다!
 		{
-			temp_x = rand() % 36;    //0 ~ 가로 블록 개수(36)-1 에서 랜덤
-			temp_y = rand() % 32;    //0 ~ 가로 블록 개수(32)-1 에서 랜덤
+			temp_x = rand() % 34+1;    //1~34 에서 랜덤
+			temp_y = rand() % 30+1;    //1~30 에서 랜덤
 
 			if (block[temp_y][temp_x].isempty == true)
 				break;
@@ -1707,15 +1754,15 @@ void Spawn_monster()
 	/* 스폰 몹 숫자 밸런싱 필요 */
 	CHARACTER* p = monster_head;
 	int i = 0;
-
-	while (i < 1/*숫자 밸런스 조정*/)
+	int temp = 1000;
+	while (i < 3/*숫자 밸런스 조정*/)
 	{
 		//head노드는 삭제하지 않고 사용하기
 		CHARACTER* temp_character = (CHARACTER*)malloc(sizeof(CHARACTER));
 
 		temp_character->health = 100;
 		temp_character->max_health = 100;
-		temp_character->x = 1000;
+		temp_character->x = temp;
 		temp_character->y = 1000;
 		temp_character->direction = E;
 		temp_character->sprite_num = 0;
@@ -1727,6 +1774,9 @@ void Spawn_monster()
 
 		monster_num++;
 		i++;
+		temp += 50;
+
+		p = p->next;
 	}
 
 	//몹 생성 - 연결리스트
@@ -1862,11 +1912,10 @@ bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
 		return true;
 }
 
-bool Crash_check_character2object(int speed)    //고정오브젝트와의 충돌검사 wall, barrel, itembox 
+bool Crash_check_character2object(int speed)    //오브젝트와의 충돌검사
 {
-	int character_block_x = player.x / 50;  //소수점 버림
-	int character_block_y = player.y / 50;  //소수점 버림
 
+	////////////////////////////////////////고정오브젝트 충돌검사////////////////////////////////////////
 	RECT character_rect;
 	RECT temp_rect = {};  //intersectrect 결과로 받아오는 rect. 인자를 비워두면 함수가 작동을 안해서 넣어놓음. 무시해도됨
 
@@ -1944,14 +1993,182 @@ bool Crash_check_character2object(int speed)    //고정오브젝트와의 충돌검사 wall
 					block[j][i].isitembox = false;
 					block[j][i].isempty = true;
 					Aquire_itembox();  //아이템박스 습득
-
-					return false;
 				}
 			}
 
 
 		}
 	}
+	////////////////////////////////////////몬스터 충돌검사////////////////////////////////////////
+	{
+		CHARACTER* p = monster_head->next;
+		while (p != NULL)
+		{
+			RECT monster_rect;
+
+			if (p->isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+				monster_rect = { p->x - 32,p->y - 32,p->x + 32,p->y + 32 };
+			else
+				monster_rect = { p->x - 19,p->y - 30,p->x + 19,p->y + 30 };
+
+			if (IntersectRect(&temp_rect, &monster_rect, &character_rect))
+				return true;
+
+			p = p->next;
+		}
+	}
+
+
+	////////////////////////////////////////보스 충돌검사////////////////////////////////////////
+	{
+		CHARACTER* p = boss_head->next;
+		while (p != NULL)
+		{
+			RECT monster_rect;
+
+			if (p->isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+				monster_rect = { p->x - 32,p->y - 32,p->x + 32,p->y + 32 };
+			else
+				monster_rect = { p->x - 19,p->y - 30,p->x + 19,p->y + 30 };
+
+			if (IntersectRect(&temp_rect, &monster_rect, &character_rect))
+				return true;
+
+			p = p->next;
+		}
+	}
+
+
+
+	return false;
+}
+
+
+bool Crash_check_monster2object(int speed,CHARACTER* monster)    //몬스터와 오브젝트와의 충돌검사
+{
+	/***************************************************************/
+
+	// 캐릭터 - 몬스터간의 충돌은 Crash_check_character2object에서 검사함.
+	// 몬스터는 사정거리 안에 캐릭터가 들어오면 *정지*해서 공격하기 때문에 
+	//몬스터가 캐릭터에 충돌하는지에 대한 검사 불필요
+
+	/****************************************************************/
+
+	////////////////////////////////////////고정오브젝트 충돌검사////////////////////////////////////////
+
+	RECT monster_rect= { monster->x - 19, monster->y - 30, monster->x + 19, monster->y + 30 };
+	RECT temp_rect = {};  //intersectrect 결과로 받아오는 rect. 인자를 비워두면 함수가 작동을 안해서 넣어놓음. 무시해도됨
+
+	if (monster->direction == N)  //현재 좌표 기준x 이동 후에 벽등과 겹치는지
+	{
+		monster_rect.top -= speed;
+	}
+	else if (monster->direction == NE)
+	{
+		monster_rect.top -= speed;
+		monster_rect.right += speed;
+
+	}
+	else if (monster->direction == E)
+	{
+		monster_rect.right += speed;
+	}
+	else if (monster->direction == SE)
+	{
+		monster_rect.bottom += speed;
+		monster_rect.right += speed;
+	}
+	else if (monster->direction == S)
+	{
+		monster_rect.bottom += speed;
+	}
+	else if (monster->direction == SW)
+	{
+		monster_rect.bottom += speed;
+		monster_rect.left -= speed;
+	}
+	else if (monster->direction == W)
+	{
+		monster_rect.left -= speed;
+	}
+	else if (monster->direction == NW)
+	{
+		monster_rect.top -= speed;
+		monster_rect.left -= speed;
+	}
+
+	for (int i = (monster-> x/ 50 - 1); i <= (monster->x / 50 + 1); i++)
+	{
+		if (i < 0)
+			continue;
+
+		for (int j = (monster->y / 50 - 1); j <= (monster->y / 50 + 1); j++)
+		{
+			if (j < 0)
+				continue;
+
+			if (j > 31)
+				break;
+
+			if (IntersectRect(&temp_rect, &block[j][i].rect, &monster_rect))
+			{
+				if ((block[j][i].isinvinciblewall) || (block[j][i].iswall) || (block[j][i].isbarrel))   //구조물에 막히면
+				{
+					return true;
+				}
+			}
+
+		}
+	}
+	////////////////////////////////////////몬스터 충돌검사////////////////////////////////////////
+	{
+		CHARACTER* p = monster_head->next;
+		while (p != NULL)
+		{
+			if (p == monster)  //자기 자신과의 충돌검사는 불필요!
+			{
+				p = p->next;
+				continue;
+			}
+			RECT p_rect;
+
+			if (p->isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+				p_rect = { p->x - 32,p->y - 32,p->x + 32,p->y + 32 };
+			else
+				p_rect = { p->x - 19,p->y - 30,p->x + 19,p->y + 30 };
+
+			if (IntersectRect(&temp_rect, &p_rect, &monster_rect))
+				return true;
+
+			p = p->next;
+		}
+	}
+
+
+	////////////////////////////////////////보스 충돌검사////////////////////////////////////////
+	{
+		CHARACTER* p = boss_head->next;
+		while (p != NULL)
+		{
+			if (p == monster)  //자기 자신과의 충돌검사는 불필요!
+			{
+				p = p->next;
+				continue;
+			}
+			RECT p_rect;
+
+			if (p->isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+				p_rect = { p->x - 32,p->y - 32,p->x + 32,p->y + 32 };
+			else
+				p_rect = { p->x - 19,p->y - 30,p->x + 19,p->y + 30 };
+
+			if (IntersectRect(&temp_rect, &p_rect, &monster_rect))
+				return true;
+
+			p = p->next;
+		}
+	}
+
 	return false;
 }
 
