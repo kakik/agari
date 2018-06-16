@@ -168,8 +168,8 @@ RECT monster_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
  { { 0,37,34,74 },{ 34,37,68,74 } }/*S*/,{ { 68,37,102,74 },{ 102,37,136,74 } }/*SW*/,{ { 136,37,170,74 },{ 170,37,204,74 } }/*W*/,{ { 204,37,238,74 },{ 238,37,272,74 } }/*NW*/ };
 
 RECT logo_rect = { 120,120,750,370 };          //로고 위치      (스타트화면)
-RECT play_button_rect = { 600,480,750,550 };   //play버튼 위치  (스타트화면)
-RECT exit_button_rect = { 600,600,750,670 };   //exit버튼 위치  (스타트화면)
+RECT play_button_rect = { 650,480,800,550 };   //play버튼 위치  (스타트화면)
+RECT exit_button_rect = { 650,600,800,670 };   //exit버튼 위치  (스타트화면)
 
 RECT weapon_image_rect[6] = { { 220,680,270,730 },{ 300,680,350,730 },{ 380,680,430,730 },{ 460,680,510,730 },{ 540,680,590,730 },{ 620,680,670,730 } };  //무기 6개 이미지 위치
 
@@ -443,7 +443,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//총알 출력
 
 
-
+			//////////////////////////////////////하단 총 선택 출력//////////////////////////////////////////
 			hbrush = CreateSolidBrush(RGB(0, 0, 0));
 			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
 
