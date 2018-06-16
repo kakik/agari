@@ -3,6 +3,7 @@
 #include <tchar.h>
 #include <random>
 #include <time.h>
+#include <math.h>
 #include <atlimage.h>
 
 
@@ -11,6 +12,7 @@ LPCTSTR lpszClass = _T("agari!");
 
 #define character_width 38
 #define character_height 60
+
 
 enum direction  //방향 N=0,NE=1,E=2,SE=3,S=4,SW=5,W=6,NW=7
 {
@@ -27,7 +29,7 @@ enum weapom     //무기번호 pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 
 enum timer      //타이머 넘버에 숫자 대신 이걸 써줍시다 
 {
 	rest_time,
-	move_player,atk_player,
+	move_player, atk_player,
 	spawn_monster, move_monster,
 	spawn_itembox,
 };
@@ -56,8 +58,6 @@ typedef struct WEAPON       //무기 정보
 	int damage;             //무기별 데미지        
 	int range;              //무기별 사정거리
 	int delay;              //무기 사용 딜레이 
-
-	CImage img;              //무기 이미지
 }WEAPON;
 
 
@@ -81,7 +81,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
 void Game_start_setting(HWND hWnd);  //게임 시작 셋팅(변수 초기화 등등)
 bool Aquire_itembox();      //아이템 박스를 먹어부려쪄!
-void Spawn_itembox();
+bool Spawn_itembox();
 void Char_Deathcheck(HWND hWnd);
 void Stage_start(HWND hWnd);
 void Reset_weapon_setting();
@@ -89,6 +89,7 @@ void Reset_weapon_upgrade();
 void Spawn_monster();
 void Spawn_boss();
 bool Remaining_bullet_check();  //남은 총알 확인  남았으면 false 없으면 true
+bool Crash_check_character2object(int speed);
 /*********************************************void()함수 최고*****************************************************/
 
 /*********************************************사랑합니다 전역변수*****************************************************/
@@ -151,6 +152,7 @@ CHARACTER* boss_head;     //head노드는 삭제하지 않고 사용하기
 int monster_num;          //현재 몬스터 숫자(player.isattacking == true)
 int boss_num;             //현재 보스몬스터 숫자
 
+
 RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
 { { { 0,0,18,30 },{ 32,0,50,30 },{ 64,0,82,30 },{ 96,0,114,30 } }/*N*/,{ { 133,0,151,30 },{ 165,0,173,30 },{ 197,0,215,30 },{ 229,0,247,30 } }/*NE*/,
 { { 264,0,282,30 },{ 296,0,314,30 },{ 328,0,346,30 },{ 360,0,388,30 } }/*E*/,{ { 397,0,415,30 },{ 428,0,446,30 },{ 460,0,488,30 },{ 492,0,510,30 } }/*SE*/,
@@ -160,6 +162,10 @@ RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
 RECT char_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
 { {{0,0,30,32}, {30,0,60,32} }/*N*/, {{ 60,0,90,32 }, {90,0,120,32} }/*NE*/,{{120,0,150,32},{150,0,180,32}}/*E*/,{{180,0,210,32},{210,0,240,32}}/*SE*/,
 { { 0,32,30,64 },{ 30,32,60,64 } }/*S*/,{ { 60,32,90,64 },{ 90,32,120,64 } }/*SW*/,{ { 120,32,150,64 },{ 150,32,180,64 } }/*W*/,{ { 180,32,210,64 },{ 210,32,240,64 }/*NW*/ } };
+
+RECT monster_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
+{ { { 0,0,34,37 },{ 34,0,68,37 } }/*N*/,{ { 68,0,102,37 },{ 102,0,136,37 } }/*NE*/,{ { 136,0,170,37 },{ 170,0,204,37 } }/*E*/,{ { 204,0,238,37 },{ 238,0,272,37 } }/*SE*/,
+ { { 0,37,34,74 },{ 34,37,68,74 } }/*S*/,{ { 68,37,102,74 },{ 102,37,136,74 } }/*SW*/,{ { 136,37,170,74 },{ 170,37,204,74 } }/*W*/,{ { 204,37,238,74 },{ 238,37,272,74 } }/*NW*/ };
 
 RECT logo_rect = { 120,120,750,370 };          //로고 위치      (스타트화면)
 RECT play_button_rect = { 600,480,750,550 };   //play버튼 위치  (스타트화면)
@@ -186,34 +192,32 @@ CImage logo_img;            //로고
 CImage play_button_img;     //play버튼
 CImage exit_button_img;     //exit버튼
 
+CImage itembox_img;
+CImage wall_img;
+CImage barrel_img;
+CImage rocket_bullet_img;
 
-							/*         무기 이미지는 WEAPON 구조체 안에 있음!       */
+int current_char_num;       //캐릭터 선택용... 현재는 무쓸모
 
-//CImage char_move_sprite[10][8][4]; //캐릭터 이동 스프라이트 [캐릭터 번호][방향][이동 모션 4개]
-//CImage char_atk_sprite[10][8][2];  //캐릭터 공격 스프라이트 [캐릭터 번호][방향][공격 모션 2개]
-int current_char_num;              //선택한 캐릭터 번호  char_move_sprite[current_char_num][direction][n]같이 사용
-
-//////
 //////
 CImage charac_sprite;
-//////
-//////
-
-
-//////
-//////
 CImage charac_atk_sprite;
-//////
+
+CImage monster_sprite;
+CImage monster_atk_sprite;
+
+CImage boss_sprite;
+CImage boss_atk_sprite;
 //////
 
 CImage monster_move_sprite[8][4]; //몬스터 이동 스프라이트 [방향][이동 모션 4개(?)]
-CImage monster_atk_sprite[8][2];  //보스 공격 스프라이트[방향][공격 모션 2개(?)]
+
 
 								  /*********************************************비트맵 이미지*****************************************************/
 MSG Message;
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
-	HWND hWnd;	
+	HWND hWnd;
 
 	WNDCLASSEX WndClass;
 	g_hInst = hInstance;
@@ -240,10 +244,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdPar
 
 	srand(GetTickCount());  //겟틱카운트! 랜덤시드~
 
-	while (GetMessage(&Message, 0, 0, 0)) 
+	while (GetMessage(&Message, 0, 0, 0))
 	{
-			TranslateMessage(&Message);
-			DispatchMessage(&Message);
+		TranslateMessage(&Message);
+		DispatchMessage(&Message);
 	}
 
 	return Message.wParam;
@@ -260,7 +264,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	HBRUSH hbrush, oldbrush;
 
 	CImage img;
-	CImage dc,dc2;
+	CImage dc, dc2;
 
 	TCHAR str[500] = {};
 
@@ -278,8 +282,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		play_button_img.Load(TEXT("..\\agari\\resource\\PLAY.png"));
 		exit_button_img.Load(TEXT("..\\agari\\resource\\EXIT.png"));
 		start_page_bk_img.Load(TEXT("..\\agari\\resource\\startBack.png"));
+
 		charac_sprite.Load(TEXT("..\\agari\\resource\\Izuna_move.png"));
 		charac_atk_sprite.Load(TEXT("..\\agari\\resource\\Izuna_attack.png"));
+
+		monster_sprite.Load(TEXT("..\\agari\\resource\\Monster_move.png"));
+		monster_atk_sprite.Load(TEXT("..\\agari\\resource\\Monster_attack.png"));
+
+		itembox_img.Load(TEXT("..\\agari\\resource\\cube.png"));
+		wall_img.Load(TEXT("..\\agari\\resource\\wall.png"));
+		barrel_img.Load(TEXT("..\\agari\\resource\\barrel.png"));
+		rocket_bullet_img.Load(TEXT("..\\agari\\resource\\Rocket.png"));
 
 		/*********************************************이미지 로드*****************************************************/
 
@@ -293,10 +306,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 
+		monster_head = (CHARACTER*)malloc(sizeof(CHARACTER));
+		monster_head->next = NULL;
+		boss_head = (CHARACTER*)malloc(sizeof(CHARACTER));
+		boss_head->next = NULL;
 
 		break;
 	case WM_PAINT:
-	
+
 		hdc = BeginPaint(hWnd, &ps);
 
 		if (current_page == start_page)
@@ -319,12 +336,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (current_page == game_page)
 		{
-			dc.Create(win_x_size*2, win_y_size*2, 24);	// == CreateCompatibleBitmap
+			dc.Create(win_x_size * 2, win_y_size * 2, 24);	// == CreateCompatibleBitmap
 			memdc1 = dc.GetDC();					// == CreateComaptibleDC
 
+			//////////////////////////////////////////배경 출력///////////////////////////////////////////////
 			hbrush = CreateSolidBrush(RGB(200, 255, 255));
 			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-			Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);	//배경 출력
+			Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);
 			SelectObject(memdc1, oldbrush);
 			DeleteObject(hbrush);
 
@@ -339,69 +357,92 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				LineTo(memdc1, i * 50, win_y_size * 2);
 			}
 
-
-			for (int i = 0; i < 32; i++)//아이템박스 출력
+			//////////////////////////////////////////고정 오브젝트 출력///////////////////////////////////////////////
+			for (int i = 0; i < 32; i++)
 			{
 				for (int j = 0; j < 36; j++)
 				{
-					if (block[i][j].isitembox == true)
+					if (block[i][j].isitembox)
 					{
-						hbrush = CreateSolidBrush(RGB(0, 0, 255));
-						oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-
-						Ellipse(memdc1, block[i][j].rect.left, block[i][j].rect.top, block[i][j].rect.right, block[i][j].rect.bottom);
-
-						SelectObject(memdc1, oldbrush);
-						DeleteObject(hbrush);
+						itembox_img.Draw(memdc1, block[i][j].rect.left + 10, block[i][j].rect.top + 4, 30, 41, 0, 0, 30, 41);
 					}
-					block[i][j].rect = { 50 * j,50 * i,50 * j + 50,50 * i + 50 }; 
+					else if ((block[i][j].iswall) || (block[i][j].isinvinciblewall))
+					{
+						wall_img.Draw(memdc1, block[i][j].rect.left, block[i][j].rect.top, 50, 50, 0, 0, 22, 30);
+					}
+					else if (block[i][j].isbarrel)
+					{
+						barrel_img.Draw(memdc1, block[i][j].rect.left, block[i][j].rect.top, 50, 50, 0, 0, 544, 720);
+					}
 				}
+
 			}
 
+			//////////////////////////////////////////캐릭터 출력///////////////////////////////////////////////
 			if (player.isattacking == false)  //공격중 아닐때
 			{
 				charac_sprite.Draw(memdc1, player.x - character_width / 2, player.y - character_height / 2, character_width, character_height,
 					char_move_sprite_rect[player.direction][player.sprite_num].left, char_move_sprite_rect[player.direction][player.sprite_num].top, 18, 30);
 			}
-			else  //공격중일때
+			else                              //공격중일때
 			{
-				charac_atk_sprite.Draw(memdc1, player.x -24, player.y -32, 64, 64,
+				charac_atk_sprite.Draw(memdc1, player.x - 24, player.y - 32, 64, 64,
 					char_atk_sprite_rect[player.direction][player.sprite_num].left, char_atk_sprite_rect[player.direction][player.sprite_num].top, 30, 32);
 
 			}
 
-			Rectangle(memdc1, player.x - 20, player.y - 40, player.x+20, player.y-33);  //체력바
-			hbrush = CreateSolidBrush(RGB(255-(int((float)player.health / (float)player.max_health*255.0)), int((float)player.health/(float)player.max_health*255.0) , 0));   //체력 퍼센트따라서 색 다르게
+			//////////////////////////////////////////체력바 출력///////////////////////////////////////////////
+			Rectangle(memdc1, player.x - 20, player.y - 40, player.x + 20, player.y - 33);  //체력바
+			hbrush = CreateSolidBrush(RGB(255 - (int((float)player.health / (float)player.max_health*255.0)), int((float)player.health / (float)player.max_health*255.0), 0));   //체력 퍼센트따라서 색 다르게
 			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-			Rectangle(memdc1, player.x - 19, player.y - 39, int(player.x-19+((float)player.health / (float)player.max_health*38.0)), player.y - 34);
+			Rectangle(memdc1, player.x - 19, player.y - 39, int(player.x - 19 + ((float)player.health / (float)player.max_health*38.0)), player.y - 34);
 			SelectObject(memdc1, oldbrush);
 			DeleteObject(hbrush);
-			//캐릭터, 몬스터 출력
 
-	
+			//////////////////////////////////////////몬스터 출력///////////////////////////////////////////////
+			CHARACTER* p = monster_head->next;
+
+			while (p != NULL)
+			{
+				if (p->isattacking == false) //공격중 아닐때
+				{
+					monster_sprite.Draw(memdc1, p->x - character_width / 2, p->y - character_height / 2, character_width, character_height,
+						char_move_sprite_rect[p->direction][p->sprite_num].left, char_move_sprite_rect[p->direction][p->sprite_num].top, 18, 30);
+				}
+				else                         //공격중일때
+				{
+					monster_atk_sprite.Draw(memdc1, p->x - 24, p->y - 32, 64, 64,
+						monster_atk_sprite_rect[p->direction][p->sprite_num].left, monster_atk_sprite_rect[p->direction][p->sprite_num].top, 34, 37);
+				}
+				p = p->next;
+			}
+
+			//////////////////////////////////////////보스몬스터 출력///////////////////////////////////////////////
+
+
 			int temp_atk;
 			if (player.isattacking == true)
 				temp_atk = 1;
 			else
 				temp_atk = 0;
 
-			int temp_mv;	
+			int temp_mv;
 			if (player.ismoving == true)
 				temp_mv = 1;
 			else
 				temp_mv = 0;
-			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d   ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet,temp_atk, temp_mv);
-			TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2),str,_tcslen(str));
+			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d  itembox_num : %d  ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet, itembox_num, temp_atk, temp_mv);
+			TextOut(memdc1, player.x - (win_x_size / 2), player.y - (win_y_size / 2), str, _tcslen(str));
 
-													
 
-												
+
+
 
 			//오브젝트 출력(벽, 베럴)
 
 			//총알 출력
-            
-			
+
+
 
 			hbrush = CreateSolidBrush(RGB(0, 0, 0));
 			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
@@ -418,53 +459,53 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				for (int i = 0; i < 6; i++)
 					RoundRect(memdc1, weapon_image_rect[i].left, weapon_image_rect[i].top, weapon_image_rect[i].right, weapon_image_rect[i].bottom, 10, 10);
-				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, 0,0, win_x_size, win_y_size);
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, 0, 0, win_x_size, win_y_size);
 			}
-			else if (( win_x_size / 2*3<player.x) && (player.y < win_y_size / 2))
+			else if ((win_x_size / 2 * 3 < player.x) && (player.y < win_y_size / 2))
 			{
 				for (int i = 0; i < 6; i++)
-					RoundRect(memdc1, weapon_image_rect[i].left+ win_x_size, weapon_image_rect[i].top, weapon_image_rect[i].right+ win_x_size, weapon_image_rect[i].bottom, 10, 10);
+					RoundRect(memdc1, weapon_image_rect[i].left + win_x_size, weapon_image_rect[i].top, weapon_image_rect[i].right + win_x_size, weapon_image_rect[i].bottom, 10, 10);
 				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, win_x_size, 0, win_x_size, win_y_size);
 			}
-			else if ((win_x_size / 2 * 3 < player.x) && (win_y_size/2*3<player.y))
+			else if ((win_x_size / 2 * 3 < player.x) && (win_y_size / 2 * 3 < player.y))
 			{
 				for (int i = 0; i < 6; i++)
-				RoundRect(memdc1, weapon_image_rect[i].left+ win_x_size, weapon_image_rect[i].top+ win_y_size, weapon_image_rect[i].right+ win_x_size, 
-					weapon_image_rect[i].bottom+ win_y_size, 10, 10);
+					RoundRect(memdc1, weapon_image_rect[i].left + win_x_size, weapon_image_rect[i].top + win_y_size, weapon_image_rect[i].right + win_x_size,
+						weapon_image_rect[i].bottom + win_y_size, 10, 10);
 				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, win_x_size, win_y_size, win_x_size, win_y_size);
 			}
 			else if ((player.x < win_x_size / 2) && (win_y_size / 2 * 3 < player.y))
 			{
 				for (int i = 0; i < 6; i++)
-					RoundRect(memdc1, weapon_image_rect[i].left, weapon_image_rect[i].top+ win_y_size, weapon_image_rect[i].right, weapon_image_rect[i].bottom+ win_y_size, 10, 10);
-				dc.Draw(hdc, 0, 0, win_x_size, win_y_size,0,win_y_size, win_x_size, win_y_size);
+					RoundRect(memdc1, weapon_image_rect[i].left, weapon_image_rect[i].top + win_y_size, weapon_image_rect[i].right, weapon_image_rect[i].bottom + win_y_size, 10, 10);
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, 0, win_y_size, win_x_size, win_y_size);
 			}
 			else if (player.x < win_x_size / 2)
 			{
 				for (int i = 0; i < 6; i++)
-					RoundRect(memdc1, weapon_image_rect[i].left, weapon_image_rect[i].top + player.y - (win_y_size / 2), 
+					RoundRect(memdc1, weapon_image_rect[i].left, weapon_image_rect[i].top + player.y - (win_y_size / 2),
 						weapon_image_rect[i].right, weapon_image_rect[i].bottom + player.y - (win_y_size / 2), 10, 10);
 				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, 0, player.y - (win_y_size / 2), win_x_size, win_y_size);
 			}
 			else if (player.y < win_y_size / 2)
 			{
 				for (int i = 0; i < 6; i++)
-					RoundRect(memdc1, weapon_image_rect[i].left+ player.x - (win_x_size / 2), weapon_image_rect[i].top,
-						weapon_image_rect[i].right+ player.x - (win_x_size / 2), weapon_image_rect[i].bottom, 10, 10);
-				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2),0, win_x_size, win_y_size);
+					RoundRect(memdc1, weapon_image_rect[i].left + player.x - (win_x_size / 2), weapon_image_rect[i].top,
+						weapon_image_rect[i].right + player.x - (win_x_size / 2), weapon_image_rect[i].bottom, 10, 10);
+				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2), 0, win_x_size, win_y_size);
 			}
 			else if (win_x_size / 2 * 3 < player.x)
 			{
 				for (int i = 0; i < 6; i++)
-					RoundRect(memdc1, weapon_image_rect[i].left+ win_x_size, weapon_image_rect[i].top + player.y - (win_y_size / 2),
-						weapon_image_rect[i].right+ win_x_size, weapon_image_rect[i].bottom + player.y - (win_y_size / 2), 10, 10);
+					RoundRect(memdc1, weapon_image_rect[i].left + win_x_size, weapon_image_rect[i].top + player.y - (win_y_size / 2),
+						weapon_image_rect[i].right + win_x_size, weapon_image_rect[i].bottom + player.y - (win_y_size / 2), 10, 10);
 				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, win_x_size, player.y - (win_y_size / 2), win_x_size, win_y_size);
 			}
 			else if (win_y_size / 2 * 3 < player.y)
 			{
 				for (int i = 0; i < 6; i++)
-					RoundRect(memdc1, weapon_image_rect[i].left + player.x - (win_x_size / 2), weapon_image_rect[i].top+ win_y_size,
-						weapon_image_rect[i].right + player.x - (win_x_size / 2), weapon_image_rect[i].bottom+ win_y_size, 10, 10);
+					RoundRect(memdc1, weapon_image_rect[i].left + player.x - (win_x_size / 2), weapon_image_rect[i].top + win_y_size,
+						weapon_image_rect[i].right + player.x - (win_x_size / 2), weapon_image_rect[i].bottom + win_y_size, 10, 10);
 				dc.Draw(hdc, 0, 0, win_x_size, win_y_size, player.x - (win_x_size / 2), win_y_size, win_x_size, win_y_size);
 			}
 
@@ -609,16 +650,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_KEYDOWN:
 	{
-		
+
 		if (current_page == game_page)
 		{
-			
+
 			switch (wParam)
 			{
 			case 'w':
 			case 'W':
 			{
-				if ((player.direction == N) || (player.direction == S)||(player.direction==SE)||(player.direction == SW))  //이동 방향을 북으로
+				if ((player.direction == N) || (player.direction == S) || (player.direction == SE) || (player.direction == SW))  //이동 방향을 북으로
 					player.direction = N;
 				else if (player.direction == W)  //이동 방향을 북서로
 				{
@@ -626,7 +667,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						player.direction = NW;
 					else
 						player.direction = N;
-				}		
+				}
 				else if (player.direction == E)  //이동 방향을 북동으로
 				{
 					if (player.ismoving == true)
@@ -644,7 +685,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case 'a':
 			case 'A':
 			{
-				if ((player.direction == E) || (player.direction == W)||(player.direction ==NE )||(player.direction ==SE ))  //이동 방향을 서로
+				if ((player.direction == E) || (player.direction == W) || (player.direction == NE) || (player.direction == SE))  //이동 방향을 서로
 					player.direction = W;
 				else if (player.direction == N)  //이동 방향을 북서로
 				{
@@ -932,7 +973,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 					else if (selected_weapon == rocket)
 					{
-						
+
 						if (player.isattacking == false)
 						{
 							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
@@ -1032,7 +1073,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					KillTimer(hWnd, atk_player);
 					InvalidateRect(hWnd, NULL, false);
 				}
-				
+
 			}
 			break;
 			}
@@ -1084,71 +1125,71 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	}
 	case atk_player: //무기 사용
 	{
-			if (selected_weapon == pistol)
+		if (selected_weapon == pistol)
+		{
+			//무기 발사
+			//캐릭터 스프라이트 변경
+		}
+		else if (selected_weapon == uzi)
+		{
+
+			if (Remaining_bullet_check())   //남은 총알 확인 -> 없으면 killtimer, isfiring=false
+			{
+				player.isattacking = false;
+				KillTimer(hWnd, atk_player);
+				//캐릭터 스프라이트 변경
+
+			}
+			else
+			{
+
+				//무기 발사
+				//캐릭터 스프라이트 변경
+				weapon[selected_weapon].bullet--;//총알 감소
+			}
+		}
+		else if (selected_weapon == shotgun)
+		{
+			if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
+			{
+				player.isattacking = false;
+				KillTimer(hWnd, atk_player);
+				//캐릭터 스프라이트 변경
+
+			}
+			else
 			{
 				//무기 발사
 				//캐릭터 스프라이트 변경
+				weapon[selected_weapon].bullet--;//총알 감소
 			}
-			else if (selected_weapon == uzi)
+		}
+		else if (selected_weapon == rocket)
+		{
+			if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
 			{
-
-				if (Remaining_bullet_check())   //남은 총알 확인 -> 없으면 killtimer, isfiring=false
-				{
-					player.isattacking = false;
-					KillTimer(hWnd, atk_player);
-					//캐릭터 스프라이트 변경
-
-				}
-				else
-				{
-
-					//무기 발사
-					//캐릭터 스프라이트 변경
-					weapon[selected_weapon].bullet--;//총알 감소
-				}
+				player.isattacking = false;
+				KillTimer(hWnd, atk_player);
+				//캐릭터 스프라이트 변경
 			}
-			else if (selected_weapon == shotgun)
+			else
 			{
-				if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
-				{
-					player.isattacking = false;
-					KillTimer(hWnd, atk_player);
-					//캐릭터 스프라이트 변경
+				//무기 발사
+				//캐릭터 스프라이트 변경
+				weapon[selected_weapon].bullet--;//총알 감소
+			}
+		}
 
-				}
-				else
-				{
-					//무기 발사
-					//캐릭터 스프라이트 변경
-					weapon[selected_weapon].bullet--;//총알 감소
-				}
-			}
-			else if (selected_weapon == rocket)
-			{
-				if (Remaining_bullet_check())//남은 총알 확인 -> 없으면 killtimer, isfiring=false
-				{
-					player.isattacking = false;
-					KillTimer(hWnd, atk_player);
-					//캐릭터 스프라이트 변경
-				}
-				else
-				{
-					//무기 발사
-					//캐릭터 스프라이트 변경
-					weapon[selected_weapon].bullet--;//총알 감소
-				}
-			}
-
-			if (player.isattacking == true)
-			{
-				if (player.sprite_num == 0)
-					player.sprite_num = 1;
-				else
-					player.sprite_num = 0;
-			}
+		if (player.isattacking == true)
+		{
+			if (player.sprite_num == 0)
+				player.sprite_num = 1;
+			else
+				player.sprite_num = 0;
+		}
 
 		InvalidateRect(hWnd, NULL, false);
-	
+
 		break;
 	}
 	case move_player:
@@ -1159,10 +1200,12 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		int x_crash_check;
 		int y_crash_check;
 
+		int speed = 5;
+
 		if (player.isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
 		{
-			x_crash_check=32;
-			y_crash_check=32;
+			x_crash_check = 32;
+			y_crash_check = 32;
 		}
 		else
 		{
@@ -1170,53 +1213,56 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			y_crash_check = 30;
 		}
 
-		if (player.direction == N)
+		if (Crash_check_character2object(speed) == false)
 		{
-			if (!(player.y - y_crash_check - 5 < 0))  //맵 경계 충돌체크
-				player.y -= 5;
-		}
-		else if (player.direction == NE)
-		{
-			if (!(win_x_size * 2 < player.x + x_crash_check + 5))  //맵 경계 충돌체크
-				player.x += 5;
-			if (!(player.y - y_crash_check - 5 < 0))  //맵 경계 충돌체크
-				player.y -= 5;
-		}
-		else if (player.direction == E)
-		{
-			if (!(win_x_size * 2 < player.x + x_crash_check + 5))  //맵 경계 충돌체크
-				player.x += 5;
-		}
-		else if (player.direction == SE)
-		{
-			if (!(win_x_size * 2 < player.x + x_crash_check + 5))  //맵 경계 충돌체크
-				player.x += 5;
-			if (!(win_y_size * 2 < player.y + y_crash_check + 5))  //맵 경계 충돌체크
-				player.y += 5;
-		}
-		else if (player.direction == S)
-		{
-			if (!(win_y_size * 2 < player.y + y_crash_check + 5))  //맵 경계 충돌체크
-				player.y += 5;
-		}
-		else if (player.direction == SW)
-		{
-			if (!(player.x - x_crash_check - 5 < 0))  //맵 경계 충돌체크
-				player.x -= 5;
-			if (!(win_y_size * 2 < player.y + y_crash_check + 5))  //맵 경계 충돌체크
-				player.y += 5;
-		}
-		else if (player.direction == W)
-		{
-			if (!(player.x - x_crash_check - 5 < 0))  //맵 경계 충돌체크
-				player.x -= 5;
-		}
-		else if (player.direction == NW)
-		{
-			if (!(player.x - x_crash_check - 5 < 0))  //맵 경계 충돌체크
-				player.x -= 5;
-			if (!(player.y - y_crash_check - 5 < 0))  //맵 경계 충돌체크
-				player.y -= 5;
+			if (player.direction == N)
+			{
+				if (!(player.y - y_crash_check - speed < 0))  //맵 경계 충돌체크
+					player.y -= speed;
+			}
+			else if (player.direction == NE)
+			{
+				if (!(win_x_size * 2 < player.x + x_crash_check + speed))  //맵 경계 충돌체크
+					player.x += speed;
+				if (!(player.y - y_crash_check - speed < 0))  //맵 경계 충돌체크
+					player.y -= speed;
+			}
+			else if (player.direction == E)
+			{
+				if (!(win_x_size * 2 < player.x + x_crash_check + speed))  //맵 경계 충돌체크
+					player.x += speed;
+			}
+			else if (player.direction == SE)
+			{
+				if (!(win_x_size * 2 < player.x + x_crash_check + speed))  //맵 경계 충돌체크
+					player.x += speed;
+				if (!(win_y_size * 2 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
+					player.y += speed;
+			}
+			else if (player.direction == S)
+			{
+				if (!(win_y_size * 2 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
+					player.y += speed;
+			}
+			else if (player.direction == SW)
+			{
+				if (!(player.x - x_crash_check - speed < 0))  //맵 경계 충돌체크
+					player.x -= speed;
+				if (!(win_y_size * 2 < player.y + y_crash_check + speed))  //맵 경계 충돌체크
+					player.y += speed;
+			}
+			else if (player.direction == W)
+			{
+				if (!(player.x - x_crash_check - speed < 0))  //맵 경계 충돌체크
+					player.x -= speed;
+			}
+			else if (player.direction == NW)
+			{
+				if (!(player.x - x_crash_check - speed < 0))  //맵 경계 충돌체크
+					player.x -= speed;
+				if (!(player.y - y_crash_check - speed < 0))  //맵 경계 충돌체크
+					player.y -= speed;
+			}
 		}
 
 		if (player.isattacking == false)
@@ -1226,7 +1272,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 				player.sprite_num++;
 		}
-		
+
 
 
 
@@ -1236,9 +1282,166 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	}
 	case move_monster:
 	{
-		InvalidateRect(hWnd, NULL, false);
+		int monster_speed = 5;          //몬스터 스피드 - 밸런스 조정 필요
+		int monster_attack_range = 14;  //몬스터 사정거리 - 밸런스 조정 필요
+
+		int x_crash_check;
+		int y_crash_check;
+		RECT monster_attack_range_rect = {};  //몬스터 사정거리 rect - intersectrect로 사용
+		RECT temp_rect = {};             //intersectrect 결과로 받아오는 rect. 인자를 비워두면 함수가 작동을 안해서 넣어놓음. 무시해도됨
+
+		RECT player_rect;               //플레이어 rect - 플레이어가 공격중일 때와 아닐때 크기가 다르기 때문에 사용
+		if (player.isattacking == true) //플레이어 rect 설정
+			player_rect = { player.x - 32,player.y - 32,player.x + 32,player.y + 32 };
+		else
+			player_rect = { player.x - 32,player.y - 32,player.x + 32,player.y + 32 };
+
+		CHARACTER* p = monster_head->next;
+		while (p != NULL)
+		{
+
+			if (p->isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+			{
+				x_crash_check = 32;
+				y_crash_check = 32;
+			}
+			else
+			{
+				x_crash_check = 19;
+				y_crash_check = 30;
+			}
+
+			if (p->isattacking == false)
+			{
+				monster_attack_range_rect = { p->x - x_crash_check- monster_attack_range/**/,p->y - y_crash_check- monster_attack_range/**/,
+					p->x + x_crash_check+ monster_attack_range /**/,p->y + y_crash_check + monster_attack_range }; //몬스터 사정거리 rect - intersectrect로 사용
+
+				if (IntersectRect(&temp_rect,&player_rect,&monster_attack_range_rect))          //이동중 플레이어가 사정거리 안에 들어오면 
+				{
+					//-> 공격모션 시작
+					p->sprite_num = 0;
+					p->isattacking = true;
+					p->ismoving = false;
+
+				}
+				else if (abs(player.x - p->x) < character_width)   
+				{
+					if (player.y > p->y)
+					{
+						p->direction = S;
+					}
+					else
+					{
+						p->direction = N;
+					}
+				}
+				else if (abs(player.y - p->y) < character_height)
+				{
+					if (player.x > p->x)
+					{
+						p->direction = E;
+					}
+					else
+					{
+						p->direction = W;
+					}
+				}
+				else if ((player.y > p->y) && (p->x < player.x))
+				{
+					p->direction = SE;
+				}
+				else if ((player.y > p->y) && (p->x > player.x))
+				{
+					p->direction = SW;
+				}
+				else if ((player.y < p->y) && (p->x > player.x))
+				{
+					p->direction = NW;
+				}
+				else if ((player.y < p->y) && (p->x < player.x))
+				{
+					p->direction = NE;
+				}
+
+				if (p->isattacking == false)  //공격중엔 이동을 멈춤
+				{
+					if (p->direction == N)
+					{
+						if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+							p->y -= monster_speed;
+					}
+					else if (p->direction == NE)
+					{
+						if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
+							p->x += monster_speed;
+						if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+							p->y -= monster_speed;
+					}
+					else if (p->direction == E)
+					{
+						if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
+							p->x += monster_speed;
+					}
+					else if (p->direction == SE)
+					{
+						if (!(win_x_size * 2 < p->x + x_crash_check + monster_speed))  //맵 경계 충돌체크
+							p->x += monster_speed;
+						if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
+							p->y += monster_speed;
+					}
+					else if (p->direction == S)
+					{
+						if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
+							p->y += monster_speed;
+					}
+					else if (p->direction == SW)
+					{
+						if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+							p->x -= monster_speed;
+						if (!(win_y_size * 2 < p->y + y_crash_check + monster_speed))  //맵 경계 충돌체크
+							p->y += monster_speed;
+					}
+					else if (p->direction == W)
+					{
+						if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+							p->x -= monster_speed;
+					}
+					else if (p->direction == NW)
+					{
+						if (!(p->x - x_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+							p->x -= monster_speed;
+						if (!(p->y - y_crash_check - monster_speed < 0))  //맵 경계 충돌체크
+							p->y -= monster_speed;
+					}
+
+					if (p->sprite_num == 3)
+						p->sprite_num = 0;
+					else
+						p->sprite_num++;
+				}
+			}
+			else  //공격 
+			{
+				if (p->sprite_num == 0)
+				{
+					//플레이어 피격판정
+					p->sprite_num++;
+				}
+				else if (p->sprite_num == 1)   //공격 멈춤
+				{
+					p->sprite_num = 0;
+					p->isattacking = false;
+					p->ismoving = true;
+				}
+			}
+
+			p = p->next;
+		}
+
+		InvalidateRect(hWnd, NULL, false);	
+		break;
 	}
-	
+
 	break;
 	}
 
@@ -1283,10 +1486,16 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 		Spawn_itembox();
 
 	Reset_weapon_setting();
-	
+
 	isrest_time = true;
 
+	block[17][15].iswall = true;
+	block[17][15].isempty = false;
 
+	block[16][14].isbarrel = true;
+	block[16][14].isempty = false;
+
+	SetTimer(hWnd, rest_time, 5000, TimerProc);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1294,6 +1503,8 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 {
 	/*  아이템 박스 삭제, itembox_num--따로 처리 필요  */
+	itembox_num--;
+	aquired_itembox_num++;
 
 	int opened_weapon_num;        //추가 습득한 무기 개수 (pistol 제외)
 	for (int i = 5; i > -1; i--)
@@ -1305,14 +1516,20 @@ bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 		}
 	}
 
-	if ((2 <= stage) && (stage <= 6))  //2스테이지부터 무기 하나씩 풀림
+	if (2 <= stage)  //2스테이지부터 무기 하나씩 풀림
 	{
-		if (weapon[stage - 1].open == false)
+		for (int i = 1; i < stage; i++)
 		{
-			weapon[stage - 1].open = true;
-			return 0;
+			if (weapon[i].open == false)
+			{
+				weapon[i].open = true;
+				return 0;
+			}
+			if (i == 5)
+				break;
 		}
 	}
+
 	/*             특수 조건, 밸런싱? ㄴㄴ 기획 필요              */
 	/*                무기 업그레이드 해금 조건임                 */
 	//if ((aquired_itembox_num == ) || ())
@@ -1377,9 +1594,11 @@ bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Spawn_itembox()     //18*16 블록에서 비어있는 블록에서 랜덤으로 아이템 박스 생성	
+bool Spawn_itembox()     //18*16 블록에서 비어있는 블록에서 랜덤으로 아이템 박스 생성	
 {
-	if (itembox_num < 6) //아이템박스는 5개까지만! (밸런싱 필요)
+	if (itembox_num > 4) //아이템박스는 5개까지만! (밸런싱 필요)
+		return 1;
+	else
 	{
 		int temp_x;
 		int temp_y;
@@ -1429,7 +1648,7 @@ void Stage_start(HWND hWnd)   //스테이지 시작 세팅(몬스터 생성) 흥 함수 작성 순�
 
 	Spawn_monster();
 	Spawn_boss();
-
+	SetTimer(hWnd, move_monster, 100, TimerProc);
 	//몹 맵에서 나오도록 하는 타이머 생성 - 몹 스폰장소에서 한두마리씩 나오고, 입구가 막혀서 나오지 못할경우 나오지 않도록 해야함
 }
 
@@ -1441,16 +1660,16 @@ void Spawn_monster()
 	CHARACTER* p = monster_head;
 	int i = 0;
 
-	while (i < 50/*숫자 밸런스 조정*/)
+	while (i < 1/*숫자 밸런스 조정*/)
 	{
 		//head노드는 삭제하지 않고 사용하기
 		CHARACTER* temp_character = (CHARACTER*)malloc(sizeof(CHARACTER));
 
 		temp_character->health = 100;
 		temp_character->max_health = 100;
-		//temp_character->x=
-		//temp_character->y=
-		//temp_character->direction=
+		temp_character->x = 1000;
+		temp_character->y = 1000;
+		temp_character->direction = E;
 		temp_character->sprite_num = 0;
 		temp_character->ismoving = false;
 		temp_character->isattacking = false;
@@ -1482,11 +1701,11 @@ void Spawn_boss()
 
 		temp_character->health = 500;
 		temp_character->max_health = 500;
-		//temp_character->x=
-		//temp_character->y=
-		//temp_character->direction=
+		//	temp_character->x = 
+		//	temp_character->y = 1
+		//	temp_character->direction = 
 		temp_character->sprite_num = 0;
-		temp_character->ismoving = false;
+		temp_character->ismoving = true;
 		temp_character->isattacking = false;
 		temp_character->next = NULL;
 
@@ -1539,9 +1758,9 @@ void Reset_weapon_setting()
 	weapon[2].delay = 100;
 	weapon[3].delay = 0;
 	weapon[4].delay = 0;
-	weapon[5].delay = 2000;  
+	weapon[5].delay = 2000;
 
-							 /*            무기별 설정, 밸런싱 필요                              */
+	/*            무기별 설정, 밸런싱 필요                              */
 
 	for (int i = 1; i < 6; i++)
 	{
@@ -1585,17 +1804,103 @@ void Reset_weapon_upgrade()   //무기 업그레이드 초기화
 	rocket_maxammo_up2 = false;
 }
 
- bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
+bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
 {
-	 if (weapon[selected_weapon].bullet != 0)
-	 {
-		 return false;
-	 }
-	 else
-		 return true;
+	if (weapon[selected_weapon].bullet != 0)
+	{
+		return false;
+	}
+	else
+		return true;
 }
- 
- void Crash_check()
- {
 
- }
+bool Crash_check_character2object(int speed)    //고정오브젝트와의 충돌검사 wall, barrel, itembox 
+{
+	int character_block_x = player.x / 50;  //소수점 버림
+	int character_block_y = player.y / 50;  //소수점 버림
+
+	RECT character_rect;
+	RECT temp_rect = {};  //intersectrect 결과로 받아오는 rect. 인자를 비워두면 함수가 작동을 안해서 넣어놓음. 무시해도됨
+
+	if (player.isattacking)
+	{
+		character_rect = { player.x - 32,player.y - 32,player.x + 32,player.y + 32 };
+
+	}
+	else
+	{
+		character_rect = { player.x - 19,player.y - 30,player.x + 19,player.y + 30 };
+	}
+
+
+	if (player.direction == N)  //현재 좌표 기준x 이동 후에 벽등과 겹치는지
+	{
+		character_rect.top -= speed;
+	}
+	else if (player.direction == NE)
+	{
+		character_rect.top -= speed;
+		character_rect.right += speed;
+
+	}
+	else if (player.direction == E)
+	{
+		character_rect.right += speed;
+	}
+	else if (player.direction == SE)
+	{
+		character_rect.bottom += speed;
+		character_rect.right += speed;
+	}
+	else if (player.direction == S)
+	{
+		character_rect.bottom += speed;
+	}
+	else if (player.direction == SW)
+	{
+		character_rect.bottom += speed;
+		character_rect.left -= speed;
+	}
+	else if (player.direction == W)
+	{
+		character_rect.left -= speed;
+	}
+	else if (player.direction == NW)
+	{
+		character_rect.top -= speed;
+		character_rect.left -= speed;
+	}
+
+	for (int i = (player.x / 50 - 1); i <= (player.x / 50 + 1); i++)
+	{
+		if (i < 0)
+			continue;
+
+		for (int j = (player.y / 50 - 1); j <= (player.y / 50 + 1); j++)
+		{
+			if (j < 0)
+				continue;
+
+			if (IntersectRect(&temp_rect, &block[j][i].rect, &character_rect))
+			{
+				if ((block[j][i].isinvinciblewall) || (block[j][i].iswall) || (block[j][i].isbarrel))   //구조물에 막히면
+				{
+
+					return true;
+				}
+				else if (block[j][i].isitembox)
+				{
+					block[j][i].isitembox = false;
+					block[j][i].isempty = true;
+					Aquire_itembox();  //아이템박스 습득
+
+					return false;
+				}
+			}
+
+
+		}
+	}
+	return false;
+}
+
