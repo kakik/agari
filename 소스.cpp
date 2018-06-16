@@ -1885,6 +1885,9 @@ bool Crash_check_character2object(int speed)    //고정오브젝트와의 충돌검사 wall
 			if (j < 0)
 				continue;
 
+			if (j > 31)
+				break;
+
 			if (IntersectRect(&temp_rect, &block[j][i].rect, &character_rect))
 			{
 				if ((block[j][i].isinvinciblewall) || (block[j][i].iswall) || (block[j][i].isbarrel))   //구조물에 막히면
