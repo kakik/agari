@@ -282,6 +282,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		play_button_img.Load(TEXT("..\\agari\\resource\\PLAY.png"));
 		exit_button_img.Load(TEXT("..\\agari\\resource\\EXIT.png"));
 		start_page_bk_img.Load(TEXT("..\\agari\\resource\\startBack.png"));
+		game_page_bk_img.Load(TEXT("..\\agari\\resource\\stage.png"));
 
 		charac_sprite.Load(TEXT("..\\agari\\resource\\Izuna_move.png"));
 		charac_atk_sprite.Load(TEXT("..\\agari\\resource\\Izuna_attack.png"));
@@ -310,8 +311,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		monster_head->next = NULL;
 		boss_head = (CHARACTER*)malloc(sizeof(CHARACTER));
 		boss_head->next = NULL;
-
 		break;
+
 	case WM_PAINT:
 
 		hdc = BeginPaint(hWnd, &ps);
@@ -337,14 +338,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		else if (current_page == game_page)
 		{
 			dc.Create(win_x_size * 2, win_y_size * 2, 24);	// == CreateCompatibleBitmap
-			memdc1 = dc.GetDC();					// == CreateComaptibleDC
+			memdc1 = dc.GetDC();							// == CreateComaptibleDC
 
 			//////////////////////////////////////////배경 출력///////////////////////////////////////////////
-			hbrush = CreateSolidBrush(RGB(200, 255, 255));
-			oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-			Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);
-			SelectObject(memdc1, oldbrush);
-			DeleteObject(hbrush);
+			//hbrush = CreateSolidBrush(RGB(200, 255, 255));
+			//oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
+			//Rectangle(memdc1, 0, 0, win_x_size * 2, win_y_size * 2);
+			//SelectObject(memdc1, oldbrush);
+			//DeleteObject(hbrush);
+
+			game_page_bk_img.BitBlt(memdc1, 0, 0, SRCCOPY);
 
 			for (int i = 0; i < 33; i++)  //블록 구분선 출력
 			{
@@ -364,6 +367,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				{
 					if (block[i][j].isitembox)
 					{
+
 						itembox_img.Draw(memdc1, block[i][j].rect.left + 10, block[i][j].rect.top + 4, 30, 41, 0, 0, 30, 41);
 					}
 					else if ((block[i][j].iswall) || (block[i][j].isinvinciblewall))
