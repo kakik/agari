@@ -41,8 +41,7 @@ typedef struct CHARACTER   //플레이어, 몬스터, 보스몬스터 정보
 	int x;                 //현재 캐릭터 x좌표 
 	int y;                 //현재 캐릭터 y좌표 
 	int direction;         //현재 캐릭터가 바라보는 방향 enum direction으로 사용
-
-	int sprite_num;
+	int sprite_num;        //캐릭터 스프라이트 num
 	bool ismoving;         //이동중인지 (타이머 돌아가고있는지)
 	bool isattacking;      //공격중인지 (타이머 돌아가고있는지)
 
@@ -70,7 +69,6 @@ typedef struct BLOCK         //50*50크기 블록
 	bool isinvinciblewall;    //파괴 불가능한 벽이 있닝?
 	bool isbarrel;            //베럴이 있닝?
 	bool isitembox;           //아이템박스가 있닝?
-
 	bool isempty;             //비어있니? == 위의 4 오브젝트중 아무것도 없어야만 true!
 
 	RECT rect;                //블록 좌표 
@@ -80,17 +78,17 @@ typedef struct BLOCK         //50*50크기 블록
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
 void Game_start_setting(HWND hWnd);  //게임 시작 셋팅(변수 초기화 등등)
-bool Aquire_itembox();      //아이템 박스를 먹어부려쪄!
-bool Spawn_itembox();
-void Char_Deathcheck(HWND hWnd);
-void Stage_start(HWND hWnd);
 void Reset_weapon_setting();
 void Reset_weapon_upgrade();
+void Stage_start(HWND hWnd);
+bool Spawn_itembox();
+bool Aquire_itembox();      //아이템 박스를 먹어부려쪄!
 void Spawn_monster();
 void Spawn_boss();
-bool Remaining_bullet_check();  //남은 총알 확인  남았으면 false 없으면 true
-bool Crash_check_character2object(int speed);
+bool Crash_check_character2object(int speed,int direction);
 bool Crash_check_monster2object(int speed, CHARACTER* monster);
+bool Char_Deathcheck(HWND hWnd);
+bool Remaining_bullet_check();  //남은 총알 확인  남았으면 false 없으면 true
 /*********************************************void()함수 최고*****************************************************/
 
 /*********************************************사랑합니다 전역변수*****************************************************/
@@ -108,12 +106,27 @@ int current_page;          //현재 페이지  enum page로 사용
 int stage;                 //현재 스테이지
 int score;                 //현재 스코어
 
+bool isrest_time;
+
+CHARACTER* monster_head;  //head노드는 삭제하지 않고 사용하기
+int monster_num;          //현재 몬스터 숫자(player.isattacking == true)
+int monster_dmg;          //몬스터 데미지
+
+CHARACTER* boss_head;     //head노드는 삭제하지 않고 사용하기
+int boss_num;             //현재 보스몬스터 숫자
+int boss_dmg;             //보스몬스터 데미지
+
+int itembox_num;           //맵에 존재하는 아이템 박스 개수
+int aquired_itembox_num;   //현재까지 습득한 아이템 박스 개수
+
 
 CHARACTER player;          //플레이어
 WEAPON weapon[6];          //무기 6개 enum weapon으로 사용
 int selected_weapon;       //현재 선택중인 무기 enum weapon으로 사용
 
-/******************무기 업그레이드 bool변수*******************/
+
+
+/////////////////////////////////////무기 업그레이드 bool변수/////////////////////////////////////
 //무기번호 pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 4, rocket = 5
 bool pistol_range_up1;
 bool pistol_delay_down1;
@@ -139,20 +152,8 @@ bool wall_maxammo_up2;
 bool rocket_delay_down1;
 bool rocket_maxammo_up1;
 bool rocket_maxammo_up2;
-/*************************************************************/
 
-int itembox_num;           //맵에 존재하는 아이템 박스 개수
-int aquired_itembox_num;   //현재까지 습득한 아이템 박스 개수
-
-bool isrest_time;
-
-
-CHARACTER* monster_head;  //head노드는 삭제하지 않고 사용하기
-CHARACTER* boss_head;     //head노드는 삭제하지 않고 사용하기
-
-int monster_num;          //현재 몬스터 숫자(player.isattacking == true)
-int boss_num;             //현재 보스몬스터 숫자
-
+////////////////////////////////////////////////////////////////////////////////////////////////
 
 RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
 { { { 0,0,18,30 },{ 32,0,50,30 },{ 64,0,82,30 },{ 96,0,114,30 } }/*N*/,{ { 133,0,151,30 },{ 165,0,173,30 },{ 197,0,215,30 },{ 229,0,247,30 } }/*NE*/,
@@ -609,13 +610,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 		else if (current_page == end_page)
 		{
-			//스코어
 
+			dc.Create(win_x_size, win_y_size, 24);
+			memdc1 = dc.GetDC();
+			start_page_bk_img.Draw(memdc1, 0, 0, win_x_size, win_y_size);
+			//스코어
+				
 			//스테이지
 
 			//replay버튼
 
-			//exit버튼
+			
+			exit_button_img.Draw(memdc1, exit2_button_rect);   //exit버튼
+
+			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	
+
+			dc.ReleaseDC();		// dc 해제
+			dc.Destroy();		// 썼던 dc 삭제
 		}
 
 		EndPaint(hWnd, &ps);
@@ -1186,6 +1197,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 {
@@ -1304,7 +1316,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			y_crash_check = 30;
 		}
 
-		if (Crash_check_character2object(speed) == false)
+		if (Crash_check_character2object(speed,player.direction) == false)
 		{
 			if (player.direction == N)
 			{
@@ -1366,17 +1378,13 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 				player.sprite_num++;
 		}
 
-
-
-
-
 		InvalidateRect(hWnd, NULL, false);
 		break;
 	}
 	case move_monster:
 	{
 		int monster_speed = 5;          //몬스터 스피드 - 밸런스 조정 필요
-		int monster_attack_range = 14;  //몬스터 사정거리 - 밸런스 조정 필요
+		int monster_attack_range = 7;  //몬스터 사정거리 - 밸런스 조정 필요
 
 		int x_crash_check;
 		int y_crash_check;
@@ -1403,11 +1411,11 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 				x_crash_check = 19;
 				y_crash_check = 30;
 			}
+			monster_attack_range_rect = { p->x - x_crash_check - monster_attack_range/**/,p->y - y_crash_check - monster_attack_range/**/,
+				p->x + x_crash_check + monster_attack_range /**/,p->y + y_crash_check + monster_attack_range }; //몬스터 사정거리 rect - intersectrect로 사용
 
 			if (p->isattacking == false)
 			{
-				monster_attack_range_rect = { p->x - x_crash_check- monster_attack_range/**/,p->y - y_crash_check- monster_attack_range/**/,
-					p->x + x_crash_check+ monster_attack_range /**/,p->y + y_crash_check + monster_attack_range }; //몬스터 사정거리 rect - intersectrect로 사용
 
 				if (IntersectRect(&temp_rect,&player_rect,&monster_attack_range_rect))          //이동중 플레이어가 사정거리 안에 들어오면 
 				{
@@ -1519,7 +1527,82 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			{
 				if (p->sprite_num == 0)
 				{
-					//플레이어 피격판정
+					////////////////////////////////////플레이어 피격판정////////////////////////////////////
+					if (IntersectRect(&temp_rect, &player_rect, &monster_attack_range_rect)) //플레이어가 사정거리 안에 있으면
+					{
+						player.health -= monster_dmg;
+						if (Char_Deathcheck(hWnd) == false)
+						{
+							int knockback_distance = 10;
+
+							if (player.isattacking == true)   //공격하다가 맞으면 공격이 끊김
+							{
+								KillTimer(hWnd, atk_player);
+								player.isattacking = false;
+								player.sprite_num = 0;
+							}
+
+							if (Crash_check_character2object(knockback_distance, p->direction) == false)
+							{
+								player.sprite_num = 0;
+
+								x_crash_check = 19;
+								y_crash_check = 30;
+
+								if (p->direction == N)
+								{
+									if (!(player.y - y_crash_check - knockback_distance < 50))  //맵 경계 충돌체크
+									{
+										player.y -= knockback_distance;
+									}
+								}
+								else if (p->direction == NE)
+								{
+									if (!(win_x_size * 2 < player.x + x_crash_check + knockback_distance))  //맵 경계 충돌체크
+										player.x += knockback_distance;
+									if (!(player.y - y_crash_check - knockback_distance < 50))  //맵 경계 충돌체크
+										player.y -= knockback_distance;
+								}
+								else if (p->direction == E)
+								{
+									if (!(win_x_size * 2 < player.x + x_crash_check + knockback_distance))  //맵 경계 충돌체크
+										player.x += knockback_distance;
+								}
+								else if (p->direction == SE)
+								{
+									if (!(win_x_size * 2 < player.x + x_crash_check + knockback_distance))  //맵 경계 충돌체크
+										player.x += knockback_distance;
+									if (!(win_y_size * 2 - 50 < player.y + y_crash_check + knockback_distance))  //맵 경계 충돌체크
+										player.y += knockback_distance;
+								}
+								else if (p->direction == S)
+								{
+									if (!(win_y_size * 2 - 50 < player.y + y_crash_check + knockback_distance))  //맵 경계 충돌체크
+										player.y += knockback_distance;
+								}
+								else if (p->direction == SW)
+								{
+									if (!(player.x - x_crash_check - knockback_distance < 0))  //맵 경계 충돌체크
+										player.x -= knockback_distance;
+									if (!(win_y_size * 2 - 50 < player.y + y_crash_check + knockback_distance))  //맵 경계 충돌체크
+										player.y += knockback_distance;
+								}
+								else if (p->direction == W)
+								{
+									if (!(player.x - x_crash_check - knockback_distance < 0))  //맵 경계 충돌체크
+										player.x -= knockback_distance;
+								}
+								else if (p->direction == NW)
+								{
+									if (!(player.x - x_crash_check - knockback_distance < 0))  //맵 경계 충돌체크
+										player.x -= knockback_distance;
+									if (!(player.y - y_crash_check - knockback_distance < 50))  //맵 경계 충돌체크
+										player.y -= knockback_distance;
+								}
+							}
+						}
+
+					}
 					p->sprite_num++;
 				}
 				else if (p->sprite_num == 1)   //공격 멈춤
@@ -1564,6 +1647,9 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	monster_num = 0;
 	boss_num = 0;
 
+	monster_dmg = 100;
+	//boss_dmg=
+
 	for (int i = 0; i < 32; i++)  //구조물 초기화
 	{
 		for (int j = 0; j < 36; j++)
@@ -1591,6 +1677,165 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	block[16][14].isempty = false;
 
 	SetTimer(hWnd, rest_time, 5000, TimerProc);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Reset_weapon_setting()
+{
+	/*              무기별 설정, 밸런싱 필요                            */
+	Reset_weapon_upgrade();
+	/*pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 4, rocket = 5*/
+
+	/*             무기별 최대 탄약 수 설정, 밸런싱 필요                */
+	weapon[pistol].max_bullet = 9999;   //pistol은 총알 무한
+	weapon[1].max_bullet = 40;
+	weapon[2].max_bullet = 20;
+	weapon[3].max_bullet = 10;
+	weapon[4].max_bullet = 10;
+	weapon[5].max_bullet = 5;
+
+	/*             무기별 데미지 설정, 밸런싱 필요                      */
+	weapon[pistol].damage = 20;
+	weapon[1].damage = 20;
+	weapon[2].damage = 50;
+	weapon[3].damage = 300;
+	weapon[4].damage = 0;  //wall 데미지 없음
+	weapon[5].damage = 300;
+
+	/*            무기별 사정거리 설정, 밸런싱 필요                     */
+	weapon[pistol].range = 200;
+	weapon[1].range = 400;
+	weapon[2].range = 100;
+	weapon[3].range = 0;
+	weapon[4].range = 0;
+	weapon[5].range = 2000;  //사정거리 무한
+
+							 /*            무기별 딜레이 설정, 밸런싱 필요                     */
+	weapon[pistol].delay = 200;
+	weapon[1].delay = 400;
+	weapon[2].delay = 100;
+	weapon[3].delay = 0;
+	weapon[4].delay = 0;
+	weapon[5].delay = 2000;
+
+	/*            무기별 설정, 밸런싱 필요                              */
+
+	for (int i = 1; i < 6; i++)
+	{
+		weapon[i].open = false;
+		weapon[i].bullet = 0;
+	}
+
+	weapon[pistol].open = true;   //처음엔 권총밖에 엄서.. 야캐요..
+	weapon[pistol].bullet = weapon[pistol].max_bullet;
+
+	selected_weapon = pistol;     //권총 선택
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Reset_weapon_upgrade()   //무기 업그레이드 초기화
+{
+	pistol_range_up1 = false;
+	pistol_delay_down1 = false;
+	//pistol 총알 무한
+
+	uzi_range_up1 = false;
+	uzi_delay_down1 = false;
+	uzi_maxammo_up1 = false;
+	uzi_maxammo_up2 = false;
+
+	shotgun_range_up1 = false;
+	shotgun_delay_down1 = false;
+	shotgun_maxammo_up1 = false;
+	shotgun_maxammo_up2 = false;
+
+	barrel_maxammo_up1 = false;
+	barrel_maxammo_up2 = false;
+
+	wall_maxammo_up1 = false;
+	wall_maxammo_up2 = false;
+
+	//rocket 사정거리 무한
+	rocket_delay_down1 = false;
+	rocket_maxammo_up1 = false;
+	rocket_maxammo_up2 = false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Spawn_boss()
+{
+	/* 스폰 몹 숫자 밸런싱 필요 */
+	CHARACTER* p = boss_head;
+	int i = 0;
+
+	while (i < 50/*숫자 밸런스 조정*/)
+	{
+		//head노드는 삭제하지 않고 사용하기
+		CHARACTER* temp_character = (CHARACTER*)malloc(sizeof(CHARACTER));
+
+		temp_character->health = 500;
+		temp_character->max_health = 500;
+		//	temp_character->x = 
+		//	temp_character->y = 1
+		//	temp_character->direction = 
+		temp_character->sprite_num = 0;
+		temp_character->ismoving = true;
+		temp_character->isattacking = false;
+		temp_character->next = NULL;
+
+		p->next = temp_character;
+
+		monster_num++;
+		i++;
+	}
+
+	//몹 생성 - 연결리스트
+	//head노드는 삭제하지 않고 사용하기
+	//몹 좌표 지정 - 난이도 : HELL
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Stage_start(HWND hWnd)   //스테이지 시작 세팅(몬스터 생성) 흥 함수 작성 순서같은거 생각나는대로 적는거야 데헷페로
+{
+	stage++;
+	SetTimer(hWnd, rest_time, 5000, TimerProc);
+
+	Spawn_monster();
+	Spawn_boss();
+	SetTimer(hWnd, move_monster, 100, TimerProc);
+	//몹 맵에서 나오도록 하는 타이머 생성 - 몹 스폰장소에서 한두마리씩 나오고, 입구가 막혀서 나오지 못할경우 나오지 않도록 해야함
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Spawn_itembox()     //18*16 블록에서 비어있는 블록에서 랜덤으로 아이템 박스 생성	
+{
+	if (itembox_num > 4) //아이템박스는 5개까지만! (밸런싱 필요)
+		return 1;
+	else
+	{
+		int temp_x;
+		int temp_y;
+
+		while (true)     //비어있는 칸을 찾아봅시다!
+		{
+			temp_x = rand() % 34 + 1;    //1~34 에서 랜덤
+			temp_y = rand() % 30 + 1;    //1~30 에서 랜덤
+
+			if (block[temp_y][temp_x].isempty == true)
+				break;
+		}
+
+		block[temp_y][temp_x].isitembox = true;
+		block[temp_y][temp_x].isempty = false;
+
+		itembox_num++;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1689,66 +1934,6 @@ bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Spawn_itembox()     //18*16 블록에서 비어있는 블록에서 랜덤으로 아이템 박스 생성	
-{
-	if (itembox_num > 4) //아이템박스는 5개까지만! (밸런싱 필요)
-		return 1;
-	else
-	{
-		int temp_x;
-		int temp_y;
-
-		while (true)     //비어있는 칸을 찾아봅시다!
-		{
-			temp_x = rand() % 34+1;    //1~34 에서 랜덤
-			temp_y = rand() % 30+1;    //1~30 에서 랜덤
-
-			if (block[temp_y][temp_x].isempty == true)
-				break;
-		}
-
-		block[temp_y][temp_x].isitembox = true;
-		block[temp_y][temp_x].isempty = false;
-
-		itembox_num++;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Char_Deathcheck(HWND hWnd)    //캐릭터 체력 0됐는지 확인 함수 무기발사, 몬스터 공격시에 한 줄만 적어주면 된다구?? 몬스터 사망 체크 함수는 따로 만들거라구, 칭구!
-{
-	if (player.health == 0)
-	{
-		current_page = end_page;
-
-		//타이머 녀석들.. 다...다 죽여버리겠어!!! 으앙아아아아ㅏㅏ아아ㅏㅏ아!!!
-		//KillTimer(hWnd,);
-		//KillTimer(hWnd.);
-		//KillTimer(hWnd.);
-		//KillTimer(hWnd,);
-		KillTimer(hWnd, spawn_itembox);
-
-		InvalidateRect(hWnd, NULL, false);
-	}
-
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Stage_start(HWND hWnd)   //스테이지 시작 세팅(몬스터 생성) 흥 함수 작성 순서같은거 생각나는대로 적는거야 데헷페로
-{
-	stage++;
-	SetTimer(hWnd, rest_time, 5000, TimerProc);
-
-	Spawn_monster();
-	Spawn_boss();
-	SetTimer(hWnd, move_monster, 100, TimerProc);
-	//몹 맵에서 나오도록 하는 타이머 생성 - 몹 스폰장소에서 한두마리씩 나오고, 입구가 막혀서 나오지 못할경우 나오지 않도록 해야함
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void Spawn_monster()
 {
 	/* 스폰 몹 숫자 밸런싱 필요 */
@@ -1786,133 +1971,7 @@ void Spawn_monster()
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Spawn_boss()
-{
-	/* 스폰 몹 숫자 밸런싱 필요 */
-	CHARACTER* p = boss_head;
-	int i = 0;
-
-	while (i < 50/*숫자 밸런스 조정*/)
-	{
-		//head노드는 삭제하지 않고 사용하기
-		CHARACTER* temp_character = (CHARACTER*)malloc(sizeof(CHARACTER));
-
-		temp_character->health = 500;
-		temp_character->max_health = 500;
-		//	temp_character->x = 
-		//	temp_character->y = 1
-		//	temp_character->direction = 
-		temp_character->sprite_num = 0;
-		temp_character->ismoving = true;
-		temp_character->isattacking = false;
-		temp_character->next = NULL;
-
-		p->next = temp_character;
-
-		monster_num++;
-		i++;
-	}
-
-	//몹 생성 - 연결리스트
-	//head노드는 삭제하지 않고 사용하기
-	//몹 좌표 지정 - 난이도 : HELL
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Reset_weapon_setting()
-{
-	/*              무기별 설정, 밸런싱 필요                            */
-	Reset_weapon_upgrade();
-	/*pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 4, rocket = 5*/
-
-	/*             무기별 최대 탄약 수 설정, 밸런싱 필요                */
-	weapon[pistol].max_bullet = 9999;   //pistol은 총알 무한
-	weapon[1].max_bullet = 40;
-	weapon[2].max_bullet = 20;
-	weapon[3].max_bullet = 10;
-	weapon[4].max_bullet = 10;
-	weapon[5].max_bullet = 5;
-
-	/*             무기별 데미지 설정, 밸런싱 필요                      */
-	weapon[pistol].damage = 20;
-	weapon[1].damage = 20;
-	weapon[2].damage = 50;
-	weapon[3].damage = 300;
-	weapon[4].damage = 0;  //wall 데미지 없음
-	weapon[5].damage = 300;
-
-	/*            무기별 사정거리 설정, 밸런싱 필요                     */
-	weapon[pistol].range = 200;
-	weapon[1].range = 400;
-	weapon[2].range = 100;
-	weapon[3].range = 0;
-	weapon[4].range = 0;
-	weapon[5].range = 2000;  //사정거리 무한
-
-	/*            무기별 딜레이 설정, 밸런싱 필요                     */
-	weapon[pistol].delay = 200;
-	weapon[1].delay = 400;
-	weapon[2].delay = 100;
-	weapon[3].delay = 0;
-	weapon[4].delay = 0;
-	weapon[5].delay = 2000;
-
-	/*            무기별 설정, 밸런싱 필요                              */
-
-	for (int i = 1; i < 6; i++)
-	{
-		weapon[i].open = false;
-		weapon[i].bullet = 0;
-	}
-
-	weapon[pistol].open = true;   //처음엔 권총밖에 엄서.. 야캐요..
-	weapon[pistol].bullet = weapon[pistol].max_bullet;
-
-	selected_weapon = pistol;     //권총 선택
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Reset_weapon_upgrade()   //무기 업그레이드 초기화
-{
-	pistol_range_up1 = false;
-	pistol_delay_down1 = false;
-	//pistol 총알 무한
-
-	uzi_range_up1 = false;
-	uzi_delay_down1 = false;
-	uzi_maxammo_up1 = false;
-	uzi_maxammo_up2 = false;
-
-	shotgun_range_up1 = false;
-	shotgun_delay_down1 = false;
-	shotgun_maxammo_up1 = false;
-	shotgun_maxammo_up2 = false;
-
-	barrel_maxammo_up1 = false;
-	barrel_maxammo_up2 = false;
-
-	wall_maxammo_up1 = false;
-	wall_maxammo_up2 = false;
-
-	//rocket 사정거리 무한
-	rocket_delay_down1 = false;
-	rocket_maxammo_up1 = false;
-	rocket_maxammo_up2 = false;
-}
-
-bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
-{
-	if (weapon[selected_weapon].bullet != 0)
-	{
-		return false;
-	}
-	else
-		return true;
-}
-
-bool Crash_check_character2object(int speed)    //오브젝트와의 충돌검사
+bool Crash_check_character2object(int speed,int direction)    //오브젝트와의 충돌검사
 {
 
 	////////////////////////////////////////고정오브젝트 충돌검사////////////////////////////////////////
@@ -1930,39 +1989,39 @@ bool Crash_check_character2object(int speed)    //오브젝트와의 충돌검사
 	}
 
 
-	if (player.direction == N)  //현재 좌표 기준x 이동 후에 벽등과 겹치는지
+	if (direction == N)  //현재 좌표 기준x 이동 후에 벽등과 겹치는지
 	{
 		character_rect.top -= speed;
 	}
-	else if (player.direction == NE)
+	else if (direction == NE)
 	{
 		character_rect.top -= speed;
 		character_rect.right += speed;
 
 	}
-	else if (player.direction == E)
+	else if (direction == E)
 	{
 		character_rect.right += speed;
 	}
-	else if (player.direction == SE)
+	else if (direction == SE)
 	{
 		character_rect.bottom += speed;
 		character_rect.right += speed;
 	}
-	else if (player.direction == S)
+	else if (direction == S)
 	{
 		character_rect.bottom += speed;
 	}
-	else if (player.direction == SW)
+	else if (direction == SW)
 	{
 		character_rect.bottom += speed;
 		character_rect.left -= speed;
 	}
-	else if (player.direction == W)
+	else if (direction == W)
 	{
 		character_rect.left -= speed;
 	}
-	else if (player.direction == NW)
+	else if (direction == NW)
 	{
 		character_rect.top -= speed;
 		character_rect.left -= speed;
@@ -2043,6 +2102,7 @@ bool Crash_check_character2object(int speed)    //오브젝트와의 충돌검사
 	return false;
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Crash_check_monster2object(int speed,CHARACTER* monster)    //몬스터와 오브젝트와의 충돌검사
 {
@@ -2171,4 +2231,47 @@ bool Crash_check_monster2object(int speed,CHARACTER* monster)    //몬스터와 오브
 
 	return false;
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Char_Deathcheck(HWND hWnd)    //캐릭터 체력 0됐는지 확인 함수 무기발사, 몬스터 공격시에 한 줄만 적어주면 된다구?? 몬스터 사망 체크 함수는 따로 만들거라구, 칭구!
+{
+	if (player.health <= 0)
+	{
+		current_page = end_page;
+
+		//타이머 녀석들.. 다...다 죽여버리겠어!!! 으앙아아아아ㅏㅏ아아ㅏㅏ아!!!
+		//KillTimer(hWnd,);
+		//KillTimer(hWnd.);
+		//KillTimer(hWnd.);
+		//KillTimer(hWnd,);
+		KillTimer(hWnd, spawn_itembox);
+
+		InvalidateRect(hWnd, NULL, false);
+		return true;
+	}
+	return false;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
+{
+	if (weapon[selected_weapon].bullet != 0)
+	{
+		return false;
+	}
+	else
+		return true;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
