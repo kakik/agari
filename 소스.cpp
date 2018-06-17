@@ -512,7 +512,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			{
 				RECT print_rect = weapon_image_rect[i];
 				wsprintf(bullet_num, TEXT("%d"), weapon[i].bullet);
-				wsprintf(weapon_num, TEXT("%d"), i);		
+				wsprintf(weapon_num, TEXT("%d"), i + 1);
 
 				if (selected_weapon == i)  //선택된 무기는 25픽셀 위에 출력
 				{
