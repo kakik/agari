@@ -57,6 +57,7 @@ typedef struct WEAPON       //무기 정보
 	int damage;             //무기별 데미지        
 	int range;              //무기별 사정거리
 	int delay;              //무기 사용 딜레이 
+	CImage image;			//무기 이미지
 }WEAPON;
 
 
@@ -165,6 +166,10 @@ RECT char_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
 { {{0,0,30,32}, {30,0,60,32} }/*N*/, {{ 60,0,90,32 }, {90,0,120,32} }/*NE*/,{{120,0,150,32},{150,0,180,32}}/*E*/,{{180,0,210,32},{210,0,240,32}}/*SE*/,
 { { 0,32,30,64 },{ 30,32,60,64 } }/*S*/,{ { 60,32,90,64 },{ 90,32,120,64 } }/*SW*/,{ { 120,32,150,64 },{ 150,32,180,64 } }/*W*/,{ { 180,32,210,64 },{ 210,32,240,64 }/*NW*/ } };
 
+RECT char_weapon_sprite_rect[8][2] = //무기 스프라이트 좌표
+{ {{0,0,50,52},{50,0,100,52}}/*N*/, {{100,0,150,52},{150,0,200,52}}/*NE*/ ,{ {200,0,250,52},{250,0,300,52}}/*E*/, {{300,0,350,52},{350,0,400,52}}/*SE*/,
+{ { 0,52,50,104 },{ 50,52,100,104 } }/*S*/,{ { 100,52,150,104 },{ 150,52,200,104 } }/*SW*/ ,{ { 200,52,250,104 },{ 250,52,300,104 } }/*W*/,{ { 300,52,350,104 },{ 350,52,400,104 } }/*NW*/ };
+
 RECT monster_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
 { { { 0,0,34,37 },{ 34,0,68,37 } }/*N*/,{ { 68,0,102,37 },{ 102,0,136,37 } }/*NE*/,{ { 136,0,170,37 },{ 170,0,204,37 } }/*E*/,{ { 204,0,238,37 },{ 238,0,272,37 } }/*SE*/,
  { { 0,37,34,74 },{ 34,37,68,74 } }/*S*/,{ { 68,37,102,74 },{ 102,37,136,74 } }/*SW*/,{ { 136,37,170,74 },{ 170,37,204,74 } }/*W*/,{ { 204,37,238,74 },{ 238,37,272,74 } }/*NW*/ };
@@ -204,6 +209,7 @@ int current_char_num;       //캐릭터 선택용... 현재는 무쓸모
 //////
 CImage charac_sprite;
 CImage charac_atk_sprite;
+CImage charac_weapon_sprite[6];	//공격모션 무기 스프라이트
 
 CImage monster_sprite;
 CImage monster_atk_sprite;
@@ -289,9 +295,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		charac_sprite.Load(TEXT("..\\agari\\resource\\Izuna_move.png"));
 		charac_atk_sprite.Load(TEXT("..\\agari\\resource\\Izuna_attack.png"));
+		charac_weapon_sprite[pistol].Load(TEXT("..\\agari\\resource\\attack_pistol.png"));
+		charac_weapon_sprite[uzi].Load(TEXT("..\\agari\\resource\\attack_uzi.png"));
+		charac_weapon_sprite[shotgun].Load(TEXT("..\\agari\\resource\\attack_shotgun.png"));
+		charac_weapon_sprite[rocket].Load(TEXT("..\\agari\\resource\\attack_roket.png"));
+
 
 		monster_sprite.Load(TEXT("..\\agari\\resource\\Monster_move.png"));
 		monster_atk_sprite.Load(TEXT("..\\agari\\resource\\Monster_attack.png"));
+
+		weapon[pistol].image.Load(TEXT("..\\agari\\resource\\ui_pistol.png"));
+		weapon[uzi].image.Load(TEXT("..\\agari\\resource\\ui_uzi.png"));
+		weapon[shotgun].image.Load(TEXT("..\\agari\\resource\\ui_shotgun.png"));
+		weapon[barrel].image.Load(TEXT("..\\agari\\resource\\ui_barrel.png"));
+		weapon[wall].image.Load(TEXT("..\\agari\\resource\\ui_wall.png"));
+		weapon[rocket].image.Load(TEXT("..\\agari\\resource\\ui_roket.png"));
 
 		itembox_img.Load(TEXT("..\\agari\\resource\\cube.png"));
 		wall_img.Load(TEXT("..\\agari\\resource\\wall.png"));
@@ -400,6 +418,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				charac_atk_sprite.Draw(memdc1, player.x - 24, player.y - 32, 64, 64,
 					char_atk_sprite_rect[player.direction][player.sprite_num].left, char_atk_sprite_rect[player.direction][player.sprite_num].top, 30, 32);
 
+				if (selected_weapon == pistol || selected_weapon == uzi || selected_weapon == shotgun || selected_weapon == rocket)
+				{
+					charac_weapon_sprite[selected_weapon].Draw(memdc1, player.x - 34, player.y - 42, 84, 84,
+						char_weapon_sprite_rect[player.direction][player.sprite_num].left, char_weapon_sprite_rect[player.direction][player.sprite_num].top, 50, 52);
+				}
+
 			}
 
 			//////////////////////////////////////////체력바 출력///////////////////////////////////////////////
@@ -506,7 +530,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			TCHAR bullet_num[5] = {};   //총알개수
 			TCHAR weapon_num[2] = {};   //무기번호
 
-			hbrush = CreateSolidBrush(RGB(0, 0, 0));
+			hbrush = CreateSolidBrush(RGB(255, 255, 255));
 			oldbrush = (HBRUSH)SelectObject(memdc2, hbrush);
 			for (int i = 0; i < 6; ++i)
 			{
@@ -520,6 +544,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					print_rect.bottom -= 25;
 				}
 				RoundRect(memdc2, print_rect.left, print_rect.top, print_rect.right, print_rect.bottom, 10, 10);
+
+				weapon[i].image.Draw(memdc2, print_rect);
 
 				SetBkMode(memdc2, TRANSPARENT);  //투명배경
 
