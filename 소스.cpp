@@ -140,8 +140,8 @@ CHARACTER player;          //플레이어
 WEAPON weapon[6];          //무기 6개 enum weapon으로 사용
 int selected_weapon;       //현재 선택중인 무기 enum weapon으로 사용
 
-int rocket_x_size = 34;
-int rocket_y_size = 32;
+int rocket_x_size = 40;
+int rocket_y_size = 40;
 ROCKET rocket_bullet;
 
 /////////////////////////////////////무기 업그레이드 bool변수/////////////////////////////////////
@@ -1675,6 +1675,48 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	}
 	case move_player:
 	{
+		if (rocket_bullet.launch == true)
+		{
+			switch (rocket_bullet.direction)
+			{
+			case N:
+				rocket_bullet.y -= rocket_bullet.speed;
+				break;
+
+			case NE:
+				rocket_bullet.x += rocket_bullet.speed;
+				rocket_bullet.y -= rocket_bullet.speed;
+				break;
+
+			case E:
+				rocket_bullet.x += rocket_bullet.speed;
+				break;
+
+			case SE:
+				rocket_bullet.x += rocket_bullet.speed;
+				rocket_bullet.y += rocket_bullet.speed;
+				break;
+
+			case S:
+				rocket_bullet.y += rocket_bullet.speed;
+				break;
+
+			case SW:
+				rocket_bullet.x -= rocket_bullet.speed;
+				rocket_bullet.y += rocket_bullet.speed;
+				break;
+
+			case W:
+				rocket_bullet.x -= rocket_bullet.speed;
+				break;
+
+			case NW:
+				rocket_bullet.x -= rocket_bullet.speed;
+				rocket_bullet.y -= rocket_bullet.speed;
+				break;
+			}
+		}
+
 		if (player.ismoving == false)
 			break;
 
@@ -1748,7 +1790,13 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			}
 		}
 
-		if (player.isattacking == false)
+		if (player.isattacking == true)
+		{
+			if (player.sprite_num == 2 || player.sprite_num == 3)
+				player.sprite_num = 0;
+		}
+
+		else if (player.isattacking == false)
 		{
 			if (player.sprite_num == 3)
 				player.sprite_num = 0;
@@ -2335,16 +2383,26 @@ void Spawn_monster()
 	/* 스폰 몹 숫자 밸런싱 필요 */
 	CHARACTER* p = monster_head;
 	int i = 0;
-	int temp = 1000;
-	while (i < 3/*숫자 밸런스 조정*/)
+	int spawn_direection = N;
+	int temp = 0;
+	int tmep = 100;
+	while (i < stage * 10 + 1/*숫자 밸런스 조정*/)
 	{
+		if (i == (stage * 10 + 1) / 2)
+		{
+			spawn_direection = S;
+			temp = 0;
+		}
 		//head노드는 삭제하지 않고 사용하기
 		CHARACTER* temp_character = (CHARACTER*)malloc(sizeof(CHARACTER));
 
 		temp_character->health = 100;
 		temp_character->max_health = 100;
-		temp_character->x = temp;
-		temp_character->y = 1000;
+		temp_character->x = 850 + tmep;
+		if (spawn_direection == S)
+			temp_character->y = (1650 + temp);
+		else if (spawn_direection == N)
+			temp_character->y = (-50 - temp);
 		temp_character->direction = E;
 		temp_character->sprite_num = 0;
 		temp_character->ismoving = false;
@@ -2355,7 +2413,11 @@ void Spawn_monster()
 
 		monster_num++;
 		i++;
-		temp += 50;
+		temp += 70;
+		if (tmep == 100)
+			tmep = 0;
+		else if (tmep == 0)
+			tmep = 100;
 
 		p = p->next;
 	}
@@ -2701,8 +2763,13 @@ void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX
 
 	else if (Crash_check_bullet2monster(x, y, NULL, monster_head))
 	{
+		monster_num--;
 		*dx = (int)x;
 		*dy = (int)y;
+
+		if (monster_num == 0)
+			isrest_time = true;
+
 		return;
 	}
 
@@ -2731,7 +2798,7 @@ bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p)
 			{
 				prev->next = p->next;
 			}
-			delete[] p;
+			free(p);
 			score += 10;
 		}
 
