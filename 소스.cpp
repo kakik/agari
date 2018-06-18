@@ -519,19 +519,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					switch (player.direction)
 					{
 					case N:
-						dx = player.x;
+ 						dx = player.x;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy, 0, -1);
+						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = player.x - 40;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy, 0, -1);
+						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = player.x + 40;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy, 0, -1);
+						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -539,17 +544,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case NE:
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy, cos(45 * PI), sin(45 * PI)*-1);
+						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) - 30;
-						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy, cos(45 * PI), sin(45 * PI)*-1);
+						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) + 30;
-						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy, cos(45 * PI), sin(45 * PI)*-1);
+						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -557,17 +567,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case E:
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y;
-						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy, 1, 0);
+						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y - 40;
-						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy, 1, 0);
+						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y + 40;
-						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy, 1, 0);
+						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -575,17 +590,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case SE:
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x + 40, player.y + 34, &dx, &dy, cos(45 * PI), sin(45 * PI));
+						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) + 30;
-						Crash_check_bullet2object(player.x + 40, player.y + 34, &dx, &dy, cos(45 * PI), sin(45 * PI));
+						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) - 30;
-						Crash_check_bullet2object(player.x + 40, player.y + 34, &dx, &dy, cos(45 * PI), sin(45 * PI));
+						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -593,17 +613,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case S:
 						dx = player.x;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y + 34, &dx, &dy, 0, 1);
+						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = player.x - 40;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y + 34, &dx, &dy, 0, 1);
+						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = player.x + 40;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y + 34, &dx, &dy, 0, 1);
+						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -611,17 +636,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case SW:
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI));
+						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) - 30;
-						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI));
+						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) + 30;
-						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI));
+						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -629,17 +659,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case W:
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y;
-						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy, -1, 0);
+						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y - 40;
-						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy, -1, 0);
+						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y + 40;
-						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy, -1, 0);
+						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -647,17 +682,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case NW:
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI) - 1);
+						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) - 30;
-						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI) - 1);
+						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
+
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) + 30;
-						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI) - 1);
+						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy,
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -1341,6 +1381,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 							block[temp_y][temp_x].iswall = true;
 							block[temp_y][temp_x].isempty = false;
 							block[temp_y][temp_x].isnew = true;
+							block[temp_y][temp_x].hp = 200;
 							weapon[selected_weapon].bullet--;
 						}
 
@@ -2678,7 +2719,7 @@ void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX
 		return;
 	}
 
-	if (*dx == (int)x && *dy == (int)y)
+	if (*dx <= (int)x && (int)x <= (int)((double)*dx + addX) && *dy <= (int)y && (int)y <= (int)((double)*dy + addY))	//대각선 방향일때 잘안막힘
 		return;
 	if ((int)x < 0 || (int)x > win_x_size * 2 || (int)y < 0 || (int)y > win_y_size * 2)
 		return;
