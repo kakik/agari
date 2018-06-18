@@ -33,7 +33,8 @@ enum timer      //타이머 넘버에 숫자 대신 이걸 써줍시다
 	rest_time,
 	move_player, atk_player,
 	spawn_monster, move_monster,
-	spawn_itembox, sht_player
+	spawn_itembox, sht_player,
+	start_page_character
 };
 
 typedef struct CHARACTER   //플레이어, 몬스터, 보스몬스터 정보
@@ -103,8 +104,9 @@ bool Crash_check_character2object(int speed,int direction);
 bool Crash_check_monster2object(int speed, CHARACTER* monster);
 bool Char_Deathcheck(HWND hWnd);
 bool Remaining_bullet_check();  //남은 총알 확인  남았으면 false 없으면 true
-void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX, double addY);
-bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p);
+void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX, double addY, HWND hWnd);
+bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p, int type, HWND hWnd);
+void bomb_barrel(int x, int y, HWND hWnd);
 /*********************************************void()함수 최고*****************************************************/
 
 /*********************************************사랑합니다 전역변수*****************************************************/
@@ -122,7 +124,6 @@ int current_page;          //현재 페이지  enum page로 사용
 int stage;                 //현재 스테이지
 int score;                 //현재 스코어
 
-bool isrest_time;
 
 CHARACTER* monster_head;  //head노드는 삭제하지 않고 사용하기
 int monster_num;          //현재 몬스터 숫자(player.isattacking == true)
@@ -143,6 +144,8 @@ int selected_weapon;       //현재 선택중인 무기 enum weapon으로 사용
 int rocket_x_size = 40;
 int rocket_y_size = 40;
 ROCKET rocket_bullet;
+
+bool cheatmode;
 
 /////////////////////////////////////무기 업그레이드 bool변수/////////////////////////////////////
 //무기번호 pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 4, rocket = 5
@@ -224,8 +227,8 @@ CImage rocket_bullet_img;
 int current_char_num;       //캐릭터 선택용... 현재는 무쓸모
 
 //////
-CImage charac_sprite;
-CImage charac_atk_sprite;
+CImage charac_sprite[8];
+CImage charac_atk_sprite[8];
 CImage charac_weapon_sprite[6];	//공격모션 무기 스프라이트
 
 CImage monster_sprite;
@@ -293,6 +296,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	CImage img;
 	CImage dc, dc2;
 
+	HFONT hFont, oldFont;
+
 	TCHAR str[500] = {};
 
 	int play_size_left, play_size_top;
@@ -303,9 +308,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	static bool replay_button = false;  //엔드화면 replay버튼
 	static bool exit2_button = false;  //엔드화면 exit버튼
 
+
 	switch (uMsg) {
 	case WM_CREATE:
 	{
+		current_char_num = 0;
+		cheatmode = false;
+		player.direction = S;
+		player.sprite_num = 0;
 		/*********************************************이미지 로드*****************************************************/
 
 		play_button_img.Load(TEXT("..\\agari\\resource\\PLAY.png"));
@@ -315,8 +325,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		game_page_bk_img.Load(TEXT("..\\agari\\resource\\stage.png"));
 		end_page_bk_img.Load(TEXT("..\\agari\\resource\\endBack.png"));
 
-		charac_sprite.Load(TEXT("..\\agari\\resource\\Izuna_move.png"));
-		charac_atk_sprite.Load(TEXT("..\\agari\\resource\\Izuna_attack.png"));
+		charac_sprite[0].Load(TEXT("..\\agari\\resource\\Izuna_move.png"));
+		charac_sprite[1].Load(TEXT("..\\agari\\resource\\Gen-An_move.png"));
+		charac_sprite[2].Load(TEXT("..\\agari\\resource\\Hinagiku_move.png"));
+		charac_sprite[3].Load(TEXT("..\\agari\\resource\\Ichika_move.png"));
+		charac_sprite[4].Load(TEXT("..\\agari\\resource\\Kagen_move.png"));
+		charac_sprite[5].Load(TEXT("..\\agari\\resource\\Mitsumoto_move.png"));
+		charac_sprite[6].Load(TEXT("..\\agari\\resource\\Shino_move.png"));
+		charac_sprite[7].Load(TEXT("..\\agari\\resource\\Sizune_move.png"));
+
+		charac_atk_sprite[0].Load(TEXT("..\\agari\\resource\\Izuna_attack.png"));
+		charac_atk_sprite[1].Load(TEXT("..\\agari\\resource\\Gen-An_attack.png"));
+		charac_atk_sprite[2].Load(TEXT("..\\agari\\resource\\Hinagiku_attack.png"));
+		charac_atk_sprite[3].Load(TEXT("..\\agari\\resource\\Ichika_attack.png"));
+		charac_atk_sprite[4].Load(TEXT("..\\agari\\resource\\Kagen_attack.png"));
+		charac_atk_sprite[5].Load(TEXT("..\\agari\\resource\\Mitsumoto_attack.png"));
+		charac_atk_sprite[6].Load(TEXT("..\\agari\\resource\\Shino_attack.png"));
+		charac_atk_sprite[7].Load(TEXT("..\\agari\\resource\\Sizune_attack.png"));
+		
 		charac_weapon_sprite[pistol].Load(TEXT("..\\agari\\resource\\attack_pistol.png"));
 		charac_weapon_sprite[uzi].Load(TEXT("..\\agari\\resource\\attack_uzi.png"));
 		charac_weapon_sprite[shotgun].Load(TEXT("..\\agari\\resource\\attack_shotgun.png"));
@@ -354,6 +380,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		monster_head->next = NULL;
 		boss_head = (CHARACTER*)malloc(sizeof(CHARACTER));
 		boss_head->next = NULL;
+
+		SetTimer(hWnd, start_page_character, 100, TimerProc);
 		break;
 	}
 	case WM_PAINT:
@@ -368,6 +396,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			start_page_bk_img.Draw(memdc1, 0, 0, win_x_size, win_y_size);
 			play_button_img.Draw(memdc1, play_button_rect);
 			exit_button_img.Draw(memdc1, exit_button_rect);
+
+			charac_sprite[current_char_num].Draw(memdc1, 680, 100, character_width*2, character_height*2,
+				char_move_sprite_rect[player.direction][player.sprite_num].left, char_move_sprite_rect[player.direction][player.sprite_num].top, 18, 30);
 
 			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	// 아래에 Bitblt랑 동일
 			dc.ReleaseDC();		// dc 해제
@@ -437,12 +468,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			//////////////////////////////////////////캐릭터 출력///////////////////////////////////////////////
 			if (player.isattacking == false)  //공격중 아닐때
 			{
-				charac_sprite.Draw(memdc1, player.x - character_width / 2, player.y - character_height / 2, character_width, character_height,
+				charac_sprite[current_char_num].Draw(memdc1, player.x - character_width / 2, player.y - character_height / 2, character_width, character_height,
 					char_move_sprite_rect[player.direction][player.sprite_num].left, char_move_sprite_rect[player.direction][player.sprite_num].top, 18, 30);
 			}
 			else                              //공격중일때
 			{
-				charac_atk_sprite.Draw(memdc1, player.x - 24, player.y - 32, 64, 64,
+				charac_atk_sprite[current_char_num].Draw(memdc1, player.x - 24, player.y - 32, 64, 64,
 					char_atk_sprite_rect[player.direction][player.sprite_num].left, char_atk_sprite_rect[player.direction][player.sprite_num].top, 30, 32);
 
 				charac_weapon_sprite[selected_weapon].Draw(memdc1, player.x - 34, player.y - 42, 84, 84,
@@ -458,7 +489,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case N:
 						dx = player.x;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy, 0, -1);
+						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy, 0, -1, hWnd);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -466,7 +497,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case NE:
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy, cos(45 * PI), sin(45 * PI)*-1);
+						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy, cos(45 * PI), sin(45 * PI)*-1, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y-32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -474,7 +505,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case E:
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y;
-						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy, 1, 0);
+						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy, 1, 0, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -482,7 +513,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case SE:
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy, cos(45 * PI), sin(45 * PI));
+						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy, cos(45 * PI), sin(45 * PI), hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -490,7 +521,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case S:
 						dx = player.x;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy, 0, 1);
+						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy, 0, 1, hWnd);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -498,7 +529,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case SW:
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI));
+						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI), hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -506,7 +537,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case W:
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y;
-						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy, -1, 0);
+						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy, -1, 0, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -514,7 +545,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case NW:
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI) - 1);
+						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy, cos(45 * PI)*-1, sin(45 * PI) - 1, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -534,21 +565,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
  						dx = player.x;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
 						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = player.x - 40;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
 						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = player.x + 40;
 						dy = (player.y - 32) - weapon[selected_weapon].range;
 						Crash_check_bullet2object(player.x, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -557,21 +588,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI));
 						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) - 30;
 						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) + 30;
 						Crash_check_bullet2object(player.x + 40, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -580,21 +611,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y;
 						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y - 40;
 						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x + 40) + weapon[selected_weapon].range;
 						dy = player.y + 40;
 						Crash_check_bullet2object(player.x + 40, player.y, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -603,21 +634,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
 						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) + 30;
 						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) - 30;
 						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x + 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -626,21 +657,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = player.x;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
 						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = player.x - 40;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
 						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = player.x + 40;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
 						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -649,21 +680,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
 						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) - 30;
 						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI)) + 30;
 						Crash_check_bullet2object(player.x - 40, player.y + 32, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y + 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -672,21 +703,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y;
 						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y - 40;
 						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x - 40) - weapon[selected_weapon].range;
 						dy = player.y + 40;
 						Crash_check_bullet2object(player.x - 40, player.y, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -695,21 +726,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI));
 						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) + 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) - 30;
 						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 
 						dx = (player.x - 40) - (weapon[selected_weapon].range*cos(45 * PI)) - 30;
 						dy = (player.y - 32) - (weapon[selected_weapon].range*sin(45 * PI)) + 30;
 						Crash_check_bullet2object(player.x - 40, player.y - 32, &dx, &dy,
-							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range);
+							(double)(dx - (player.x - 40)) / (double)weapon[selected_weapon].range, (double)(dy - (player.y - 32)) / (double)weapon[selected_weapon].range, hWnd);
 						MoveToEx(memdc1, player.x - 40, player.y - 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -816,8 +847,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				temp_mv = 1;
 			else
 				temp_mv = 0;
-			wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d  itembox_num : %d  ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet, itembox_num, temp_atk, temp_mv);
-			TextOut(memdc2, 0, 0, str, _tcslen(str));
+			//wsprintf(str, TEXT("stage : %d  score : %d  direction : %d  x : %d  y: %d  weapon : %d  bullet : %d  itembox_num : %d  ak? %d mv? %d"), stage, score, player.direction, player.x, player.y, selected_weapon, weapon[selected_weapon].bullet, itembox_num, temp_atk, temp_mv);
+			//TextOut(memdc2, 0, 0, str, _tcslen(str));
+
+
+			wsprintf(str, TEXT("SCORE  %d"), score);
+			hFont = CreateFont(30, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("맑은고딕"));
+			oldFont = (HFONT)SelectObject(memdc2, hFont);
+			TextOut(memdc2, 5, 5, str, _tcsclen(str));
+			SelectObject(memdc2, oldFont);
+			DeleteObject(hFont);
+
+			wsprintf(str, TEXT("STAGE  %d"), stage);
+			hFont = CreateFont(25, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("맑은고딕"));
+			oldFont = (HFONT)SelectObject(memdc2, hFont);
+			TextOut(memdc2, 390, 5, str, _tcsclen(str));
+			SelectObject(memdc2, oldFont);
+			DeleteObject(hFont);
 
 			//////////////////////////////////////////UI///////////////////////////////////////////////
 
@@ -936,9 +982,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			end_page_bk_img.Draw(memdc1, 0, 0, win_x_size, win_y_size);
 
 			//스코어
+			wsprintf(str, TEXT("SCORE  %d"), score);
+			hFont = CreateFont(100, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("궁서"));
+			oldFont = (HFONT)SelectObject(memdc1, hFont);
+			TextOut(memdc1, 380, 100, str, _tcsclen(str));
+			SelectObject(memdc1, oldFont);
+			DeleteObject(hFont);
 
 			//스테이지
-
+			wsprintf(str, TEXT("STAGE  %d"), stage);
+			hFont = CreateFont(100, 0, 0, 0, FW_NORMAL, 0, 0, 0, 0, 0, 0, 0, 0, TEXT("궁서"));
+			oldFont = (HFONT)SelectObject(memdc1, hFont);
+			TextOut(memdc1, 380, 250, str, _tcsclen(str));
+			SelectObject(memdc1, oldFont);
+			DeleteObject(hFont);
 			//replay버튼
 			replay_button_img.Draw(memdc1, replay_button_rect);
 
@@ -1074,8 +1131,51 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	}
 	case WM_KEYDOWN:
 	{
+		if (current_page == start_page)
+		{
+			switch (wParam)
+			{
+			case 'p':
+			case 'P':
+				cheatmode = true;
+				break;
 
-		if (current_page == game_page)
+			case '1':
+				current_char_num = 0;
+				break;
+
+			case '2':
+				current_char_num = 1;
+				break;
+
+			case '3':
+				current_char_num = 2;
+				break;
+
+			case '4':
+				current_char_num = 3;
+				break;
+
+			case '5':
+				current_char_num = 4;
+				break;
+
+			case '6':
+				current_char_num = 5;
+				break;
+
+			case '7':
+				current_char_num = 6;
+				break;
+
+			case '8':
+				current_char_num = 7;
+				break;
+			}
+			InvalidateRect(hWnd, NULL, false);
+		}
+
+		else if (current_page == game_page)
 		{
 
 			switch (wParam)
@@ -1401,7 +1501,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					}
 					else if (selected_weapon == rocket)
 					{
-
 						if (player.isattacking == false)
 						{
 							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
@@ -1530,21 +1629,22 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 {
 	switch (idEvent)
 	{
+	case start_page_character:
+	{
+		player.sprite_num++;
+		player.sprite_num %= 4;
+		InvalidateRect(hWnd, NULL, false);
+		break;
+	}
+
+
 	case rest_time:  //한 스테이지 종료 후 다음 스테이지까지 텀
 	{
-		if (isrest_time == false)  //스테이지 종료했을 때
-		{
 
-			isrest_time = true;
-		}
-		else    //중간 휴식시간 끝났을 때
-		{
-			//스테이지 시작
-			Stage_start(hWnd);
+		Stage_start(hWnd);
 
-			isrest_time = false;
-			KillTimer(hWnd, rest_time);
-		}
+
+		KillTimer(hWnd, rest_time);
 		break;
 	}
 	case spawn_itembox:
@@ -1655,7 +1755,6 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 					break;
 
 				}
-
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
 			}
@@ -1718,7 +1817,10 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		}
 
 		if (player.ismoving == false)
+		{
+			InvalidateRect(hWnd, NULL, false);
 			break;
+		}
 
 		int x_crash_check;
 		int y_crash_check;
@@ -2068,6 +2170,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 {
+	KillTimer(hWnd, start_page_character);
+
 	stage = 0;                    //스테이지 초기화 (스테이지 시작 함수에서 1씩 증가시키므로 0으로 초기화)
 	score = 0;                    //스코어 초기화
 
@@ -2091,18 +2195,44 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	rocket_bullet.launch = false;
 	rocket_bullet.speed = 30;
 
-	for (int i = 0; i < 32; i++)  
+	int rand_temp = 0;
+	for (int i = 1; i < 31; i++)
 		//구조물 초기화
 	{
-		for (int j = 0; j < 36; j++)
+		for (int j = 1; j < 35; j++)  //오브젝트 랜덤생성
 		{
-			block[i][j].iswall = false;
-			block[i][j].isinvinciblewall = false;       //파괴 불가능한 벽 (지형) 설정하려면 여기서! 랜덤생성도 괜찮을듯?
-			block[i][j].isbarrel = false;
-			block[i][j].isitembox = false;
-			block[i][j].isempty = true;
-			block[i][j].isnew = false;
-			block[i][j].hp = 0;
+			if ((15 < j) && (j < 21))
+			{
+
+				block[i][j].iswall = false;
+				block[i][j].isinvinciblewall = false;       //파괴 불가능한 벽 (지형) 설정하려면 여기서! 랜덤생성도 괜찮을듯?
+				block[i][j].isbarrel = false;
+				block[i][j].isitembox = false;
+				block[i][j].isempty = true;
+				block[i][j].isnew = false;
+				block[i][j].hp = 0;
+			}
+			else
+			{
+				rand_temp = rand() % 150;
+
+				block[i][j].iswall = false;
+				if (rand_temp == 1)
+					block[i][j].isinvinciblewall = true;
+				else
+					block[i][j].isinvinciblewall = false;       //파괴 불가능한 벽 (지형) 설정하려면 여기서! 랜덤생성도 괜찮을듯?
+				if (rand_temp == 2)
+					block[i][j].isbarrel = true;
+				else
+					block[i][j].isbarrel = false;
+				block[i][j].isitembox = false;
+				if ((rand_temp != 1) && (rand_temp != 2))
+					block[i][j].isempty = true;
+				else
+					block[i][j].isempty = false;
+				block[i][j].isnew = false;
+				block[i][j].hp = 0;
+			}
 		}
 	}
 	itembox_num = 0;
@@ -2112,14 +2242,7 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 
 	Reset_weapon_setting();
 
-	isrest_time = true;
 
-	block[17][15].iswall = true;
-	block[17][15].isempty = false;
-	block[17][15].hp = 200;
-
-	block[16][14].isbarrel = true;
-	block[16][14].isempty = false;
 
 	SetTimer(hWnd, rest_time, 5000, TimerProc);
 }
@@ -2142,7 +2265,7 @@ void Reset_weapon_setting()
 
 	/*             무기별 데미지 설정, 밸런싱 필요                      */
 	weapon[pistol].damage = 20;
-	weapon[uzi].damage = 20;
+	weapon[uzi].damage = 15;
 	weapon[shotgun].damage = 50;
 	weapon[barrel].damage = 300;
 	weapon[wall].damage = 0;  //wall 데미지 없음
@@ -2150,7 +2273,7 @@ void Reset_weapon_setting()
 
 	/*            무기별 사정거리 설정, 밸런싱 필요                     */
 	weapon[pistol].range = 200;
-	weapon[uzi].range = 400;
+	weapon[uzi].range = 300;
 	weapon[shotgun].range = 100;
 	weapon[barrel].range = 0;
 	weapon[wall].range = 0;
@@ -2162,14 +2285,19 @@ void Reset_weapon_setting()
 	weapon[shotgun].delay = 400;
 	weapon[barrel].delay = 0;
 	weapon[wall].delay = 0;
-	weapon[rocket].delay = 2000;
+	weapon[rocket].delay = 1800;
 
 	/*            무기별 설정, 밸런싱 필요                              */
 
 	for (int i = 1; i < 6; i++)
 	{
-		weapon[i].open = true;
-		weapon[i].bullet = 1000;
+		weapon[i].open = false;
+		weapon[i].bullet = 0;
+		if (cheatmode == true)
+		{
+			weapon[i].open = true;
+			weapon[i].bullet = 9999;
+		}
 	}
 
 	weapon[pistol].open = true;   //처음엔 권총밖에 엄서.. 야캐요..
@@ -2216,16 +2344,16 @@ void Spawn_boss()
 	CHARACTER* p = boss_head;
 	int i = 0;
 
-	while (i < 50/*숫자 밸런스 조정*/)
+	while (i < stage - 1/*숫자 밸런스 조정*/)
 	{
 		//head노드는 삭제하지 않고 사용하기
 		CHARACTER* temp_character = (CHARACTER*)malloc(sizeof(CHARACTER));
 
 		temp_character->health = 500;
 		temp_character->max_health = 500;
-		//	temp_character->x = 
-		//	temp_character->y = 1
-		//	temp_character->direction = 
+		//   temp_character->x = 
+		//   temp_character->y = 1
+		//   temp_character->direction = 
 		temp_character->sprite_num = 0;
 		temp_character->ismoving = true;
 		temp_character->isattacking = false;
@@ -2233,7 +2361,7 @@ void Spawn_boss()
 
 		p->next = temp_character;
 
-		monster_num++;
+		boss_num++;
 		i++;
 	}
 
@@ -2247,10 +2375,9 @@ void Spawn_boss()
 void Stage_start(HWND hWnd)   //스테이지 시작 세팅(몬스터 생성) 흥 함수 작성 순서같은거 생각나는대로 적는거야 데헷페로
 {
 	stage++;
-	SetTimer(hWnd, rest_time, 5000, TimerProc);
 
 	Spawn_monster();
-	Spawn_boss();
+	//Spawn_boss();    //미구현 ㅠㅠㅠㅠ
 	SetTimer(hWnd, move_monster, 100, TimerProc);
 	//몹 맵에서 나오도록 하는 타이머 생성 - 몹 스폰장소에서 한두마리씩 나오고, 입구가 막혀서 나오지 못할경우 나오지 않도록 해야함
 }
@@ -2327,6 +2454,7 @@ bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 
 	/*             업그레이드 불가능시               */
 
+
 	int rand_num = rand() % (opened_weapon_num * 2 + 1);   //난이도 조절시 꽝 확률 추가하면 됨
 
 	if (rand_num == 0)  //   1/((획득한 무기 개수*2)+1)의 확률로 체력회복
@@ -2337,41 +2465,41 @@ bool Aquire_itembox()             //아이템 박스를 먹어부려쪄!
 	{
 		/*---------------------------------총알 획득시 최대까지 차는 것이 아닌 일정 수치만 증가 (밸런싱 필요)--------------------------*/
 
-		/*if ((weapon[uzi].bullet +       ) > weapon[uzi].max_bullet)  //최대탄약 개수 이상으로 획득 불가
-		weapon[uzi].bullet = weapon[uzi].max_bullet;
-		weapon[uzi].bullet +=       ;*/
+		if ((weapon[uzi].bullet + 20) > weapon[uzi].max_bullet)  //최대탄약 개수 이상으로 획득 불가
+			weapon[uzi].bullet = weapon[uzi].max_bullet;
+		weapon[uzi].bullet += 20;
 	}
 	else if ((rand_num == 3) || (rand_num == 4))
 	{
 		/*---------------------------------총알 획득시 최대까지 차는 것이 아닌 일정 수치만 증가 (밸런싱 필요)--------------------------*/
 
-		/*if ((weapon[shotgun].bullet +       ) > weapon[shotgun].max_bullet)  //최대탄약 개수 이상으로 획득 불가
-		weapon[shotgun].bullet = weapon[shotgun].max_bullet;
-		weapon[shotgun].bullet +=       ;*/
+		if ((weapon[shotgun].bullet + 10) > weapon[shotgun].max_bullet)  //최대탄약 개수 이상으로 획득 불가
+			weapon[shotgun].bullet = weapon[shotgun].max_bullet;
+		weapon[shotgun].bullet += 10;
 	}
 	else if ((rand_num == 5) || (rand_num == 6))
 	{
 		/*---------------------------------총알 획득시 최대까지 차는 것이 아닌 일정 수치만 증가 (밸런싱 필요)--------------------------*/
 
-		/*if ((weapon[barrel].bullet +       ) > weapon[barrel].max_bullet)  //최대탄약 개수 이상으로 획득 불가
-		weapon[barrel].bullet = weapon[barrel].max_bullet;
-		weapon[barrel].bullet +=       ;*/
+		if ((weapon[barrel].bullet + 5) > weapon[barrel].max_bullet)  //최대탄약 개수 이상으로 획득 불가
+			weapon[barrel].bullet = weapon[barrel].max_bullet;
+		weapon[barrel].bullet += 5;
 	}
 	else if ((rand_num == 7) || (rand_num == 8))
 	{
 		/*---------------------------------총알 획득시 최대까지 차는 것이 아닌 일정 수치만 증가 (밸런싱 필요)--------------------------*/
 
-		/*if ((weapon[wall].bullet +       ) > weapon[wall].max_bullet)  //최대탄약 개수 이상으로 획득 불가
-		weapon[wall].bullet = weapon[wall].max_bullet;
-		weapon[wall].bullet +=       ;*/
+		if ((weapon[wall].bullet + 5) > weapon[wall].max_bullet)  //최대탄약 개수 이상으로 획득 불가
+			weapon[wall].bullet = weapon[wall].max_bullet;
+		weapon[wall].bullet += 5;
 	}
 	else if ((rand_num == 9) || (rand_num == 10))
 	{
 		/*---------------------------------총알 획득시 최대까지 차는 것이 아닌 일정 수치만 증가 (밸런싱 필요)--------------------------*/
 
-		/*if ((weapon[rocket].bullet +       ) > weapon[rocket].max_bullet)  //최대탄약 개수 이상으로 획득 불가
-		weapon[rocket].bullet = weapon[rocket].max_bullet;
-		weapon[rocket].bullet +=       ;*/
+		if ((weapon[rocket].bullet + 3) > weapon[rocket].max_bullet)  //최대탄약 개수 이상으로 획득 불가
+			weapon[rocket].bullet = weapon[rocket].max_bullet;
+		weapon[rocket].bullet += 3;
 	}
 
 }
@@ -2708,11 +2836,15 @@ bool Char_Deathcheck(HWND hWnd)    //캐릭터 체력 0됐는지 확인 함수 무기발사, 몬�
 		current_page = end_page;
 
 		//타이머 녀석들.. 다...다 죽여버리겠어!!! 으앙아아아아ㅏㅏ아아ㅏㅏ아!!!
-		//KillTimer(hWnd,);
-		//KillTimer(hWnd.);
-		//KillTimer(hWnd.);
-		//KillTimer(hWnd,);
+		KillTimer(hWnd, rest_time);
+		KillTimer(hWnd, move_player);
+		KillTimer(hWnd, atk_player);
 		KillTimer(hWnd, spawn_itembox);
+		KillTimer(hWnd, move_monster);
+		KillTimer(hWnd, spawn_itembox);
+		KillTimer(hWnd, sht_player);
+		monster_head->next = NULL;
+		boss_head->next = NULL;
 
 		InvalidateRect(hWnd, NULL, false);
 		return true;
@@ -2734,7 +2866,7 @@ bool Remaining_bullet_check()  //남은 총알 확인  남았으면 false 없으면 true
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX, double addY)
+void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX, double addY, HWND hWnd)
 {
  	if (block[(int)y / block_size][(int)x / block_size].isempty == false)
 	{
@@ -2753,7 +2885,7 @@ void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX
 		else if (block[(int)y / block_size][(int)x / block_size].isbarrel)
 		{
 			/****************************barrel 폭발 구현*********************************/
-
+			bomb_barrel(x, y, hWnd);
 			/****************************************************************************/
 			*dx = (int)x;
 			*dy = (int)y;
@@ -2762,19 +2894,16 @@ void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX
 
 		else if (block[(int)y / block_size][(int)x / block_size].isinvinciblewall)
 		{
-
+			*dx = (int)x;
+			*dy = (int)y;
+			return;
 		}
 	}
 
-	else if (Crash_check_bullet2monster(x, y, NULL, monster_head))
+	else if (Crash_check_bullet2monster(x, y, NULL, monster_head, selected_weapon ,hWnd))
 	{
-		monster_num--;
 		*dx = (int)x;
 		*dy = (int)y;
-
-		if (monster_num == 0)
-			isrest_time = true;
-
 		return;
 	}
 
@@ -2784,18 +2913,18 @@ void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX
 	if ((int)x < 0 || (int)x > win_x_size * 2 || (int)y < 0 || (int)y > win_y_size * 2)
 		return;
 
-	Crash_check_bullet2object(x + addX, y + addY, dx, dy, addX, addY);
+	Crash_check_bullet2object(x + addX, y + addY, dx, dy, addX, addY, hWnd);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p)
+bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p, int type, HWND hWnd)
 {
 	RECT monster_rect = { p->x - 19, p->y - 30, p->x + 19, p->y + 30 };
 
 	if (monster_rect.left <= x && monster_rect.right >= x && monster_rect.top <= y && monster_rect.bottom >= y)
 	{
-		p->health -= weapon[selected_weapon].damage;
+		p->health -= weapon[type].damage;
 
 		if (p->health < 0)
 		{
@@ -2805,16 +2934,148 @@ bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p)
 			}
 			free(p);
 			score += 10;
+			monster_num--;
+
+			if (monster_num == 0)
+			{
+				SetTimer(hWnd, rest_time, 5000, TimerProc);
+			}
+
 		}
 
 		return true;
 	}
 
 	if (p->next != NULL)
-		return Crash_check_bullet2monster(x, y, p, p->next);
+		return Crash_check_bullet2monster(x, y, p, p->next, type, hWnd);
 
 	return false;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void bomb_barrel(int x, int y, HWND hWnd)
+{
+	if (block[(y / block_size)][(x / block_size) - 1].isempty == true)
+	{
+		Crash_check_bullet2monster(block[(y / block_size)][(x / block_size) - 1].rect.left + (block_size / 2), block[(y / block_size)][(x / block_size) - 1].rect.top + (block_size / 2), NULL, monster_head, barrel, hWnd);
+		RECT rtP, rtTmp;
+		int x_crash_check, y_crash_check;
+		if (player.isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+		{
+			x_crash_check = 32;
+			y_crash_check = 32;
+		}
+		else
+		{
+			x_crash_check = 19;
+			y_crash_check = 30;
+		}
+
+		SetRect(&rtP, player.x - x_crash_check, player.y - y_crash_check, player.x + x_crash_check, player.y + y_crash_check);
+		if (IntersectRect(&rtTmp, &block[(y / block_size)][(x / block_size) - 1].rect, &rtP))
+		{
+			player.health -= weapon[barrel].damage;
+		}
+	}
+	if (block[(y / block_size)][(x / block_size) + 1].isempty == true)
+	{
+		Crash_check_bullet2monster(block[(y / block_size)][(x / block_size) + 1].rect.left + (block_size / 2), block[(y / block_size)][(x / block_size) + 1].rect.top + (block_size / 2), NULL, monster_head, barrel, hWnd);
+		RECT rtP, rtTmp;
+		int x_crash_check, y_crash_check;
+		if (player.isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+		{
+			x_crash_check = 32;
+			y_crash_check = 32;
+		}
+		else
+		{
+			x_crash_check = 19;
+			y_crash_check = 30;
+		}
+
+		SetRect(&rtP, player.x - x_crash_check, player.y - y_crash_check, player.x + x_crash_check, player.y + y_crash_check);
+		if (IntersectRect(&rtTmp, &block[(y / block_size)][(x / block_size) + 1].rect, &rtP))
+		{
+			player.health -= weapon[barrel].damage;
+		}
+	}
+	if (block[(y / block_size) - 1][(x / block_size)].isempty == true)
+	{
+		Crash_check_bullet2monster(block[(y / block_size) - 1][(x / block_size)].rect.left + (block_size / 2), block[(y / block_size) - 1][(x / block_size)].rect.top + (block_size / 2), NULL, monster_head, barrel, hWnd);
+		RECT rtP, rtTmp;
+		int x_crash_check, y_crash_check;
+		if (player.isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+		{
+			x_crash_check = 32;
+			y_crash_check = 32;
+		}
+		else
+		{
+			x_crash_check = 19;
+			y_crash_check = 30;
+		}
+
+		SetRect(&rtP, player.x - x_crash_check, player.y - y_crash_check, player.x + x_crash_check, player.y + y_crash_check);
+		if (IntersectRect(&rtTmp, &block[(y / block_size) - 1][(x / block_size)].rect, &rtP))
+		{
+			player.health -= weapon[barrel].damage;
+		}
+	}
+	if (block[(y / block_size) + 1][(x / block_size)].isempty == true)
+	{
+		Crash_check_bullet2monster(block[(y / block_size) + 1][(x / block_size)].rect.left + (block_size / 2), block[(y / block_size) + 1][(x / block_size)].rect.top + (block_size / 2), NULL, monster_head, barrel, hWnd);
+		RECT rtP, rtTmp;
+		int x_crash_check, y_crash_check;
+		if (player.isattacking == true)  //공격중일때와 아닐때 사이즈가 다르므로 충돌체크도 다르게
+		{
+			x_crash_check = 32;
+			y_crash_check = 32;
+		}
+		else
+		{
+			x_crash_check = 19;
+			y_crash_check = 30;
+		}
+
+		SetRect(&rtP, player.x - x_crash_check, player.y - y_crash_check, player.x + x_crash_check, player.y + y_crash_check);
+		if (IntersectRect(&rtTmp, &block[(y / block_size) + 1][(x / block_size)].rect, &rtP))
+		{
+			player.health -= weapon[barrel].damage;
+		}
+	}
+
+	if (block[y / block_size][x / block_size].isbarrel == true)
+	{
+		block[(y / block_size)][(x / block_size)].isempty = true;
+		block[(y / block_size)][(x / block_size)].isbarrel = false;
+	}
+
+	else if (block[(y / block_size)][(x / block_size)].iswall == true)
+	{
+		block[(int)y / block_size][(int)x / block_size].hp -= weapon[barrel].damage;
+		if (block[(int)y / block_size][(int)x / block_size].hp < 0)
+		{
+			block[(int)y / block_size][(int)x / block_size].iswall = false;
+			block[(int)y / block_size][(int)x / block_size].isempty = true;
+		}
+		return;
+	}
+
+	if (block[(y / block_size)][(x / block_size) - 1].isempty == false)
+	{
+		bomb_barrel(block[(y / block_size)][(x / block_size) - 1].rect.left + (block_size / 2), block[(y / block_size)][(x / block_size) - 1].rect.top + (block_size / 2), hWnd);
+	}
+	if (block[(y / block_size)][(x / block_size) + 1].isempty == false)
+	{
+		bomb_barrel(block[(y / block_size)][(x / block_size) + 1].rect.left + (block_size / 2), block[(y / block_size)][(x / block_size) + 1].rect.top + (block_size / 2), hWnd);
+	}
+	if (block[(y / block_size) - 1][(x / block_size)].isempty == false)
+	{
+		bomb_barrel(block[(y / block_size) - 1][(x / block_size)].rect.left + (block_size / 2), block[(y / block_size) - 1][(x / block_size)].rect.top + (block_size / 2), hWnd);
+	}
+	if (block[(y / block_size) + 1][(x / block_size)].isempty == false)
+	{
+		bomb_barrel(block[(y / block_size) + 1][(x / block_size)].rect.left + (block_size / 2), block[(y / block_size) + 1][(x / block_size)].rect.top + (block_size / 2), hWnd);
+	}
+}
