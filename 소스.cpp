@@ -2759,6 +2759,11 @@ void Crash_check_bullet2object(double x, double y, int* dx, int* dy, double addX
 			*dy = (int)y;
 			return;
 		}
+
+		else if (block[(int)y / block_size][(int)x / block_size].isinvinciblewall)
+		{
+
+		}
 	}
 
 	else if (Crash_check_bullet2monster(x, y, NULL, monster_head))
