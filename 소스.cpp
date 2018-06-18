@@ -33,7 +33,8 @@ enum timer      //타이머 넘버에 숫자 대신 이걸 써줍시다
 	rest_time,
 	move_player, atk_player,
 	spawn_monster, move_monster,
-	spawn_itembox, sht_player
+	spawn_itembox, sht_player,
+	launch_rocket
 };
 
 typedef struct CHARACTER   //플레이어, 몬스터, 보스몬스터 정보
@@ -133,7 +134,8 @@ CHARACTER player;          //플레이어
 WEAPON weapon[6];          //무기 6개 enum weapon으로 사용
 int selected_weapon;       //현재 선택중인 무기 enum weapon으로 사용
 
-
+int lch_rocket[5];
+bool lch_check_roket;
 
 /////////////////////////////////////무기 업그레이드 bool변수/////////////////////////////////////
 //무기번호 pistol = 0, uzi = 1, shotgun = 2, barrel = 3, wall = 4, rocket = 5
@@ -468,7 +470,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case SE:
 						dx = (player.x + 40) + (weapon[selected_weapon].range*cos(45 * PI));
 						dy = (player.y + 32) + (weapon[selected_weapon].range*sin(45 * PI));
-						Crash_check_bullet2object(player.x + 40, player.y + 34, &dx, &dy, cos(45 * PI), sin(45 * PI));
+						Crash_check_bullet2object(player.x + 40, player.y + 32, &dx, &dy, cos(45 * PI), sin(45 * PI));
 						MoveToEx(memdc1, player.x + 40, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -476,7 +478,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					case S:
 						dx = player.x;
 						dy = (player.y + 32) + weapon[selected_weapon].range;
-						Crash_check_bullet2object(player.x, player.y + 34, &dx, &dy, 0, 1);
+						Crash_check_bullet2object(player.x, player.y + 32, &dx, &dy, 0, 1);
 						MoveToEx(memdc1, player.x, player.y + 32, NULL);
 						LineTo(memdc1, dx, dy);
 						break;
@@ -1550,6 +1552,68 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 			{
 				//무기 발사
+				//lch_check_roket = true;
+				//lch_rocket[0] = player.direction;
+				//
+				//switch (lch_rocket[0])
+				//{
+				//case N:
+				//	lch_rocket[1] = player.x;
+				//	lch_rocket[2] = player.y - 32;
+				//	lch_rocket[3] = 0;
+				//	lch_rocket[4] = 5;
+				//	break;
+				//
+				//case NE:
+				//	lch_rocket[1] = player.x + 40;
+				//	lch_rocket[2] = player.y - 32;
+				//	lch_rocket[3] = 5;
+				//	lch_rocket[4] = 5;
+				//	break;
+				//
+				//case E:
+				//	lch_rocket[1] = player.x + 40;
+				//	lch_rocket[2] = player.y;
+				//	lch_rocket[3] = 5;
+				//	lch_rocket[4] = 0;
+				//	break;
+				//
+				//case SE:
+				//	lch_rocket[1] = player.x + 40;
+				//	lch_rocket[2] = player.y + 32;
+				//	lch_rocket[3] = 5;
+				//	lch_rocket[4] = 5;
+				//	break;
+				//
+				//case S:
+				//	lch_rocket[1] = player.x;
+				//	lch_rocket[2] = player.y + 32;
+				//	lch_rocket[3] = 5;
+				//	lch_rocket[4] = 0;
+				//	break;
+				//
+				//case SW:
+				//	lch_rocket[1] = player.x - 40;
+				//	lch_rocket[2] = player.y + 32;
+				//	lch_rocket[3] = 5;
+				//	lch_rocket[4] = 5;
+				//	break;
+				//
+				//case W:
+				//	lch_rocket[1] = player.x - 40;
+				//	lch_rocket[2] = player.y;
+				//	lch_rocket[3] = 5;
+				//	lch_rocket[4] = 0;
+				//	break;
+				//
+				//case NW:
+				//	lch_rocket[1] = player.x - 40;
+				//	lch_rocket[2] = player.y - 32;
+				//	lch_rocket[3] -= 5;
+				//	lch_rocket[4] -= 5;
+				//	break;
+				//}
+
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
 			}
@@ -1651,6 +1715,15 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 				player.sprite_num++;
 		}
+
+		//if (lch_check_roket)
+		//{
+		//	if (lch_rocket[0] <= 0 || lch_rocket[0] >= win_x_size * 2 || lch_rocket[1] <= 0 || lch_rocket[1] >= win_y_size * 2)
+		//	{
+		//		lch_check_roket = false;
+		//	}
+		//	Crash_check_bullet2object(lch_rocket[0],lch_rocket[1],)
+		//}
 
 		InvalidateRect(hWnd, NULL, false);
 		break;
@@ -1905,6 +1978,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		}
 		InvalidateRect(hWnd, NULL, false);
 	break;
+		
 	}
 
 
@@ -1934,6 +2008,13 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 
 	monster_dmg = 100;
 	//boss_dmg=
+
+	lch_rocket[0] = 0;
+	lch_rocket[1] = 0;
+	lch_rocket[2] = 0;
+	lch_rocket[3] = 0;
+	lch_rocket[4] = 0;
+	lch_check_roket = false;
 
 	for (int i = 0; i < 32; i++)  //구조물 초기화
 	{
@@ -2084,7 +2165,6 @@ void Spawn_boss()
 	//head노드는 삭제하지 않고 사용하기
 	//몹 좌표 지정 - 난이도 : HELL
 }
-
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
