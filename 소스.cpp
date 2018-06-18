@@ -1558,6 +1558,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		if (selected_weapon == pistol)
 		{
 			//무기 발사
+			SetTimer(hWnd, sht_player, 20, TimerProc);
+
 			//캐릭터 스프라이트 변경
 		}
 		else if (selected_weapon == uzi)
@@ -1572,8 +1574,9 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			}
 			else
 			{
-
 				//무기 발사
+				SetTimer(hWnd, sht_player, 20, TimerProc);
+
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
 			}
@@ -1590,6 +1593,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 			{
 				//무기 발사
+				SetTimer(hWnd, sht_player, 20, TimerProc);
+
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
 			}
@@ -1605,6 +1610,51 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 			{
 				//무기 발사
+				rocket_bullet.launch = true;
+				rocket_bullet.direction = player.direction;
+				switch (rocket_bullet.direction)
+				{
+				case N:
+					rocket_bullet.x = player.x;
+					rocket_bullet.y = player.y - 32;
+					break;
+
+				case NE:
+					rocket_bullet.x = player.x + 40;
+					rocket_bullet.y = player.y - 32;
+					break;
+
+				case E:
+					rocket_bullet.x = player.x + 40;
+					rocket_bullet.y = player.y;
+					break;
+
+				case SE:
+					rocket_bullet.x = player.x + 40;
+					rocket_bullet.y = player.y + 32;
+					break;
+
+				case S:
+					rocket_bullet.x = player.x;
+					rocket_bullet.y = player.y + 32;
+					break;
+
+				case SW:
+					rocket_bullet.x = player.x - 40;
+					rocket_bullet.y = player.y + 32;
+					break;
+
+				case W:
+					rocket_bullet.x = player.x - 40;
+					rocket_bullet.y = player.y;
+					break;
+
+				case NW:
+					rocket_bullet.x = player.x - 40;
+					rocket_bullet.y = player.y - 32;
+					break;
+
+				}
 
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
@@ -1617,10 +1667,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 				player.sprite_num = 1;
 			else
 				player.sprite_num = 0;
-
-
-			SetTimer(hWnd, sht_player, 20, TimerProc);
 		}
+
 		InvalidateRect(hWnd, NULL, false);
 
 		break;
@@ -1993,9 +2041,10 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	//boss_dmg=
 
 	rocket_bullet.launch = false;
+	rocket_bullet.speed = 30;
 
-	for (int i = 0; i < 32; i++)  /
-		/구조물 초기화
+	for (int i = 0; i < 32; i++)  
+		//구조물 초기화
 	{
 		for (int j = 0; j < 36; j++)
 		{
