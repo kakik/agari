@@ -2703,6 +2703,7 @@ bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p)
 				prev->next = p->next;
 			}
 			delete[] p;
+			score += 10;
 		}
 
 		return true;
