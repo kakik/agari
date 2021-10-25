@@ -384,7 +384,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		SetTimer(hWnd, start_page_character, 100, TimerProc);
 		break;
 	}
-	case WM_PAINT:
+	case WM_PAINT: // ·£´õ¸µ
 	{
 		hdc = BeginPaint(hWnd, &ps);
 
@@ -1010,7 +1010,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		EndPaint(hWnd, &ps);
 		break;
 
-	case WM_LBUTTONDOWN:
+	case WM_LBUTTONDOWN: // input key
 	{
 		mx = LOWORD(lParam);
 		my = HIWORD(lParam);
