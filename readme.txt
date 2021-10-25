@@ -6,5 +6,3 @@ memdc1에 출력
 
 스코어, 인벤토리, 상태 등등 ui
 478줄 dc.BitBlt 작업 이후에 memdc2에 출력
-
-test
