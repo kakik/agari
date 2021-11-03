@@ -32,6 +32,7 @@ const char SC_PACKET_ITEM_COUNT = 9;
 const char SC_PACKET_CHAGE_WEAPON = 10;
 
 //	패킷 정의(Client->Server)
+#pragma pack(push,1)
 struct packet {
 	unsigned char packetSize;
 	char packetType;
@@ -97,3 +98,4 @@ struct sc_packet_change_weapon : packet {
 	char playerID;
 	char gunID; // == itemID
 };
+#pragma pop()
