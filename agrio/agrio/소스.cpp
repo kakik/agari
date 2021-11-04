@@ -5,6 +5,7 @@
 #include <time.h>
 #include <math.h>
 #include <atlimage.h>
+#include <iostream>
 
 
 HINSTANCE g_hInst;
@@ -88,6 +89,88 @@ typedef struct BLOCK         //50*50크기 블록
 
 	RECT rect;                //블록 좌표 
 }BLOCK;
+
+
+
+/******************************************** 네트워크 게임 프로그래밍 ********************************************/
+struct Coordinate {
+	short x;
+	short y;
+};
+
+class GameObject {
+private:
+	Coordinate pos;
+	char direction;
+	char sprite;
+	unsigned char width, height;
+	bool isActive;
+
+public:
+	void LoginOk (void* pk)
+	{
+
+	}
+
+	void ObjMove (void* pk)
+	{
+
+	}
+
+	void PutObj(void* pk)
+	{
+
+	}
+
+	void RemoveObj(void* pk)
+	{
+
+	}
+
+	void Render()
+	{
+
+	}
+};
+
+class Player : GameObject {
+private:
+	char curGun;
+	char state;
+	short hp;
+	short items[8];
+
+public:
+	void PlayerState(void* pk)
+	{
+
+	}
+
+	void ChangeWeapon(void* pk)
+	{
+
+	}
+
+	void ChangeHp(void* pk)
+	{
+
+	}
+
+	void GetItem(void* pk)
+	{
+
+	}
+
+	void ItemCount(void* pk)
+	{
+
+	}
+
+	void UseItem(int index)
+	{
+
+	}
+};
 
 /************************************************함수 선언********************************************************/
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -381,7 +464,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		boss_head = (CHARACTER*)malloc(sizeof(CHARACTER));
 		boss_head->next = NULL;
 
-		SetTimer(hWnd, start_page_character, 100, TimerProc);
+		SetTimer(hWnd, start_page_character, 100, (TIMERPROC)TimerProc);
 		break;
 	}
 	case WM_PAINT: // 랜더링
@@ -1082,7 +1165,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				current_page = game_page;   //게임화면으로 이동
 				play_button = false;
 
-				SetTimer(hWnd, spawn_itembox, 15000, TimerProc);//15초마다 아이템박스 생성
+				SetTimer(hWnd, spawn_itembox, 15000, (TIMERPROC)TimerProc);//15초마다 아이템박스 생성
 				Game_start_setting(hWnd);                       //게임 시작 셋팅(변수 초기화 등등)
 
 				InvalidateRect(hWnd, NULL, false);
@@ -1107,7 +1190,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				current_page = game_page;   //게임화면으로 이동
 				play_button = false;
 
-				SetTimer(hWnd, spawn_itembox, 15000, TimerProc);//15초마다 아이템박스 생성
+				SetTimer(hWnd, spawn_itembox, 15000, (TIMERPROC)TimerProc);//15초마다 아이템박스 생성
 				Game_start_setting(hWnd);                       //게임 시작 셋팅(변수 초기화 등등)
 
 
@@ -1409,7 +1492,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					{
 						if (player.isattacking == false)
 						{
-							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, (TIMERPROC)TimerProc);
 							player.isshooting = true;
 							player.isattacking = true;
 						}
@@ -1418,7 +1501,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					{
 						if (player.isattacking == false)
 						{
-							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, (TIMERPROC)TimerProc);
 							player.isattacking = true;
 						}
 					}
@@ -1426,7 +1509,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					{
 						if (player.isattacking == false)
 						{
-							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, (TIMERPROC)TimerProc);
 							player.isattacking = true;
 						}
 					}
@@ -1503,7 +1586,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					{
 						if (player.isattacking == false)
 						{
-							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, TimerProc);
+							SetTimer(hWnd, atk_player, weapon[selected_weapon].delay, (TIMERPROC)TimerProc);
 							player.isattacking = true;
 						}
 					}
@@ -1658,7 +1741,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		if (selected_weapon == pistol)
 		{
 			//무기 발사
-			SetTimer(hWnd, sht_player, 20, TimerProc);
+			SetTimer(hWnd, sht_player, 20, (TIMERPROC)TimerProc);
 
 			//캐릭터 스프라이트 변경
 		}
@@ -1675,7 +1758,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 			{
 				//무기 발사
-				SetTimer(hWnd, sht_player, 20, TimerProc);
+				SetTimer(hWnd, sht_player, 20, (TIMERPROC)TimerProc);
 
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
@@ -1693,7 +1776,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else
 			{
 				//무기 발사
-				SetTimer(hWnd, sht_player, 20, TimerProc);
+				SetTimer(hWnd, sht_player, 20, (TIMERPROC)TimerProc);
 
 				//캐릭터 스프라이트 변경
 				weapon[selected_weapon].bullet--;//총알 감소
@@ -2184,7 +2267,7 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 	player.ismoving = false;
 	player.isattacking = false;
 	player.isshooting = false;
-	SetTimer(hWnd, move_player, 50, TimerProc);   //플레이어 이동
+	SetTimer(hWnd, move_player, 50, (TIMERPROC)TimerProc);   //플레이어 이동
 
 	monster_num = 0;
 	boss_num = 0;
@@ -2244,7 +2327,7 @@ void Game_start_setting(HWND hWnd)         //게임 시작 셋팅(변수 초기화 등등)
 
 
 
-	SetTimer(hWnd, rest_time, 5000, TimerProc);
+	SetTimer(hWnd, rest_time, 5000, (TIMERPROC)TimerProc);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2378,7 +2461,7 @@ void Stage_start(HWND hWnd)   //스테이지 시작 세팅(몬스터 생성) 흥 함수 작성 순�
 
 	Spawn_monster();
 	//Spawn_boss();    //미구현 ㅠㅠㅠㅠ
-	SetTimer(hWnd, move_monster, 100, TimerProc);
+	SetTimer(hWnd, move_monster, 100, (TIMERPROC)TimerProc);
 	//몹 맵에서 나오도록 하는 타이머 생성 - 몹 스폰장소에서 한두마리씩 나오고, 입구가 막혀서 나오지 못할경우 나오지 않도록 해야함
 }
 
@@ -2939,7 +3022,7 @@ bool Crash_check_bullet2monster(int x, int y, CHARACTER* prev, CHARACTER* p, int
 
 			if (monster_num == 0)
 			{
-				SetTimer(hWnd, rest_time, 5000, TimerProc);
+				SetTimer(hWnd, rest_time, 5000, (TIMERPROC)TimerProc);
 			}
 
 		}
