@@ -1,3 +1,4 @@
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib, "ws2_32")
 #include <winsock2.h>
 #include <cstdlib>
@@ -79,7 +80,7 @@ public:
 			cs_packet_login recvPecket;
 			retval = recv(sock, reinterpret_cast<char*>((&recvPecket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
 
-			cout << "cs_packet_login : " << recvPecket.packetSize << " " << recvPecket.packetType << " " << recvPecket.playerSkin << endl;
+			cout << "ID: " << id << " , cs_packet_login : " << recvPecket.packetSize << " " << recvPecket.packetType << " " << recvPecket.playerSkin << endl;
 
 			sc_packet_login_ok sendPacket;
 
@@ -110,7 +111,7 @@ public:
 				if (Client.id != id) {
 					sc_packet_put_obj sendPutPacket;
 					sendPutPacket.packetSize = sizeof(sendPutPacket);
-					sendPutPacket.packetType = SC_PACKET_PUT_OBJ;
+					sendPutPacket.packetType = SC_PACKET_OBJ_MOVE;
 					sendPutPacket.x = 1;
 
 					Client.Send(&sendPutPacket);
@@ -123,7 +124,7 @@ public:
 			cs_packet_player_move recvPecket;
 			retval = recv(sock, reinterpret_cast<char*>((&recvPecket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
 
-			cout << "cs_packet_player_move : " << (int)recvPecket.dir << endl;
+			cout << "ID: " << id << " , cs_packet_player_move : " << (int)recvPecket.dir << endl;
 			/*
 			* 각 클라이언트들한테 플레이어가 이동했으니 해당 플레이어 오브젝트를 이동 하라고함
 			*/
@@ -137,6 +138,38 @@ public:
 					Client.Send(&sendPutPacket);
 				}
 			}
+		}
+		break;
+		case CS_PACKET_PLAYER_STATE:
+		{
+
+		}
+		break;
+		case CS_PACKET_SHOOT_BULLET:
+		{
+			cs_packet_shoot_bullet recvPecket;
+			retval = recv(sock, reinterpret_cast<char*>((&recvPecket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+
+			cout << "ID: " << id << " , cs_packet_player_move : " << (int)recvPecket.shootX << " " << (int)recvPecket.shootY << " " << (int)recvPecket.dir << endl;
+			/*
+			* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
+			*/
+			for (const auto& Client : Clients) {
+				if (Client.id != id) {
+					sc_packet_obj_move sendPutPacket;
+					sendPutPacket.packetSize = sizeof(sendPutPacket);
+					sendPutPacket.packetType = SC_PACKET_OBJ_MOVE;
+					// objectID, lookDir, x, y;
+
+					Client.Send(&sendPutPacket);
+				}
+			}
+
+		}
+		break;
+		case CS_PACKET_USED_ITEM:
+		{
+
 		}
 		break;
 		default:
