@@ -1,15 +1,18 @@
 #pragma once
+
+#pragma comment(lib, "ws2_32")
+#include <winsock2.h>
+#include <cstdlib>
+#include"../../agrio_Server/agrio_Server/Protocol.h"
+
 #include <windows.h>
 #include <stdio.h>
 #include <tchar.h>
-#include <random>
-#include <time.h>
-#include <math.h>
 #include <atlimage.h>
 #include <iostream>
 #include <vector>
 
-/********************************** 좌표 **********************************/
+/******************************************** 좌표 ********************************************/
 // 스프라이트
 const RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
 { { { 0,0,18,30 },{ 32,0,50,30 },{ 64,0,82,30 },{ 96,0,114,30 } }/*N*/,{ { 133,0,151,30 },{ 165,0,173,30 },{ 197,0,215,30 },{ 229,0,247,30 } }/*NE*/,
@@ -22,9 +25,6 @@ const RECT char_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
 const RECT char_weapon_sprite_rect[8][2] = //무기 스프라이트 좌표
 { {{0,0,50,52},{50,0,100,52}}/*N*/, {{100,0,150,52},{150,0,200,52}}/*NE*/ ,{ {200,0,250,52},{250,0,300,52}}/*E*/, {{300,0,350,52},{350,0,400,52}}/*SE*/,
 { { 0,52,50,104 },{ 50,52,100,104 } }/*S*/,{ { 100,52,150,104 },{ 150,52,200,104 } }/*SW*/ ,{ { 200,52,250,104 },{ 250,52,300,104 } }/*W*/,{ { 300,52,350,104 },{ 350,52,400,104 } }/*NW*/ };
-const RECT monster_atk_sprite_rect[8][2] =  //공격모션 스프라이트 좌표
-{ { { 0,0,34,37 },{ 34,0,68,37 } }/*N*/,{ { 68,0,102,37 },{ 102,0,136,37 } }/*NE*/,{ { 136,0,170,37 },{ 170,0,204,37 } }/*E*/,{ { 204,0,238,37 },{ 238,0,272,37 } }/*SE*/,
- { { 0,37,34,74 },{ 34,37,68,74 } }/*S*/,{ { 68,37,102,74 },{ 102,37,136,74 } }/*SW*/,{ { 136,37,170,74 },{ 170,37,204,74 } }/*W*/,{ { 204,37,238,74 },{ 238,37,272,74 } }/*NW*/ };
 
 // UI 좌표
 const RECT logo_rect = //로고 위치      (스타트화면)
@@ -39,9 +39,9 @@ const RECT exit_button_rect = //exit버튼 위치  (스타트화면)
 {
 	650,600,800,670
 };
-const RECT weapon_image_rect[6] =  //무기 6개 이미지 위치
+const RECT weapon_image_rect[5] =  //인벤토리 5개 이미지 위치
 {
-	{ 220,730,270,780 },{ 300,730,350,780 },{ 380,730,430,780 },{ 460,730,510,780 },{ 540,730,590,780 },{ 620,730,670,780 }
+	{ 285,730,335,780 },{ 355,730,405,780 },{ 425,730,475,780 },{ 495,730,545,780 }, { 565,730,615,780 }
 };
 const RECT GAMEOVER_rect = //게임오버 버튼 위치  (게임엔드화면)
 {
@@ -63,6 +63,26 @@ const RECT exit2_button_rect = //exit버튼 위치       (게임엔드화면)    //exit버�
 
 
 /******************************************** 변수 ********************************************/
+// enum
+enum class SCENE
+{
+	title, lobby, stage1, gameover
+};
+enum class STATE
+{
+	idle, move, attack
+};
+
+// 스프라이트
+enum class SPRITE
+{
+	bgTitle, bgStage1, bgEnd, btnPlay, btnExit, btnReplay,
+	Izuna, Izuna_Atk, GenAn, GenAn_Atk, Hinagiku, Hinagiku_Atk, Ichika, Ichika_Atk, Kagen, Kagen_Atk, Mitsumoto, Mitsumoto_Atk, Shino, Shino_Atk, Sizune, Sizune_Atk,
+	pistol, uzi, shotgun, box,
+	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
+	itemBox
+};
+
 // Win API
 MSG Message;
 HINSTANCE g_hInst;
@@ -74,55 +94,19 @@ const int character_height = 60;
 const int win_x_size = 900;      //윈도우 x사이즈
 const int win_y_size = 800;      //윈도우 y사이즈
 
-// enum
-enum class SCENE
-{
-	title, lobby, stage1, gameover
-};
-enum class DIR
-{
-	N, NE, E, SE, S, SW, W, NW
-};
+unsigned __int64 TIMER;
 
-enum class STATE
-{
-	idle, move, attack
-};
-enum ITEM
-{
-	pistol, uzi, shotgun, potiion, box
-};
+// 타이틀 창에서 캐릭터 선택하게 해주는 변수들
+int selAnimation = 0;
+int selTimer = 100;
+int playerSel = (int)SPRITE::Izuna;
+
+// 플레이어의 인덱스 값
+int playerID;
 
 // 씬
 SCENE scene = SCENE::title;
 
-// 스프라이트
-enum class SPRITE
-{
-	bgTitle, bgStage1, bgEnd, btnPlay, btnExit, btnReplay, 
-	p0, p0Atk, p1, p1Atk, p2, p2Atk, p3, p3Atk, p4, p4Atk, p5, p5Atk, p6, p6Atk, p7, p7Atk,
-	pistol, uzi, shotgun,
-	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
-	itemBox
-};
-
-
-//CImage start_page_bk_img;   //시작화면 배경
-//CImage game_page_bk_img;    //게임화면 배경
-//CImage end_page_bk_img;     //엔드화면 배경
-//
-//CImage play_button_img;     //play버튼
-//CImage exit_button_img;     //exit버튼
-//CImage replay_button_img;	//리플레이 버튼
-//
-//CImage playerSprite[8][2];
-//CImage weaponSprite[6];		// 공격 모션 무기 스프라이트
-//
-//CImage ui[5];				// 하단 무기들 스프라이트
-//
-//CImage wall_img;
-//CImage itembox_img;
-//std::vector<CImage> sprites;
 
 /******************************************** 네트워크 게임 프로그래밍 ********************************************/
 struct Coordinate {
@@ -134,16 +118,18 @@ class GameObject {
 private:
 	Coordinate pos;
 	DIR direction;
-	char sprite;
-	unsigned char width, height;
-	bool isActive;
+	int sprite;
+	int width, height;
+	bool isActive = false;
 
 public:
 	void LoginOk(void* pk);
 	void ObjMove(void* pk);
 	void PutObj(void* pk);
-	void RemoveObj(void* pk);
-	virtual void Render();
+	void RemoveObj();
+	virtual void Render(HDC& hdc);
+
+	virtual void test();
 };
 
 class Player : GameObject {
@@ -160,13 +146,43 @@ public:
 	void GetItem(void* pk);
 	void ItemCount(void* pk);
 	void UseItem(int index);
-	virtual void Render();
+	virtual void Render(HDC& hdc);
+
+	virtual void test();
 };
 
 
 std::vector<GameObject*> gameObject;
-CImage sprites[31];
+CImage sprites[32];
 
-/********************************** 함수 **********************************/
+/******************************************** 함수 ********************************************/
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
+
+void err_quit(const char* msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL,
+		WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL
+	);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, (LPCWSTR)msg, MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+	exit(1);
+}
+void err_display(const char* msg)
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+		NULL,
+		WSAGetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf, 0, NULL
+	);
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, (LPCWSTR)msg, MB_ICONERROR);
+	LocalFree(lpMsgBuf);
+}
+void Recv(SOCKET sock);
+DWORD WINAPI ProcessClient(LPVOID arg);

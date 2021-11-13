@@ -7,7 +7,7 @@ const char* SEVER_ADDR = "127.0.0.1";
 const char MAX_USER = 3;
 
 //	총알 발사 방향
-enum DIR { UP, DOWN, LEFTUP, RIGHTUP, LEFTDOWN, RIGHTDOWN, LEFT, RIGHT };
+enum DIR { N, NE, E, SE, S, SW, W, NW };
 
 //	아이템 ID
 enum ITEM { pistol, uzi, shotgun, potion, box };
