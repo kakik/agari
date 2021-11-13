@@ -69,7 +69,46 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	switch (uMsg) 
 	{
 	case WM_CREATE:
+		/*********************************************이미지 로드*****************************************************/
+		sprites[(int)SPRITE::btnPlay].Load(TEXT("resource/PLAY.png"));
+		sprites[(int)SPRITE::btnExit].Load(TEXT("resource/EXIT.png"));
+		sprites[(int)SPRITE::btnReplay].Load(TEXT("resource/REPLAY.png"));
+		sprites[(int)SPRITE::bgTitle].Load(TEXT("resource/startBack.png"));
+		sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/stage.png"));
+		sprites[(int)SPRITE::bgEnd].Load(TEXT("resource/endBack.png"));
 
+		sprites[(int)SPRITE::p0].Load(TEXT("resource/Izuna_move.png"));
+		sprites[(int)SPRITE::p1].Load(TEXT("resource/Gen-An_move.png"));
+		sprites[(int)SPRITE::p2].Load(TEXT("resource/Hinagiku_move.png"));
+		sprites[(int)SPRITE::p3].Load(TEXT("resource/Ichika_move.png"));
+		sprites[(int)SPRITE::p4].Load(TEXT("resource/Kagen_move.png"));
+		sprites[(int)SPRITE::p5].Load(TEXT("resource/Mitsumoto_move.png"));
+		sprites[(int)SPRITE::p6].Load(TEXT("resource/Shino_move.png"));
+		sprites[(int)SPRITE::p7].Load(TEXT("resource/Sizune_move.png"));
+
+		sprites[(int)SPRITE::p0Atk].Load(TEXT("resource/Izuna_attack.png"));
+		sprites[(int)SPRITE::p1Atk].Load(TEXT("resource/Gen-An_attack.png"));
+		sprites[(int)SPRITE::p2Atk].Load(TEXT("resource/Hinagiku_attack.png"));
+		sprites[(int)SPRITE::p3Atk].Load(TEXT("resource/Ichika_attack.png"));
+		sprites[(int)SPRITE::p4Atk].Load(TEXT("resource/Kagen_attack.png"));
+		sprites[(int)SPRITE::p5Atk].Load(TEXT("resource/Mitsumoto_attack.png"));
+		sprites[(int)SPRITE::p6Atk].Load(TEXT("resource/Shino_attack.png"));
+		sprites[(int)SPRITE::p7Atk].Load(TEXT("resource/Sizune_attack.png"));
+
+		sprites[(int)SPRITE::pistol].Load(TEXT("resource/attack_pistol.png"));
+		sprites[(int)SPRITE::uzi].Load(TEXT("resource/attack_uzi.png"));
+		sprites[(int)SPRITE::shotgun].Load(TEXT("resource/attack_shotgun.png"));
+
+		sprites[(int)SPRITE::uiPistol].Load(TEXT("resource/ui_pistol.png"));
+		sprites[(int)SPRITE::uiUzi].Load(TEXT("resource/ui_uzi.png"));
+		sprites[(int)SPRITE::uiShotgun].Load(TEXT("resource/ui_shotgun.png"));
+		sprites[(int)SPRITE::uiBox].Load(TEXT("resource/ui_box.png"));
+		sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_box.png"));	// uiposition 이미지 만들어야함
+
+		sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
+		/*********************************************이미지 로드*****************************************************/
+
+		SetTimer(hWnd, 0, 10, (TIMERPROC)TimerProc);	// updateLoop
 		break;
 	
 	case WM_GETMINMAXINFO:
@@ -80,10 +119,25 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		return false;
 		break;
 
-
-
 	case WM_PAINT: // 랜더링
 		hdc = BeginPaint(hWnd, &ps);
+
+		if (scene == SCENE::title)
+		{
+			dc.Create(win_x_size, win_y_size, 24);	// == CreateCompatibleBitmap
+			memdc1 = dc.GetDC();					// == CreateComaptibleDC
+
+			sprites[(int)SPRITE::bgTitle].Draw(memdc1, 0, 0, win_x_size, win_y_size);
+			sprites[(int)SPRITE::btnPlay].Draw(memdc1, play_button_rect);
+			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit_button_rect);
+
+			/*charac_sprite[current_char_num].Draw(memdc1, 680, 100, character_width * 2, character_height * 2,
+				char_move_sprite_rect[player.direction][player.sprite_num].left, char_move_sprite_rect[player.direction][player.sprite_num].top, 18, 30);*/
+
+			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	// 아래에 Bitblt랑 동일
+			dc.ReleaseDC();		// dc 해제
+			dc.Destroy();		// 썼던 dc 삭제
+		}
 
 		EndPaint(hWnd, &ps);
 		break;
@@ -96,9 +150,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_MOUSEMOVE:
-
-
 		break;
+
 	case WM_KEYDOWN:
 		break;
 
@@ -118,8 +171,67 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 {
-	switch (idEvent)
-	{
+	// idEvent에 메세지가 담겨져서 옴 근데 안쓸 예정
+}
 
-	}
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void GameObject::LoginOk(void* pk)
+{
+
+}
+
+void GameObject::ObjMove(void* pk)
+{
+
+}
+
+void GameObject::PutObj(void* pk)
+{
+
+}
+
+void GameObject::RemoveObj(void* pk)
+{
+
+}
+
+void GameObject::Render()
+{
+
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Player::PlayerState(void* pk)
+{
+
+}
+
+void Player::ChangeWeapon(void* pk)
+{
+
+}
+
+void Player::ChangeHp(void* pk)
+{
+	
+}
+
+void Player::GetItem(void* pk)
+{
+	
+}
+
+void Player::ItemCount(void* pk)
+{
+	
+}
+
+void Player::UseItem(int index)
+{
+	
+}
+
+void Player::Render()
+{
+
 }

@@ -7,6 +7,7 @@
 #include <math.h>
 #include <atlimage.h>
 #include <iostream>
+#include <vector>
 
 /********************************** 좌표 **********************************/
 // 스프라이트
@@ -59,19 +60,21 @@ const RECT exit2_button_rect = //exit버튼 위치       (게임엔드화면)    //exit버�
 	530,640,680,710
 };
 
-/********************************** 변수 **********************************/
+
+
+/******************************************** 변수 ********************************************/
 // Win API
 MSG Message;
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = _T("이름을 몰로 할까요????");
 
-
+// 전역변수
 const int character_width = 38;
 const int character_height = 60;
 const int win_x_size = 900;      //윈도우 x사이즈
 const int win_y_size = 800;      //윈도우 y사이즈
 
-
+// enum
 enum class SCENE
 {
 	title, lobby, stage1, gameover
@@ -80,7 +83,12 @@ enum class DIR
 {
 	N, NE, E, SE, S, SW, W, NW
 };
-enum class ITEM
+
+enum class STATE
+{
+	idle, move, attack
+};
+enum ITEM
 {
 	pistol, uzi, shotgun, potiion, box
 };
@@ -89,17 +97,32 @@ enum class ITEM
 SCENE scene = SCENE::title;
 
 // 스프라이트
-// 캐릭터
-CImage playerSprite[8][2];
-CImage weaponSprite[6];
+enum class SPRITE
+{
+	bgTitle, bgStage1, bgEnd, btnPlay, btnExit, btnReplay, 
+	p0, p0Atk, p1, p1Atk, p2, p2Atk, p3, p3Atk, p4, p4Atk, p5, p5Atk, p6, p6Atk, p7, p7Atk,
+	pistol, uzi, shotgun,
+	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
+	itemBox
+};
 
-CImage wall_img;
-CImage itembox_img;
 
-/********************************** 함수 **********************************/
-LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
-
+//CImage start_page_bk_img;   //시작화면 배경
+//CImage game_page_bk_img;    //게임화면 배경
+//CImage end_page_bk_img;     //엔드화면 배경
+//
+//CImage play_button_img;     //play버튼
+//CImage exit_button_img;     //exit버튼
+//CImage replay_button_img;	//리플레이 버튼
+//
+//CImage playerSprite[8][2];
+//CImage weaponSprite[6];		// 공격 모션 무기 스프라이트
+//
+//CImage ui[5];				// 하단 무기들 스프라이트
+//
+//CImage wall_img;
+//CImage itembox_img;
+//std::vector<CImage> sprites;
 
 /******************************************** 네트워크 게임 프로그래밍 ********************************************/
 struct Coordinate {
@@ -120,7 +143,7 @@ public:
 	void ObjMove(void* pk);
 	void PutObj(void* pk);
 	void RemoveObj(void* pk);
-	void Render();
+	virtual void Render();
 };
 
 class Player : GameObject {
@@ -137,4 +160,13 @@ public:
 	void GetItem(void* pk);
 	void ItemCount(void* pk);
 	void UseItem(int index);
+	virtual void Render();
 };
+
+
+std::vector<GameObject*> gameObject;
+CImage sprites[31];
+
+/********************************** 함수 **********************************/
+LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
