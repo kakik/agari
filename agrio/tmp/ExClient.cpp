@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <thread>
+#include <vector>
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #include <winsock2.h>
 #pragma comment(lib, "ws2_32")
@@ -40,7 +41,15 @@ void err_display(const char* msg)
 	LocalFree(lpMsgBuf);
 }
 
+class GO {
+	short x, y;
+	char id;
+public:
+	GO(short _x, short _y, char _id) :x(_x), y(_y), id(_id) {
 
+	}
+};
+std::vector<GO> gos;
 void Recv(SOCKET sock) {
 
 	packet pkSize;
@@ -57,30 +66,29 @@ void Recv(SOCKET sock) {
 	case SC_PACKET_LOGIN_OK:
 	{
 		sc_packet_login_ok recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		cout << "playerID   ; " << (int)recvPacket.playerID << endl;
-		cout << "x          ; " << (int)recvPacket.x << endl;
-		cout << "y			; " << (int)recvPacket.y << endl;
-		cout << "[TCP 클라이언트] " << retval << "바이트를 받았습니다.\n";
+		cout << recvPacket.playerID<<" 플레이어 로그인 성공" << endl;
+		gos.emplace_back(recvPacket.x, recvPacket.y, recvPacket.playerID);
 	}
 	break;
 	case SC_PACKET_PUT_OBJ:
 	{
 		sc_packet_put_obj recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket )+2, pkSize.packetSize - 2, MSG_WAITALL);
 
-
-		cout << "x: " << (int)recvPacket.x;
-		cout << "y: " << (int)recvPacket.y << endl;
+		gos.emplace_back(recvPacket.x, recvPacket.y, recvPacket.objectID);
+		cout << "id: " << (int)recvPacket.objectID;
+		cout << " x: " << (int)recvPacket.x;
+		cout << " y: " << (int)recvPacket.y << endl;
 		cout << "[TCP 클라이언트] " << retval << "바이트를 받았습니다.\n";
 	}
 	break;
 	case SC_PACKET_OBJ_MOVE:
 	{
 		sc_packet_obj_move recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
-
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket)+2, pkSize.packetSize - 2, MSG_WAITALL);
+		//gos[recvPacket.objectID].move();
 		cout << "x: " << (int)recvPacket.x;
 		cout << "y: " << (int)recvPacket.y << endl;
 		cout << "[TCP 클라이언트] " << retval << "바이트를 받았습니다.\n";
@@ -155,12 +163,27 @@ int main()
 			}
 		}
 		break;
-		case 'm':
+		case 'w':
+		case 'a':
+		case 's':
+		case 'd':
 		{
 			cs_packet_player_move sendPacket;
 			sendPacket.packetSize = sizeof(cs_packet_player_move);
 			sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
-			sendPacket.dir = 2;
+			sendPacket.dir = buf[0];
+			// 데이터 보내기
+			retval = send(sock, reinterpret_cast<char*>(&sendPacket), sizeof(sendPacket), 0);
+			if (retval == SOCKET_ERROR) {
+				err_display("send()");
+			}
+		}
+		case 'q':
+		{
+			cs_packet_shoot_bullet sendPacket;
+			sendPacket.packetSize = sizeof(cs_packet_player_move);
+			sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
+			sendPacket.dir = buf[0];
 			// 데이터 보내기
 			retval = send(sock, reinterpret_cast<char*>(&sendPacket), sizeof(sendPacket), 0);
 			if (retval == SOCKET_ERROR) {

@@ -80,7 +80,7 @@ void Client::Recv() {
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
 		for (const auto& Client : net->Clients) {
-			if (Client.id != id) {
+			if (Client.id != id) {//
 				net->send_move_obj(Client.id);
 			}
 		}

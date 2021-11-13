@@ -53,7 +53,6 @@ public:
 
 	void update();
 	void start_accept() {
-
 		threads.emplace_back(&Network::AcceptThread, this);
 	}
 
