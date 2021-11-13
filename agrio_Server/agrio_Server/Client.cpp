@@ -26,9 +26,9 @@ void Client::Recv() {
 	case CS_PACKET_LOGIN:
 	{
 		cs_packet_login recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>((&recvPecket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval = recv(sock, reinterpret_cast<char*>((&recvPecket))+2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		std::cout << "ID: " << id << " , cs_packet_login : " << recvPecket.packetSize << " " << recvPecket.packetType << " " << recvPecket.playerSkin << std::endl;
+		std::cout << "ID: " << id << " , cs_packet_login : " << (int)recvPecket.playerSkin << std::endl;
 
 		net->send_login_ok(id);
 		/*
@@ -52,7 +52,7 @@ void Client::Recv() {
 	case CS_PACKET_PLAYER_MOVE:
 	{
 		cs_packet_player_move recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>((&recvPecket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval = recv(sock, reinterpret_cast<char*>(&recvPecket)+2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		std::cout << "ID: " << id << " , cs_packet_player_move : " << (int)recvPecket.dir << std::endl;
 		/*
@@ -73,7 +73,7 @@ void Client::Recv() {
 	case CS_PACKET_SHOOT_BULLET:
 	{
 		cs_packet_shoot_bullet recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>((&recvPecket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval = recv(sock, reinterpret_cast<char*>(&recvPecket)+2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		std::cout << "ID: " << id << " , cs_packet_player_move : " << (int)recvPecket.shootX << " " << (int)recvPecket.shootY << " " << (int)recvPecket.dir << std::endl;
 		/*

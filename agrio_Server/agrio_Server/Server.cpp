@@ -40,7 +40,7 @@ int main()
 		while (1) {
 	
 
-			net->update();
+			//net->update();
 			
 		}
 	}

@@ -9,24 +9,24 @@ Network* Network::GetInstance()
 {
 	return instance;
 }
-void Network::ProcessClient(void* arg)
+void Network::ProcessClient(int id)
 {
-	Client* client = (Client*)arg;
+	Client& client = Clients[id];
 
 
-	while (true)
-		client->Recv();
+	while (true) {
+		client.Recv();
+	}
 
 	return ;
 }
-void Network::AcceptThread(void* arg) {
-	SOCKET listensock = (SOCKET)arg;
+void Network::AcceptThread() {
 	SOCKADDR_IN ClientAddr;
 	int addrlen;
 	int id = 0;
 	while (id < 4) {
 		addrlen = sizeof(ClientAddr);
-		SOCKET client_sock = accept(listensock, (SOCKADDR*)&ClientAddr, &addrlen);
+		SOCKET client_sock = accept(listen_sock, (SOCKADDR*)&ClientAddr, &addrlen);
 		if (client_sock == INVALID_SOCKET) {
 			err_display("accept()");
 			return;
@@ -37,7 +37,7 @@ void Network::AcceptThread(void* arg) {
 
 		Clients.emplace_back(client_sock, id++);//이부분 해결해야됨
 
-		threads.emplace_back(&Network::ProcessClient, Network::GetInstance(), (void*)client_sock);
+		threads.emplace_back(&Network::ProcessClient, Network::GetInstance(), id-1);
 		
 	}
 }
@@ -90,7 +90,7 @@ void Network::send_put_obj(int id) {
 void Network::send_move_obj(int id) {
 	sc_packet_obj_move sendPutPacket;
 	sendPutPacket.packetSize = sizeof(sendPutPacket);
-	sendPutPacket.packetType = SC_PACKET_PUT_OBJ;
+	sendPutPacket.packetType = SC_PACKET_OBJ_MOVE;
 	// objectID, lookDir, x, y;
 
 	Clients[id].Send(&sendPutPacket);

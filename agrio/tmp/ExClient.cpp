@@ -1,10 +1,14 @@
-#pragma comment(lib, "ws2_32")
-#include <winsock2.h>
 #include <cstdlib>
 #include <iostream>
+#include <thread>
+#define _WINSOCK_DEPRECATED_NO_WARNINGS
+#include <winsock2.h>
+#pragma comment(lib, "ws2_32")
+
 #include"../../agrio_Server/agrio_Server/Protocol.h"
+
 #define SERVERIP	"127.0.0.1"
-#define SERVERPORT	9000
+#define SERVERPORT	4000
 #define BUFSIZE		512
 
 using namespace std;
@@ -88,7 +92,7 @@ void Recv(SOCKET sock) {
 	}
 }
 
-DWORD WINAPI ProcessClient(LPVOID arg)
+void ProcessClient(void* arg)
 {
 	SOCKET sock = reinterpret_cast<SOCKET>(arg);
 	//서버와 데이터 통신
@@ -98,7 +102,7 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 		Recv(sock);
 	}
-	return 0;
+
 }
 
 int main()
@@ -123,12 +127,10 @@ int main()
 	retval = connect(sock, (SOCKADDR*)&ServerAddr, sizeof(ServerAddr));
 	if (retval == SOCKET_ERROR) err_quit("connect()");
 
-	HANDLE hThread;
 
 
-	hThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)sock, 0, NULL);
+	thread recvThread( ProcessClient, (void*)sock);
 
-	if (hThread == NULL)closesocket(sock);
 
 	char buf[BUFSIZE + 1];
 
@@ -175,6 +177,7 @@ int main()
 		cout << "[TCP 클라이언트]" << retval << "바이트 보냈습니다\n";
 	}
 
+	recvThread.join();
 
 	WSACleanup();
 }

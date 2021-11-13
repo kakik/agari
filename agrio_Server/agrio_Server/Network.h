@@ -54,11 +54,11 @@ public:
 	void update();
 	void start_accept() {
 
-		threads.emplace_back(&Network::AcceptThread, Network::GetInstance(), (void*)listen_sock);
+		threads.emplace_back(&Network::AcceptThread, this);
 	}
 
 
-	void ProcessClient(void* arg);
-	void AcceptThread(void* arg);
+	void ProcessClient(int id);
+	void AcceptThread();
 };
 
