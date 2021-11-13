@@ -1,7 +1,7 @@
 #pragma once
-//	서버 주소
-const short SEVER_PORT = 4000;
-const char* SEVER_ADDR = "127.0.0.1";
+
+
+
 
 //	최대 접속 가능 클라이언트
 const char MAX_USER = 3;
@@ -98,4 +98,4 @@ struct sc_packet_change_weapon : packet {
 	char playerID;
 	char gunID; // == itemID
 };
-#pragma pop()
+#pragma pack(pop)
