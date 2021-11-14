@@ -1,7 +1,7 @@
 #include "Game.h"
 
 #define SERVERIP	"127.0.0.1"
-#define SERVERPORT	9000
+#define SERVERPORT	4000
 #define BUFSIZE		512
 
 /********************************** Main **********************************/
