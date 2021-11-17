@@ -12,6 +12,8 @@
 #include <iostream>
 #include <vector>
 
+
+
 /******************************************** 좌표 ********************************************/
 // 스프라이트
 const RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
@@ -115,7 +117,7 @@ struct Coordinate {
 };
 
 class GameObject {
-private:
+protected:
 	Coordinate pos;
 	DIR direction;
 	int sprite;

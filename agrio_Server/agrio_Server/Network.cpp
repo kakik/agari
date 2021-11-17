@@ -74,26 +74,27 @@ void Network::send_login_ok(int id) {
 	sendPacket.packetSize = sizeof(sendPacket);
 	sendPacket.packetType = SC_PACKET_LOGIN_OK;
 	sendPacket.playerID = id;
-	sendPacket.x = 0;
-	sendPacket.y = 0;
+	sendPacket.x = 800;
+	sendPacket.y = 900;
 	Clients[id].Send(&sendPacket);
 }
 
-void Network::send_put_obj(int id) {
+void Network::send_put_obj(int id,int target) {
 	sc_packet_put_obj sendPutPacket;
 	sendPutPacket.packetSize = sizeof(sendPutPacket);
 	sendPutPacket.packetType = SC_PACKET_PUT_OBJ;
 	sendPutPacket.x = 1;
-	sendPutPacket.objectID = id;
+	sendPutPacket.objectID = target;
 	Clients[id].Send(&sendPutPacket);
 }
-void Network::send_move_obj(int id) {
-	sc_packet_obj_move sendPutPacket;
-	sendPutPacket.packetSize = sizeof(sendPutPacket);
-	sendPutPacket.packetType = SC_PACKET_OBJ_MOVE;
+void Network::send_move_obj(int id,int mover) {
+	sc_packet_move_obj sendMovePacket;
+	sendMovePacket.packetSize = sizeof(sendMovePacket);
+	sendMovePacket.packetType = SC_PACKET_MOVE_OBJ;
+	sendMovePacket.objectID = mover;
 	// objectID, lookDir, x, y;
 
-	Clients[id].Send(&sendPutPacket);
+	Clients[id].Send(&sendMovePacket);
 }
 
 void Network::update() {

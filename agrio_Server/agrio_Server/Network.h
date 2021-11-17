@@ -48,8 +48,8 @@ public:
 
 	void send_login_ok(int id);
 
-	void send_put_obj(int id);
-	void send_move_obj(int id);
+	void send_put_obj(int id,int target);
+	void send_move_obj(int id, int mover);
 
 	void update();
 	void start_accept() {

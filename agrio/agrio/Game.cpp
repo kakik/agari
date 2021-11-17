@@ -27,7 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdPar
 
 	RegisterClassEx(&WndClass);
 
-	hWnd = CreateWindow(lpszClass, lpszClass, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME, 
+	hWnd = CreateWindow(lpszClass, lpszClass, WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
 		0, 0, win_x_size + 14, win_y_size + 36, NULL, (HMENU)NULL, g_hInst, NULL);
 
 	ShowWindow(hWnd, nCmdShow);
@@ -43,6 +43,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdPar
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+SOCKET sock;
+void Send(void* Packet);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -75,52 +77,54 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_CREATE:
 	{
+		{
+			/*********************************************이미지 로드*****************************************************/
+			sprites[(int)SPRITE::btnPlay].Load(TEXT("resource/PLAY.png"));
+			sprites[(int)SPRITE::btnExit].Load(TEXT("resource/EXIT.png"));
+			sprites[(int)SPRITE::btnReplay].Load(TEXT("resource/REPLAY.png"));
+			sprites[(int)SPRITE::bgTitle].Load(TEXT("resource/startBack(구).png"));
+			sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/stage.png"));
+			sprites[(int)SPRITE::bgEnd].Load(TEXT("resource/endBack.png"));
+
+			sprites[(int)SPRITE::Izuna].Load(TEXT("resource/Izuna_move.png"));
+			sprites[(int)SPRITE::GenAn].Load(TEXT("resource/Gen-An_move.png"));
+			sprites[(int)SPRITE::Hinagiku].Load(TEXT("resource/Hinagiku_move.png"));
+			sprites[(int)SPRITE::Ichika].Load(TEXT("resource/Ichika_move.png"));
+			sprites[(int)SPRITE::Kagen].Load(TEXT("resource/Kagen_move.png"));
+			sprites[(int)SPRITE::Mitsumoto].Load(TEXT("resource/Mitsumoto_move.png"));
+			sprites[(int)SPRITE::Shino].Load(TEXT("resource/Shino_move.png"));
+			sprites[(int)SPRITE::Sizune].Load(TEXT("resource/Sizune_move.png"));
+
+			sprites[(int)SPRITE::Izuna_Atk].Load(TEXT("resource/Izuna_attack.png"));
+			sprites[(int)SPRITE::GenAn_Atk].Load(TEXT("resource/Gen-An_attack.png"));
+			sprites[(int)SPRITE::Hinagiku_Atk].Load(TEXT("resource/Hinagiku_attack.png"));
+			sprites[(int)SPRITE::Ichika_Atk].Load(TEXT("resource/Ichika_attack.png"));
+			sprites[(int)SPRITE::Kagen_Atk].Load(TEXT("resource/Kagen_attack.png"));
+			sprites[(int)SPRITE::Mitsumoto_Atk].Load(TEXT("resource/Mitsumoto_attack.png"));
+			sprites[(int)SPRITE::Shino_Atk].Load(TEXT("resource/Shino_attack.png"));
+			sprites[(int)SPRITE::Sizune_Atk].Load(TEXT("resource/Sizune_attack.png"));
+
+			sprites[(int)SPRITE::pistol].Load(TEXT("resource/attack_pistol.png"));
+			sprites[(int)SPRITE::uzi].Load(TEXT("resource/attack_uzi.png"));
+			sprites[(int)SPRITE::shotgun].Load(TEXT("resource/attack_shotgun.png"));
+			sprites[(int)SPRITE::box].Load(TEXT("resource/box.png"));
+
+
+			sprites[(int)SPRITE::uiPistol].Load(TEXT("resource/ui_pistol.png"));
+			sprites[(int)SPRITE::uiUzi].Load(TEXT("resource/ui_uzi.png"));
+			sprites[(int)SPRITE::uiShotgun].Load(TEXT("resource/ui_shotgun.png"));
+			sprites[(int)SPRITE::uiBox].Load(TEXT("resource/ui_box.png"));
+			sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_box.png"));	// uiposition 이미지 만들어야함
+
+			sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
+		}
+		
 		/*********************************************이미지 로드*****************************************************/
-		sprites[(int)SPRITE::btnPlay].Load(TEXT("resource/PLAY.png"));
-		sprites[(int)SPRITE::btnExit].Load(TEXT("resource/EXIT.png"));
-		sprites[(int)SPRITE::btnReplay].Load(TEXT("resource/REPLAY.png"));
-		sprites[(int)SPRITE::bgTitle].Load(TEXT("resource/startBack.png"));
-		sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/stage.png"));
-		sprites[(int)SPRITE::bgEnd].Load(TEXT("resource/endBack.png"));
-
-		sprites[(int)SPRITE::Izuna].Load(TEXT("resource/Izuna_move.png"));
-		sprites[(int)SPRITE::GenAn].Load(TEXT("resource/Gen-An_move.png"));
-		sprites[(int)SPRITE::Hinagiku].Load(TEXT("resource/Hinagiku_move.png"));
-		sprites[(int)SPRITE::Ichika].Load(TEXT("resource/Ichika_move.png"));
-		sprites[(int)SPRITE::Kagen].Load(TEXT("resource/Kagen_move.png"));
-		sprites[(int)SPRITE::Mitsumoto].Load(TEXT("resource/Mitsumoto_move.png"));
-		sprites[(int)SPRITE::Shino].Load(TEXT("resource/Shino_move.png"));
-		sprites[(int)SPRITE::Sizune].Load(TEXT("resource/Sizune_move.png"));
-
-		sprites[(int)SPRITE::Izuna_Atk].Load(TEXT("resource/Izuna_attack.png"));
-		sprites[(int)SPRITE::GenAn_Atk].Load(TEXT("resource/Gen-An_attack.png"));
-		sprites[(int)SPRITE::Hinagiku_Atk].Load(TEXT("resource/Hinagiku_attack.png"));
-		sprites[(int)SPRITE::Ichika_Atk].Load(TEXT("resource/Ichika_attack.png"));
-		sprites[(int)SPRITE::Kagen_Atk].Load(TEXT("resource/Kagen_attack.png"));
-		sprites[(int)SPRITE::Mitsumoto_Atk].Load(TEXT("resource/Mitsumoto_attack.png"));
-		sprites[(int)SPRITE::Shino_Atk].Load(TEXT("resource/Shino_attack.png"));
-		sprites[(int)SPRITE::Sizune_Atk].Load(TEXT("resource/Sizune_attack.png"));
-
-		sprites[(int)SPRITE::pistol].Load(TEXT("resource/attack_pistol.png"));
-		sprites[(int)SPRITE::uzi].Load(TEXT("resource/attack_uzi.png"));
-		sprites[(int)SPRITE::shotgun].Load(TEXT("resource/attack_shotgun.png"));
-		sprites[(int)SPRITE::box].Load(TEXT("resource/box.png"));
-
-
-		sprites[(int)SPRITE::uiPistol].Load(TEXT("resource/ui_pistol.png"));
-		sprites[(int)SPRITE::uiUzi].Load(TEXT("resource/ui_uzi.png"));
-		sprites[(int)SPRITE::uiShotgun].Load(TEXT("resource/ui_shotgun.png"));
-		sprites[(int)SPRITE::uiBox].Load(TEXT("resource/ui_box.png"));
-		sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_box.png"));	// uiposition 이미지 만들어야함
-
-		sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
-
-		/*********************************************이미지 로드*****************************************************/
-
+		gameObject.reserve(1000);
 		for (int i = 0; i < 4; ++i)
 		{
 			Player* player = new Player;
-			gameObject.push_back((GameObject*)player);
+			gameObject.push_back(reinterpret_cast<GameObject*>(player));
 		}
 		for (int i = 0; i < 100; ++i)
 		{
@@ -128,7 +132,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			gameObject.push_back(obj);
 		}
 
-		
+
 		gameObject[5]->test();	////////////////////////// 임시
 
 		////////////////////////////////////////// winsock ///////////////////////////////////////////////
@@ -140,7 +144,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			return 1;
 
 		//socket
-		SOCKET sock = socket(AF_INET, SOCK_STREAM, 0);
+		sock = socket(AF_INET, SOCK_STREAM, 0);
 		if (sock == INVALID_SOCKET) err_quit("socket");
 
 		//connect
@@ -150,6 +154,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		ServerAddr.sin_family = AF_INET;
 		ServerAddr.sin_addr.s_addr = inet_addr(SERVERIP);
 		ServerAddr.sin_port = htons(SERVERPORT);
+
+		// 연결 실패하면 재연결하도록 바꾸자
 		retval = connect(sock, (SOCKADDR*)&ServerAddr, sizeof(ServerAddr));
 		if (retval == SOCKET_ERROR) err_quit("connect()");
 
@@ -306,7 +312,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			memdc1 = dc.GetDC();
 			sprites[(int)SPRITE::bgEnd].Draw(memdc1, 0, 0, win_x_size, win_y_size);
 
-			
+
 			sprites[(int)SPRITE::btnReplay].Draw(memdc1, replay_button_rect);	//replay버튼
 			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit2_button_rect);		//exit버튼
 
@@ -356,6 +362,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (play_button == true)
 			{
 				scene = SCENE::lobby;
+
+				cs_packet_login packet;
+				packet.packetSize = sizeof(cs_packet_login);
+				packet.packetType = CS_PACKET_LOGIN;
+				packet.playerSkin = playerSel;
+				Send(&packet);
 				play_button = false;
 				InvalidateRect(hWnd, NULL, false);
 			}
@@ -474,11 +486,12 @@ void GameObject::LoginOk(void* pk)
 	isActive = true;
 	pos.x = recvPacket->x;
 	pos.y = recvPacket->y;
+	sprite = playerSel;
 }
 
 void GameObject::ObjMove(void* pk)
 {
-	sc_packet_obj_move* recvPacket = (sc_packet_obj_move*)pk;
+	sc_packet_move_obj* recvPacket = (sc_packet_move_obj*)pk;
 
 	direction = (DIR)recvPacket->lookDir;
 	pos.x = (int)recvPacket->x;
@@ -524,31 +537,40 @@ void Player::ChangeWeapon(void* pk)
 
 void Player::ChangeHp(void* pk)
 {
-	
+
 }
 
 void Player::GetItem(void* pk)
 {
-	
+
 }
 
 void Player::ItemCount(void* pk)
 {
-	
+
 }
 
 void Player::UseItem(int index)
 {
-	
+
 }
 
 void Player::Render(HDC& hdc)
 {
+	if (isActive)
+		sprites[sprite].Draw(hdc, pos.x - (50 / 2), pos.y + (50 / 2), 50, 50);
 
 }
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void Send(void* Packet)
+{
+
+	int retval = send(sock, reinterpret_cast<char*>(Packet), reinterpret_cast<packet*>(Packet)->packetSize, 0);
+	std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
+
+}
 
 void Recv(SOCKET sock) {
 
@@ -564,7 +586,7 @@ void Recv(SOCKET sock) {
 	case SC_PACKET_LOGIN_OK:
 	{
 		sc_packet_login_ok recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		playerID = (int)recvPacket.playerID;
 		gameObject[playerID]->LoginOk(&recvPacket);
@@ -573,15 +595,15 @@ void Recv(SOCKET sock) {
 	case SC_PACKET_PUT_OBJ:
 	{
 		sc_packet_put_obj recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		gameObject[(int)recvPacket.objectID]->PutObj(&recvPacket);
 	}
 	break;
-	case SC_PACKET_OBJ_MOVE:
+	case SC_PACKET_MOVE_OBJ:
 	{
-		sc_packet_obj_move recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		sc_packet_move_obj recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		gameObject[(int)recvPacket.objectID]->PutObj(&recvPacket);
 	}
@@ -589,7 +611,7 @@ void Recv(SOCKET sock) {
 	case SC_PACKET_REMOVE_OBJ:
 	{
 		sc_packet_remove_obj recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>((&recvPacket + 2)), pkSize.packetSize - 2, MSG_WAITALL);
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		gameObject[(int)recvPacket.objectID]->RemoveObj();
 	}
@@ -611,7 +633,7 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 	}
 	return 0;
 }
- 
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GameObject::test()
@@ -620,7 +642,7 @@ void GameObject::test()
 	width = 30;
 	height = 40;
 	sprite = (int)SPRITE::box;
-	pos.x = 800;
+	pos.x = 850;
 	pos.y = 900;
 }
 

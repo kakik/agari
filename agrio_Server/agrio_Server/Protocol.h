@@ -22,7 +22,7 @@ const char CS_PACKET_USED_ITEM = 5;
 //	패킷 타입(Server->Client)
 const char SC_PACKET_LOGIN_OK = 1;
 const char SC_PACKET_CHANGE_SCENE = 2;
-const char SC_PACKET_OBJ_MOVE = 3;
+const char SC_PACKET_MOVE_OBJ = 3;
 const char SC_PACKET_PLAYER_STATE = 4;
 const char SC_PACKET_PUT_OBJ = 5;
 const char SC_PACKET_REMOVE_OBJ = 6;
@@ -57,15 +57,15 @@ struct cs_packet_used_item : packet {
 //	패킷 정의(Server->Client)
 struct sc_packet_login_ok : packet {
 	char playerID;
-	char x, y;
+	short x, y;
 };
 struct sc_packet_change_scene : packet {
 	char sceneNum;
 };
-struct sc_packet_obj_move : packet {
+struct sc_packet_move_obj : packet {
 	char objectID;
 	char lookDir;
-	char x, y;
+	short x, y;
 };
 struct sc_packet_player_state : packet {
 	char objectID;
@@ -74,7 +74,7 @@ struct sc_packet_player_state : packet {
 struct sc_packet_put_obj : packet {
 	char objectID;
 	char sprite;
-	char x, y;
+	short x, y;
 	unsigned char width, height;
 };
 struct sc_packet_remove_obj : packet {

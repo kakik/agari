@@ -28,15 +28,17 @@ void Client::Recv() {
 		cs_packet_login recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>((&recvPecket))+2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		std::cout << "ID: " << id << " , cs_packet_login : " << (int)recvPecket.playerSkin << std::endl;
+		std::cout << "ID: " << id << " , Skin : " << (int)recvPecket.playerSkin << std::endl;
 
 		net->send_login_ok(id);
 		/*
 		* 새로 접속한 클라이언트에게 현재 그려야할 플레이어를 알려줌
 		*/
+		
+		//클라이언트와 게임오브젝트를 합쳐야될 것 같음
 		for (const auto& Client : net->Clients) {
 			if (Client.id != id) {
-				net->send_put_obj(Client.id);
+				net->send_put_obj(id,Client.id);
 			}
 		}
 		/*
@@ -44,7 +46,7 @@ void Client::Recv() {
 		*/
 		for (const auto& Client : net->Clients) {
 			if (Client.id != id) {
-				net->send_put_obj(id);
+				net->send_put_obj(Client.id,id);
 			}
 		}
 	}
@@ -60,7 +62,7 @@ void Client::Recv() {
 		*/
 		for (const auto& Client : net->Clients) {
 			if (Client.id != id) {
-				net->send_move_obj(Client.id);
+				net->send_move_obj(Client.id,id);
 			}
 		}
 	}
@@ -81,7 +83,7 @@ void Client::Recv() {
 		*/
 		for (const auto& Client : net->Clients) {
 			if (Client.id != id) {//
-				net->send_move_obj(Client.id);
+				//net->send_move_obj(Client.id);
 			}
 		}
 

@@ -5,11 +5,11 @@
 
 void GameObject::Update(char* buf, int& bufStart) 
 {
-	sc_packet_obj_move pk;
+	sc_packet_move_obj pk;
 	pk.lookDir = direction;
 	pk.objectID = id;
 	pk.packetSize = sizeof(pk);
-	pk.packetType = SC_PACKET_OBJ_MOVE;
+	pk.packetType = SC_PACKET_MOVE_OBJ;
 	pk.x = 1;
 	pk.y = 1;
 	
