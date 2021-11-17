@@ -21,8 +21,8 @@
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{dcacdd03-97a6-47e3-8d87-0c40157386a7}</ProjectGuid>
-    <RootNamespace>agrioServer</RootNamespace>
+    <ProjectGuid>{65dc471d-f050-40e3-b29c-b9658499fda8}</ProjectGuid>
+    <RootNamespace>tmp</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -139,17 +139,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Client.h" />
-    <ClInclude Include="GameObject.h" />
-    <ClInclude Include="Network.h" />
-    <ClInclude Include="Protocol.h" />
-    <ClInclude Include="stdfx.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="Client.cpp" />
-    <ClCompile Include="GameObject.cpp" />
-    <ClCompile Include="Network.cpp" />
-    <ClCompile Include="Server.cpp" />
+    <ClCompile Include="ExClient.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
