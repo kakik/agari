@@ -1,5 +1,8 @@
 #pragma once
 
+const short PLAYER_WIDTH = 18;
+const short PLAYER_HEIGHT = 30;
+
 struct Coordinate
 {
 	short x, y;

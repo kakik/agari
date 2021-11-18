@@ -58,6 +58,7 @@ struct cs_packet_used_item : packet {
 struct sc_packet_login_ok : packet {
 	char playerID;
 	short x, y;
+	short width, height;
 };
 struct sc_packet_change_scene : packet {
 	char sceneNum;

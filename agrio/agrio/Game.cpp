@@ -510,6 +510,8 @@ void GameObject::LoginOk(void* pk)
 	isActive = true;
 	pos.x = recvPacket->x;
 	pos.y = recvPacket->y;
+	width = recvPacket->width;
+	height = recvPacket->height;
 	playerID = recvPacket->playerID;
 	sprite = selPlayer;
 }

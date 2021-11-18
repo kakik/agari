@@ -76,6 +76,8 @@ void Network::send_login_ok(int id) {
 	sendPacket.playerID = id;
 	sendPacket.x = 800;
 	sendPacket.y = 900;
+	sendPacket.width = PLAYER_WIDTH;
+	sendPacket.height = PLAYER_HEIGHT;
 	Clients[id].Send(&sendPacket);
 }
 
