@@ -70,10 +70,7 @@ enum class SCENE
 {
 	title, lobby, stage1, gameover
 };
-enum class STATE
-{
-	idle, move, attack
-};
+
 
 // 스프라이트
 enum class SPRITE

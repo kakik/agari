@@ -9,14 +9,14 @@ struct Coordinate
 };
 class GameObject
 {
-protected:
+public:
 	char direction;
 	float velocity;
-	unsigned char width, height;
+	unsigned short width, height;
 	unsigned char id;
-	bool isActive;
-
+	bool isMove = false;
 public:
+	bool isActive = false;
 	Coordinate pos;
 	unsigned char GetId() const {
 		return id;
@@ -25,21 +25,20 @@ public:
 	void Move(void* pk);
 	void SetBullet(void* pk);
 	void SetBox(void* pk);
-	void Update(char* buf, int& buf_start);
+	void Update(float elapsedTime,char* buf, int& buf_start);
 	void IsCollision(GameObject* other);
 };
 
+
 class Player : public GameObject
 {
+public:
+
 	char curEquip;
 	char state;
 	short hp;
 	short items[8];
-
 	SOCKET sock;
-
-
-
 
 public:
 	Player();
@@ -51,12 +50,13 @@ public:
 		sock = socket;
 	};
 	void Send(void* Packet) const;
-	void Recv();
+	bool Recv();
 
 	void ChangeState(void* pk);
 	void UseItem(void* pk);
 
 	void ChangeHP(short hp);
-	void LogIn(void* pk);
+	void SendLogIn();
+
 
 };

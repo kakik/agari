@@ -1,7 +1,7 @@
 #include "Game.h"
 
-#define SERVERIP	"127.0.0.1"
-#define SERVERPORT	4000
+#define SERVERIP	"121.139.87.12"
+#define SERVERPORT	9000
 #define BUFSIZE		512
 
 /********************************** Main **********************************/
@@ -727,7 +727,7 @@ void Recv(SOCKET sock) {
 		sc_packet_move_obj recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		gameObject[(int)recvPacket.objectID]->PutObj(&recvPacket);
+		gameObject[(int)recvPacket.objectID]->ObjMove(&recvPacket);
 	}
 	break;
 	case SC_PACKET_REMOVE_OBJ:
