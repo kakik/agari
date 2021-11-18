@@ -32,6 +32,8 @@ public:
 
 class Player : public GameObject
 {
+public:
+
 	char curEquip;
 	char state;
 	short hp;
@@ -46,27 +48,15 @@ public:
 	void SetSockId(SOCKET socket, int clientId) {
 		id = clientId;
 		sock = socket;
-
 	};
 	void Send(void* Packet) const;
-	void Recv();
+	bool Recv();
 
 	void ChangeState(void* pk);
 	void UseItem(void* pk);
 
 	void ChangeHP(short hp);
-	void SendLogIn() {
-		sc_packet_login_ok sendPacket;
-		sendPacket.packetSize = sizeof(sendPacket);
-		sendPacket.packetType = SC_PACKET_LOGIN_OK;
-		id = sendPacket.playerID = id;
-		pos.x = sendPacket.x = (short)800;
-		pos.y = sendPacket.y = (short)900;
-		width = sendPacket.width = PLAYER_WIDTH;
-		height = sendPacket.height = PLAYER_HEIGHT;
-
-		Send(&sendPacket);
-	}
+	void SendLogIn();
 
 
 };

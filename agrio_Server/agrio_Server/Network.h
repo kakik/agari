@@ -31,8 +31,6 @@ public:
 	static Network* GetInstance();
 	Network() {
 		assert(instance == nullptr);
-
-
 		for (int i = 0; i < 100;++i) {
 			GameObjects.push_back(new GameObject);
 		}
@@ -51,17 +49,29 @@ public:
 			delete go;
 		}
 	}
+	void disconnect(int id) {
+		Player* p = reinterpret_cast<Player*>(GameObjects[id]);
+		closesocket(p->sock);
+		GameObjects[id]->isActive = false;
+		GameObjects[id]->isMove = false;
+	}
+	char get_id() {
+		for (int i = 0; i < MAX_USER; ++i) {
+			if (false == GameObjects[i]->isActive) return i;
+		}
+	}
 	bool is_player(int id) {
 		return (id >= 0) && (id < 4);
+	}
+	void start_accept() {
+		threads.emplace_back(&Network::AcceptThread, this);
 	}
 
 	void send_put_obj(int id,int target);
 	void send_move_obj(int id, int mover);
 
 	void update(float elapsedTime);
-	void start_accept() {
-		threads.emplace_back(&Network::AcceptThread, this);
-	}
+
 
 
 	void ProcessClient(int id);

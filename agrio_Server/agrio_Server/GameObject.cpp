@@ -36,20 +36,20 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 
 		case (char)DIR::SE:
 			pos.x += speed;
-			pos.y -= speed;
+			pos.y += speed;
 			break;
 
 		case (char)DIR::SW:
 			pos.x -= speed;
-			pos.y -= speed;
+			pos.y += speed;
 			break;
 
 		case (char)DIR::E:
-			pos.x -= speed;
+			pos.x += speed;
 			break;
 
 		case (char)DIR::W:
-			pos.x += speed;
+			pos.x -= speed;
 			break;
 
 		default:
@@ -65,19 +65,33 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 }
 
 
+
+void Player::SendLogIn() {
+	sc_packet_login_ok sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_LOGIN_OK;
+	sendPacket.playerID = id;
+	pos.x = sendPacket.x = (short)800;
+	pos.y = sendPacket.y = (short)900;
+	width = sendPacket.width = PLAYER_WIDTH;
+	height = sendPacket.height = PLAYER_HEIGHT;
+
+	Send(&sendPacket);
+}
 void Player::Send(void* Packet) const
 {
 	int retval = send(sock, reinterpret_cast<char*>(Packet), reinterpret_cast<packet*>(Packet)->packetSize, 0);
-	std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
+	//std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
 }
 
-void Player::Recv() {
+bool Player::Recv() {
 	Network* net = Network::GetInstance();
 	packet pkSize;
 	int retval = recv(sock, reinterpret_cast<char*>(&pkSize), sizeof(packet), MSG_WAITALL);
 	if (retval == SOCKET_ERROR) {
-		err_display("send()");
-		return;
+		net->disconnect(id);
+		err_display("recv()");
+		return false;
 	}
 	std::cout << "Size : " << (int)pkSize.packetSize << std::endl;
 	std::cout << "Type : " << (int)pkSize.packetType << std::endl;
@@ -88,12 +102,12 @@ void Player::Recv() {
 	{
 		cs_packet_login recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>((&recvPecket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-
-		std::cout << "ID: " << id << " , Skin : " << (int)recvPecket.playerSkin << std::endl;
+		
+		id = net->get_id();
 		isActive = true;
 		direction = (char)DIR::N;
 
-		SendLogIn();
+
 		/*
 		* 새로 접속한 클라이언트에게 현재 그려야할 플레이어를 알려줌
 		*/
@@ -110,6 +124,7 @@ void Player::Recv() {
 			if (id == Client->GetId()) continue;
 			net->send_put_obj(Client->GetId(), id);
 		}
+		SendLogIn();
 	}
 	break;
 	case CS_PACKET_PLAYER_MOVE:
@@ -117,7 +132,6 @@ void Player::Recv() {
 		cs_packet_player_move recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>(&recvPecket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		std::cout << "ID: " << id << " , cs_packet_player_move : " << (int)recvPecket.dir << std::endl;
 		/*
 		* 각 클라이언트들한테 플레이어가 이동했으니 해당 플레이어 오브젝트를 이동 하라고함
 		*/
@@ -159,7 +173,6 @@ void Player::Recv() {
 		cs_packet_shoot_bullet recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>(&recvPecket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		std::cout << "ID: " << id << " , cs_packet_player_move : " << (int)recvPecket.shootX << " " << (int)recvPecket.shootY << " " << (int)recvPecket.dir << std::endl;
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
@@ -180,4 +193,5 @@ void Player::Recv() {
 		std::cout << "잘못된 패킷 전송";
 		break;
 	}
+	return true;
 }
