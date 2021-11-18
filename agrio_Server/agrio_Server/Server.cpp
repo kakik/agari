@@ -2,9 +2,9 @@
 #include "Network.h"
 
 using namespace std;
-
+using namespace chrono;
 //	서버 주소
-const short SEVER_PORT = 4000;
+const short SEVER_PORT = 8000;
 const char* SEVER_ADDR = "127.0.0.1";
 
 Network network;
@@ -37,11 +37,20 @@ int main()
 
 		int nClient = 0;
 		nClient++;
+		
+		auto pre_t = system_clock::now();
 		while (1) {
-	
-
-			//net->update();
+			auto cur_t = system_clock::now();
+			float elapsed = duration_cast<chrono::milliseconds>(cur_t - pre_t).count()/float(1000);
+			net->update(elapsed);
 			
+
+			
+			pre_t = cur_t;
+			if (system_clock::now() - pre_t < 16ms) {
+				this_thread::sleep_for(16ms - (system_clock::now() - cur_t));
+				//cout << "update " << chrono::duration_cast<chrono::milliseconds>(end_t - start_t).count() << "ms\n";
+			}
 		}
 	}
 

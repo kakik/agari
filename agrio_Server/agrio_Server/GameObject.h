@@ -9,14 +9,14 @@ struct Coordinate
 };
 class GameObject
 {
-protected:
+public:
 	char direction;
 	float velocity;
-	unsigned char width, height;
+	unsigned short width, height;
 	unsigned char id;
-	bool isActive;
-
+	bool isMove = false;
 public:
+	bool isActive = false;
 	Coordinate pos;
 	unsigned char GetId() const {
 		return id;
@@ -25,9 +25,10 @@ public:
 	void Move(void* pk);
 	void SetBullet(void* pk);
 	void SetBox(void* pk);
-	void Update(char* buf, int& buf_start);
+	void Update(float elapsedTime,char* buf, int& buf_start);
 	void IsCollision(GameObject* other);
 };
+
 
 class Player : public GameObject
 {
@@ -35,11 +36,7 @@ class Player : public GameObject
 	char state;
 	short hp;
 	short items[8];
-
 	SOCKET sock;
-
-
-
 
 public:
 	Player();
@@ -49,6 +46,7 @@ public:
 	void SetSockId(SOCKET socket, int clientId) {
 		id = clientId;
 		sock = socket;
+
 	};
 	void Send(void* Packet) const;
 	void Recv();
@@ -57,6 +55,18 @@ public:
 	void UseItem(void* pk);
 
 	void ChangeHP(short hp);
-	void LogIn(void* pk);
+	void SendLogIn() {
+		sc_packet_login_ok sendPacket;
+		sendPacket.packetSize = sizeof(sendPacket);
+		sendPacket.packetType = SC_PACKET_LOGIN_OK;
+		id = sendPacket.playerID = id;
+		pos.x = sendPacket.x = (short)800;
+		pos.y = sendPacket.y = (short)900;
+		width = sendPacket.width = PLAYER_WIDTH;
+		height = sendPacket.height = PLAYER_HEIGHT;
+
+		Send(&sendPacket);
+	}
+
 
 };

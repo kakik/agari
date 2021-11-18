@@ -1,7 +1,10 @@
 #pragma once
 
 
-
+enum class STATE
+{
+	idle, move, attack
+};
 
 //	최대 접속 가능 클라이언트
 const char MAX_USER = 3;
@@ -18,6 +21,8 @@ const char CS_PACKET_PLAYER_MOVE = 2;
 const char CS_PACKET_PLAYER_STATE = 3;
 const char CS_PACKET_SHOOT_BULLET = 4;
 const char CS_PACKET_USED_ITEM = 5;
+const char CS_PACKET_KEY_DOWN = 6;
+const char CS_PACKET_KEY_UP = 7;
 
 //	패킷 타입(Server->Client)
 const char SC_PACKET_LOGIN_OK = 1;
@@ -43,6 +48,7 @@ struct cs_packet_login : packet {
 struct cs_packet_player_move : packet {
 	char dir;
 };
+
 struct cs_packet_player_state : packet {
 	char playerState;
 };
@@ -53,7 +59,13 @@ struct cs_packet_shoot_bullet : packet {
 struct cs_packet_used_item : packet {
 	char itemNum;
 };
-
+struct cs_packet_keydown : packet {
+	short shootX, shootY;
+	char dir;
+};
+struct cs_packet_keyup : packet {
+	
+};
 //	패킷 정의(Server->Client)
 struct sc_packet_login_ok : packet {
 	char playerID;
