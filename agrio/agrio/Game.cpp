@@ -441,6 +441,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 		}
+
+		// Lobby packet test
+		if (scene == SCENE::lobby)
+		{
+			switch (wParam)
+			{
+			case VK_ESCAPE:
+				PostQuitMessage(0);
+				break;
+			case VK_LEFT:
+				cs_packet_player_move sendMovePacket;
+				sendMovePacket.packetSize = sizeof(sendMovePacket);
+				sendMovePacket.packetType = CS_PACKET_PLAYER_MOVE;
+				sendMovePacket.dir = 1;
+				Send(&sendMovePacket);
+				break;
+			}
+		}
 	}
 	break;
 
@@ -623,7 +641,8 @@ void Recv(SOCKET sock) {
 
 DWORD WINAPI ProcessClient(LPVOID arg)
 {
-	SOCKET sock = reinterpret_cast<SOCKET>(arg);
+	// 전역 Sock이 있는데 이거 쓰는거 맞나?
+	//SOCKET sock = reinterpret_cast<SOCKET>(arg);
 	//서버와 데이터 통신
 	int len;
 
@@ -631,6 +650,7 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 		Recv(sock);
 	}
+
 	return 0;
 }
 
