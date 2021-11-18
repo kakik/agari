@@ -101,7 +101,7 @@ unsigned __int64 TIMER;
 // 타이틀 창에서 캐릭터 선택하게 해주는 변수들
 int selAnimation = 0;
 int selTimer = 100;
-int playerSel = (int)SPRITE::Izuna;
+int selPlayer = (int)SPRITE::Izuna;
 
 // 플레이어의 인덱스 값
 int playerID;
@@ -125,6 +125,10 @@ protected:
 	bool isActive = false;
 
 public:
+	GameObject();
+
+	Coordinate GetPos() { return pos; }
+
 	void LoginOk(void* pk);
 	void ObjMove(void* pk);
 	void PutObj(void* pk);
@@ -140,6 +144,8 @@ private:
 	char state;
 	short hp;
 	short items[8];
+	
+	int animFrame = 0;
 
 public:
 	void PlayerState(void* pk);
@@ -149,6 +155,7 @@ public:
 	void ItemCount(void* pk);
 	void UseItem(int index);
 	virtual void Render(HDC& hdc);
+
 
 	virtual void test();
 };

@@ -148,7 +148,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (sock == INVALID_SOCKET) err_quit("socket");
 
 		//connect
-
 		SOCKADDR_IN ServerAddr;
 		ZeroMemory(&ServerAddr, sizeof(ServerAddr));
 		ServerAddr.sin_family = AF_INET;
@@ -160,11 +159,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		if (retval == SOCKET_ERROR) err_quit("connect()");
 
 		HANDLE hThread;
-
-
 		hThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)sock, 0, NULL);
 
 		if (hThread == NULL)closesocket(sock);
+
+		cs_packet_login packet;
+		packet.packetSize = sizeof(cs_packet_login);
+		packet.packetType = CS_PACKET_LOGIN;
+		packet.playerSkin = selPlayer;
+		Send(&packet);
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -197,7 +200,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit_button_rect);
 
 			// 선택용 스프라이트
-			sprites[playerSel].Draw(memdc1, 680, 100, character_width * 2, character_height * 2,
+			sprites[selPlayer].Draw(memdc1, 680, 100, character_width * 2, character_height * 2,
 				char_move_sprite_rect[(int)DIR::S][selAnimation].left, char_move_sprite_rect[(int)DIR::S][selAnimation].top, 18, 30);
 
 			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);	// 아래에 Bitblt랑 동일
@@ -222,35 +225,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			////////////////////////////////////////// 화면 영역 ///////////////////////////////////////////////
 			// UI 오버레이들만 memdc2에 출력함
 
-			int tempX = 900, tempY = 800;	////////////////////////// 임시
+			Coordinate playerPos = gameObject[playerID]->GetPos();	// 플레이어 좌표
 
 			dc2.Create(win_x_size, win_y_size, 24);		// 화면 출력용 DC
 			memdc2 = dc2.GetDC();						// 화면 출력용 DC
 
-			if (tempX <= (win_x_size / 2))
+			if (playerPos.x <= (win_x_size / 2))
 			{
 				play_size_left = 0;
 			}
-			else if (tempX >= (win_x_size * 2) - (win_x_size / 2))
+			else if (playerPos.x >= (win_x_size * 2) - (win_x_size / 2))
 			{
 				play_size_left = (win_x_size * 2) - win_x_size;
 			}
 			else
 			{
-				play_size_left = tempX - (win_x_size / 2);
+				play_size_left = playerPos.x - (win_x_size / 2);
 			}
 
-			if (tempY <= (win_y_size / 2))
+			if (playerPos.y <= (win_y_size / 2))
 			{
 				play_size_top = 0;
 			}
-			else if (tempY >= (win_y_size * 2) - (win_y_size / 2))
+			else if (playerPos.y >= (win_y_size * 2) - (win_y_size / 2))
 			{
 				play_size_top = (win_y_size * 2) - win_y_size;
 			}
 			else
 			{
-				play_size_top = tempY - (win_y_size / 2);
+				play_size_top = playerPos.y - (win_y_size / 2);
 			}
 
 			dc.BitBlt(memdc2, 0, 0, win_x_size, win_y_size, play_size_left, play_size_top);
@@ -362,12 +365,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			if (play_button == true)
 			{
 				scene = SCENE::lobby;
-
-				cs_packet_login packet;
-				packet.packetSize = sizeof(cs_packet_login);
-				packet.packetType = CS_PACKET_LOGIN;
-				packet.playerSkin = playerSel;
-				Send(&packet);
 				play_button = false;
 				InvalidateRect(hWnd, NULL, false);
 			}
@@ -409,35 +406,35 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (wParam)
 			{
 			case '1':
-				playerSel = (int)SPRITE::Izuna;
+				selPlayer = (int)SPRITE::Izuna;
 				break;
 
 			case '2':
-				playerSel = (int)SPRITE::GenAn;
+				selPlayer = (int)SPRITE::GenAn;
 				break;
 
 			case '3':
-				playerSel = (int)SPRITE::Hinagiku;
+				selPlayer = (int)SPRITE::Hinagiku;
 				break;
 
 			case '4':
-				playerSel = (int)SPRITE::Ichika;
+				selPlayer = (int)SPRITE::Ichika;
 				break;
 
 			case '5':
-				playerSel = (int)SPRITE::Kagen;
+				selPlayer = (int)SPRITE::Kagen;
 				break;
 
 			case '6':
-				playerSel = (int)SPRITE::Mitsumoto;
+				selPlayer = (int)SPRITE::Mitsumoto;
 				break;
 
 			case '7':
-				playerSel = (int)SPRITE::Shino;
+				selPlayer = (int)SPRITE::Shino;
 				break;
 
 			case '8':
-				playerSel = (int)SPRITE::Sizune;
+				selPlayer = (int)SPRITE::Sizune;
 				break;
 			}
 		}
@@ -497,6 +494,15 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+GameObject::GameObject()
+{
+	pos = { 0, 0 };
+	sprite = 0;
+	width = 0;
+	height = 0;
+	direction = DIR::N;
+}
+
 void GameObject::LoginOk(void* pk)
 {
 	sc_packet_login_ok* recvPacket = (sc_packet_login_ok*)pk;
@@ -504,7 +510,8 @@ void GameObject::LoginOk(void* pk)
 	isActive = true;
 	pos.x = recvPacket->x;
 	pos.y = recvPacket->y;
-	sprite = playerSel;
+	playerID = recvPacket->playerID;
+	sprite = selPlayer;
 }
 
 void GameObject::ObjMove(void* pk)
@@ -576,8 +583,8 @@ void Player::UseItem(int index)
 void Player::Render(HDC& hdc)
 {
 	if (isActive)
-		sprites[sprite].Draw(hdc, pos.x - (50 / 2), pos.y + (50 / 2), 50, 50);
-
+		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height, 
+			char_move_sprite_rect[(int)direction][animFrame].left, char_move_sprite_rect[(int)direction][animFrame].top, 18, 30);
 }
 
 
