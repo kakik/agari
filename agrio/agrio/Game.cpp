@@ -123,7 +123,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		/*********************************************이미지 로드*****************************************************/
 		gameObject.reserve(1000);
-		for (int i = 0; i < 4; ++i)
+		for (int i = 0; i < 3; ++i)
 		{
 			Player* player = new Player;
 			gameObject.push_back(reinterpret_cast<GameObject*>(player));
@@ -523,7 +523,7 @@ void ConnectServer()
 	cs_packet_login packet;
 	packet.packetSize = sizeof(cs_packet_login);
 	packet.packetType = CS_PACKET_LOGIN;
-	packet.playerSkin = selPlayer;
+	packet.playerSkin = (char)selPlayer;
 	Send(&packet);
 }
 
@@ -684,6 +684,16 @@ void GameObject::Render(HDC& hdc)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Player::Player()
+{
+	curGun = 0;
+	state = STATE::idle;
+	hp = 0;
+	animFrame = 0;
+	for (int i = 0; i < 8; ++i)
+		items[i] = 0;
+}
+
 void Player::PlayerState(void* pk)
 {
 
