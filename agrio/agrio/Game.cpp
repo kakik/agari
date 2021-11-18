@@ -44,7 +44,9 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdPar
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 SOCKET sock;
+void ConnectServer();
 void Send(void* Packet);
+void SendMovePacket(char dir);
 
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -135,39 +137,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		gameObject[5]->test();	////////////////////////// 임시
 
-		////////////////////////////////////////// winsock ///////////////////////////////////////////////
-
-		int retval;
-
-		WSADATA wsa;
-		if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
-			return 1;
-
-		//socket
-		sock = socket(AF_INET, SOCK_STREAM, 0);
-		if (sock == INVALID_SOCKET) err_quit("socket");
-
-		//connect
-		SOCKADDR_IN ServerAddr;
-		ZeroMemory(&ServerAddr, sizeof(ServerAddr));
-		ServerAddr.sin_family = AF_INET;
-		ServerAddr.sin_addr.s_addr = inet_addr(SERVERIP);
-		ServerAddr.sin_port = htons(SERVERPORT);
-
-		// 연결 실패하면 재연결하도록 바꾸자
-		retval = connect(sock, (SOCKADDR*)&ServerAddr, sizeof(ServerAddr));
-		if (retval == SOCKET_ERROR) err_quit("connect()");
-
-		HANDLE hThread;
-		hThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)sock, 0, NULL);
-
-		if (hThread == NULL)closesocket(sock);
-
-		cs_packet_login packet;
-		packet.packetSize = sizeof(cs_packet_login);
-		packet.packetType = CS_PACKET_LOGIN;
-		packet.playerSkin = selPlayer;
-		Send(&packet);
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 
@@ -364,6 +333,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			if (play_button == true)
 			{
+				ConnectServer();
+				while (!isLoginOk);
 				scene = SCENE::lobby;
 				play_button = false;
 				InvalidateRect(hWnd, NULL, false);
@@ -448,11 +419,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				PostQuitMessage(0);
 				break;
 			case VK_LEFT:
-				cs_packet_player_move sendMovePacket;
-				sendMovePacket.packetSize = sizeof(sendMovePacket);
-				sendMovePacket.packetType = CS_PACKET_PLAYER_MOVE;
-				sendMovePacket.dir = 1;
-				Send(&sendMovePacket);
+				SendMovePacket((char)DIR::E);
+				break;
+			case VK_RIGHT:
+				SendMovePacket((char)DIR::W);
+				break;
+			case VK_UP:
+				SendMovePacket((char)DIR::N);
+				break;
+			case VK_DOWN:
+				SendMovePacket((char)DIR::S);
+				break;
+			case VK_SPACE:
+				cs_packet_shoot_bullet sendPacket;
+				sendPacket.packetSize = sizeof(sendPacket);
+				sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
+				Coordinate pos = gameObject[playerID]->GetPos();
+				sendPacket.dir = (char)gameObject[playerID]->GetDir();
+				Send(&sendPacket);
 				break;
 			}
 		}
@@ -471,7 +455,49 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	return DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
+void ConnectServer()
+{
+	int retval;
 
+	WSADATA wsa;
+	if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
+		return;
+
+	//socket
+	sock = socket(AF_INET, SOCK_STREAM, 0);
+	if (sock == INVALID_SOCKET) err_quit("socket");
+
+	//connect
+	SOCKADDR_IN ServerAddr;
+	ZeroMemory(&ServerAddr, sizeof(ServerAddr));
+	ServerAddr.sin_family = AF_INET;
+	ServerAddr.sin_addr.s_addr = inet_addr(SERVERIP);
+	ServerAddr.sin_port = htons(SERVERPORT);
+
+	// 연결 실패하면 재연결하도록 바꾸자
+	retval = connect(sock, (SOCKADDR*)&ServerAddr, sizeof(ServerAddr));
+	if (retval == SOCKET_ERROR) err_quit("connect()");
+
+	HANDLE hThread;
+	hThread = CreateThread(NULL, 0, ProcessClient, (LPVOID)sock, 0, NULL);
+
+	if (hThread == NULL)closesocket(sock);
+
+	cs_packet_login packet;
+	packet.packetSize = sizeof(cs_packet_login);
+	packet.packetType = CS_PACKET_LOGIN;
+	packet.playerSkin = selPlayer;
+	Send(&packet);
+}
+
+void SendMovePacket(char dir)
+{
+	cs_packet_player_move sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
+	sendPacket.dir = dir;
+	Send(&sendPacket);
+}
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -617,6 +643,7 @@ void Recv(SOCKET sock) {
 
 		playerID = (int)recvPacket.playerID;
 		gameObject[playerID]->LoginOk(&recvPacket);
+		isLoginOk = true;
 	}
 	break;
 	case SC_PACKET_PUT_OBJ:

@@ -95,7 +95,7 @@ const int character_width = 38;
 const int character_height = 60;
 const int win_x_size = 900;      //윈도우 x사이즈
 const int win_y_size = 800;      //윈도우 y사이즈
-
+bool isLoginOk = false;			// 로그인ok가 올때까지 대기
 unsigned __int64 TIMER;
 
 // 타이틀 창에서 캐릭터 선택하게 해주는 변수들
@@ -128,6 +128,7 @@ public:
 	GameObject();
 
 	Coordinate GetPos() { return pos; }
+	DIR GetDir() { return direction; }
 
 	void LoginOk(void* pk);
 	void ObjMove(void* pk);
