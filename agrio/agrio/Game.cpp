@@ -120,7 +120,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
 		}
-		
+
 		/*********************************************이미지 로드*****************************************************/
 		gameObject.reserve(1000);
 		for (int i = 0; i < 4; ++i)
@@ -179,6 +179,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		else if (scene == SCENE::lobby)
 		{
+			while (!isLoginOk);
 			dc.Create(win_x_size * 2, win_y_size * 2, 24);	// == CreateCompatibleBitmap
 			memdc1 = dc.GetDC();							// == CreateComaptibleDC
 
@@ -413,22 +414,89 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// Lobby packet test
 		if (scene == SCENE::lobby)
 		{
+			Player* p = (Player*)gameObject[playerID];
 			switch (wParam)
 			{
 			case VK_ESCAPE:
 				PostQuitMessage(0);
 				break;
 			case VK_LEFT:
-				SendMovePacket((char)DIR::E);
+				if ((gameObject[playerID]->GetDir() == DIR::E) || (gameObject[playerID]->GetDir() == DIR::W)
+					|| (gameObject[playerID]->GetDir() == DIR::NE) || (gameObject[playerID]->GetDir() == DIR::SE))  //이동 방향을 서로
+					SendMovePacket((char)DIR::W);
+				else if (gameObject[playerID]->GetDir() == DIR::N)	//이동 방향을 북서로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::NW);
+					else
+						SendMovePacket((char)DIR::W);
+				}
+				else if (gameObject[playerID]->GetDir() == DIR::S)  //이동 방향을 남서로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::SW);
+					else
+						SendMovePacket((char)DIR::W);
+				}
 				break;
 			case VK_RIGHT:
-				SendMovePacket((char)DIR::W);
+				if ((gameObject[playerID]->GetDir() == DIR::E) || (gameObject[playerID]->GetDir() == DIR::W)
+					|| (gameObject[playerID]->GetDir() == DIR::NW) || (gameObject[playerID]->GetDir() == DIR::SW))  //이동 방향을 동으로
+					SendMovePacket((char)DIR::E);
+				else if (gameObject[playerID]->GetDir() == DIR::N)  //이동 방향을 북동으로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::NE);
+					else
+						SendMovePacket((char)DIR::E);
+				}
+				else if (gameObject[playerID]->GetDir() == DIR::S)  //이동 방향을 남동으로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::SE);
+					else
+						SendMovePacket((char)DIR::E);
+				}
 				break;
 			case VK_UP:
-				SendMovePacket((char)DIR::N);
+				if ((gameObject[playerID]->GetDir() == DIR::N) || (gameObject[playerID]->GetDir() == DIR::S)
+					|| (gameObject[playerID]->GetDir() == DIR::SE) || (gameObject[playerID]->GetDir() == DIR::SW))  //이동 방향을 북으로
+					SendMovePacket((char)DIR::N);
+				else if (gameObject[playerID]->GetDir() == DIR::W)  //이동 방향을 북서로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::NW);
+					else
+						SendMovePacket((char)DIR::N);
+				}
+				else if (gameObject[playerID]->GetDir() == DIR::E)  //이동 방향을 북동으로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::NE);
+					else
+						SendMovePacket((char)DIR::N);
+				}
+
 				break;
 			case VK_DOWN:
-				SendMovePacket((char)DIR::S);
+				if ((gameObject[playerID]->GetDir() == DIR::N) || (gameObject[playerID]->GetDir() == DIR::S)
+					|| (gameObject[playerID]->GetDir() == DIR::NE) || (gameObject[playerID]->GetDir() == DIR::NW))  //이동 방향을 남으로
+					SendMovePacket((char)DIR::S);
+				else if (gameObject[playerID]->GetDir() == DIR::W)  //이동 방향을 남서로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::SW);
+					else
+						SendMovePacket((char)DIR::S);
+				}
+				else if (gameObject[playerID]->GetDir() == DIR::E)  //이동 방향을 남동으로
+				{
+					if (p->GetState() == (char)STATE::move)
+						SendMovePacket((char)DIR::SE);
+					else
+						SendMovePacket((char)DIR::S);
+				}
+
 				break;
 			case VK_SPACE:
 				cs_packet_shoot_bullet sendPacket;
@@ -498,6 +566,7 @@ void SendMovePacket(char dir)
 	sendPacket.dir = dir;
 	Send(&sendPacket);
 }
+
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -611,7 +680,7 @@ void Player::UseItem(int index)
 void Player::Render(HDC& hdc)
 {
 	if (isActive)
-		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height, 
+		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height,
 			char_move_sprite_rect[(int)direction][animFrame].left, char_move_sprite_rect[(int)direction][animFrame].top, 18, 30);
 }
 
@@ -640,7 +709,6 @@ void Recv(SOCKET sock) {
 	{
 		sc_packet_login_ok recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-
 		playerID = (int)recvPacket.playerID;
 		gameObject[playerID]->LoginOk(&recvPacket);
 		isLoginOk = true;
