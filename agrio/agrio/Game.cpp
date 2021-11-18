@@ -417,87 +417,26 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			Player* p = (Player*)gameObject[playerID];
 			switch (wParam)
 			{
-			case VK_ESCAPE:
-				PostQuitMessage(0);
-				break;
 			case VK_LEFT:
-				if ((gameObject[playerID]->GetDir() == DIR::E) || (gameObject[playerID]->GetDir() == DIR::W)
-					|| (gameObject[playerID]->GetDir() == DIR::NE) || (gameObject[playerID]->GetDir() == DIR::SE))  //이동 방향을 서로
-					SendMovePacket((char)DIR::W);
-				else if (gameObject[playerID]->GetDir() == DIR::N)	//이동 방향을 북서로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::NW);
-					else
-						SendMovePacket((char)DIR::W);
-				}
-				else if (gameObject[playerID]->GetDir() == DIR::S)  //이동 방향을 남서로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::SW);
-					else
-						SendMovePacket((char)DIR::W);
-				}
+				keyAction.keyDown = true;
+				keyAction.left = true;
 				break;
+
 			case VK_RIGHT:
-				if ((gameObject[playerID]->GetDir() == DIR::E) || (gameObject[playerID]->GetDir() == DIR::W)
-					|| (gameObject[playerID]->GetDir() == DIR::NW) || (gameObject[playerID]->GetDir() == DIR::SW))  //이동 방향을 동으로
-					SendMovePacket((char)DIR::E);
-				else if (gameObject[playerID]->GetDir() == DIR::N)  //이동 방향을 북동으로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::NE);
-					else
-						SendMovePacket((char)DIR::E);
-				}
-				else if (gameObject[playerID]->GetDir() == DIR::S)  //이동 방향을 남동으로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::SE);
-					else
-						SendMovePacket((char)DIR::E);
-				}
+				keyAction.keyDown = true;
+				keyAction.right = true;
 				break;
+
 			case VK_UP:
-				if ((gameObject[playerID]->GetDir() == DIR::N) || (gameObject[playerID]->GetDir() == DIR::S)
-					|| (gameObject[playerID]->GetDir() == DIR::SE) || (gameObject[playerID]->GetDir() == DIR::SW))  //이동 방향을 북으로
-					SendMovePacket((char)DIR::N);
-				else if (gameObject[playerID]->GetDir() == DIR::W)  //이동 방향을 북서로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::NW);
-					else
-						SendMovePacket((char)DIR::N);
-				}
-				else if (gameObject[playerID]->GetDir() == DIR::E)  //이동 방향을 북동으로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::NE);
-					else
-						SendMovePacket((char)DIR::N);
-				}
-
+				keyAction.keyDown = true;
+				keyAction.up = true;
 				break;
+
 			case VK_DOWN:
-				if ((gameObject[playerID]->GetDir() == DIR::N) || (gameObject[playerID]->GetDir() == DIR::S)
-					|| (gameObject[playerID]->GetDir() == DIR::NE) || (gameObject[playerID]->GetDir() == DIR::NW))  //이동 방향을 남으로
-					SendMovePacket((char)DIR::S);
-				else if (gameObject[playerID]->GetDir() == DIR::W)  //이동 방향을 남서로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::SW);
-					else
-						SendMovePacket((char)DIR::S);
-				}
-				else if (gameObject[playerID]->GetDir() == DIR::E)  //이동 방향을 남동으로
-				{
-					if (p->GetState() == (char)STATE::move)
-						SendMovePacket((char)DIR::SE);
-					else
-						SendMovePacket((char)DIR::S);
-				}
-
+				keyAction.keyDown = true;
+				keyAction.down = true;
 				break;
+
 			case VK_SPACE:
 				cs_packet_shoot_bullet sendPacket;
 				sendPacket.packetSize = sizeof(sendPacket);
@@ -513,6 +452,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_KEYUP:
 	{
+		if (scene == SCENE::lobby)
+		{
+			Player* p = (Player*)gameObject[playerID];
+			switch (wParam)
+			{
+			case VK_ESCAPE:
+				PostQuitMessage(0);
+				break;
+
+			case VK_LEFT:
+				keyAction.keyUp = true;
+				keyAction.left = false;
+				break;
+
+			case VK_RIGHT:
+				keyAction.keyUp = true;
+				keyAction.right = false;
+				break;
+
+			case VK_UP:
+				keyAction.keyUp = true;
+				keyAction.up = false;
+				break;
+
+			case VK_DOWN:
+				keyAction.keyUp = true;
+				keyAction.down = false;
+				break;
+			}
+		}
 	}
 	break;
 
@@ -584,6 +553,73 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		}
 	}
 
+	else if (scene == SCENE::gameover)
+	{
+
+	}
+
+	// lobby, stage1, stage2 등등등...
+	else 
+	{
+		if (keyAction.keyDown || keyAction.keyUp)
+		{
+			if (keyAction.left && keyAction.up)
+				gameObject[playerID]->SetDir(DIR::NW);
+
+			else if (keyAction.right && keyAction.up)
+				gameObject[playerID]->SetDir(DIR::NE);
+
+			else if (keyAction.left && keyAction.down)
+				gameObject[playerID]->SetDir(DIR::SW);
+
+			else if (keyAction.right && keyAction.down)				
+				gameObject[playerID]->SetDir(DIR::SE);
+
+			else if (keyAction.left)
+				gameObject[playerID]->SetDir(DIR::W);
+
+			else if (keyAction.right)
+				gameObject[playerID]->SetDir(DIR::E);
+
+			else if (keyAction.up)
+				gameObject[playerID]->SetDir(DIR::N);
+
+			else if (keyAction.down)
+				gameObject[playerID]->SetDir(DIR::S);
+
+			Player* p = (Player*)gameObject[playerID];
+
+			if (keyAction.keyDown)
+			{
+				p->SetState(STATE::move);
+
+				cs_packet_player_move sendPacket;
+				sendPacket.packetSize = sizeof(sendPacket);
+				sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
+				sendPacket.dir = (char)p->GetDir();
+				Send(&sendPacket);
+
+				cs_packet_player_state sendStatePacket;
+				sendStatePacket.packetSize = sizeof(sendStatePacket);
+				sendStatePacket.packetType = CS_PACKET_PLAYER_STATE;
+				sendStatePacket.playerState = (char)p->GetState();
+				Send(&sendStatePacket);
+			}
+			else if (keyAction.keyUp)
+			{
+				p->SetState(STATE::idle);
+				cs_packet_player_state sendStatePacket;
+				sendStatePacket.packetSize = sizeof(sendStatePacket);
+				sendStatePacket.packetType = CS_PACKET_PLAYER_STATE;
+				sendStatePacket.playerState = (char)p->GetState();
+				Send(&sendStatePacket);
+			}
+		}
+		
+		keyAction.keyDown = false;
+		keyAction.keyUp = false;
+	}
+
 	TIMER = GetTickCount64();
 	InvalidateRect(hWnd, NULL, false);
 }
@@ -593,8 +629,8 @@ GameObject::GameObject()
 {
 	pos = { 0, 0 };
 	sprite = 0;
-	width = 0;
-	height = 0;
+	width = 1;
+	height = 1;
 	direction = DIR::N;
 }
 
@@ -624,6 +660,7 @@ void GameObject::PutObj(void* pk)
 {
 	sc_packet_put_obj* recvPacket = (sc_packet_put_obj*)pk;
 
+	isActive = true;
 	sprite = (int)recvPacket->sprite;
 	pos.x = (int)recvPacket->x;
 	pos.y = (int)recvPacket->y;
@@ -688,10 +725,8 @@ void Player::Render(HDC& hdc)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void Send(void* Packet)
 {
-
 	int retval = send(sock, reinterpret_cast<char*>(Packet), reinterpret_cast<packet*>(Packet)->packetSize, 0);
 	std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
-
 }
 
 void Recv(SOCKET sock) {

@@ -93,6 +93,15 @@ const int character_height = 60;
 const int win_x_size = 900;      //윈도우 x사이즈
 const int win_y_size = 800;      //윈도우 y사이즈
 bool isLoginOk = false;			// 로그인ok가 올때까지 대기
+
+struct KEY_ACTION
+{
+	bool left = false, right = false;
+	bool up = false, down = false;
+	bool keyDown = false, keyUp = false;
+};
+KEY_ACTION keyAction;
+
 unsigned __int64 TIMER;
 
 // 타이틀 창에서 캐릭터 선택하게 해주는 변수들
@@ -123,9 +132,10 @@ protected:
 
 public:
 	GameObject();
-
+	// getter / setter
 	Coordinate GetPos() { return pos; }
 	DIR GetDir() { return direction; }
+	void SetDir(DIR newDir) { direction = newDir; }
 
 	void LoginOk(void* pk);
 	void ObjMove(void* pk);
@@ -136,15 +146,18 @@ public:
 	virtual void test();
 };
 
-class Player : GameObject {
+class Player : public GameObject {
 private:
 	char curGun;
-	char state;
+	STATE state;
 	short hp;
 	short items[8];
 	int animFrame = 0;
 
 public:
+	STATE GetState() { return state; }
+	void SetState(STATE newState) { state = newState; }
+
 	void PlayerState(void* pk);
 	void ChangeWeapon(void* pk);
 	void ChangeHp(void* pk);
@@ -152,7 +165,6 @@ public:
 	void ItemCount(void* pk);
 	void UseItem(int index);
 	virtual void Render(HDC& hdc);
-	char GetState() { return state; };
 
 	virtual void test();
 };
