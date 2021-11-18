@@ -25,19 +25,17 @@ class Network
 public:
 	
 	std::vector<std::thread> threads;
-	std::vector<GameObject> GameObjects;
-	std::vector<Client> Clients;
+	std::vector<GameObject*> GameObjects;
+
 	SOCKET listen_sock;
 	static Network* GetInstance();
 	Network() {
 		assert(instance == nullptr);
-
+		GameObjects.resize(100);
 		instance = this;
 		WSADATA wsa;
 		if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)
 			return;
-
-		Clients.reserve(3);
 	}
 	~Network() {
 		for (auto& th : threads)
@@ -45,7 +43,9 @@ public:
 		closesocket(listen_sock);
 		WSACleanup();
 	}
-
+	bool is_player(int id) {
+		return (id >= 0) && (id < 4);
+	}
 	void send_login_ok(int id);
 
 	void send_put_obj(int id,int target);

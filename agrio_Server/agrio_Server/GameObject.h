@@ -6,10 +6,10 @@ const short PLAYER_HEIGHT = 30;
 struct Coordinate
 {
 	short x, y;
-}; 
+};
 class GameObject
 {
-	Coordinate pos;
+protected:
 	char direction;
 	float velocity;
 	unsigned char width, height;
@@ -17,6 +17,12 @@ class GameObject
 	bool isActive;
 
 public:
+	Coordinate pos;
+	unsigned char GetId() const {
+		return id;
+	}
+
+	void Move(void* pk);
 	void SetBullet(void* pk);
 	void SetBox(void* pk);
 	void Update(char* buf, int& buf_start);
@@ -29,13 +35,27 @@ class Player : public GameObject
 	char state;
 	short hp;
 	short items[8];
+
+	SOCKET sock;
+
+
+
+
 public:
 	Player();
+
 	~Player();
+
+	void SetSockId(SOCKET socket, int clientId) {
+		id = clientId;
+		sock = socket;
+	};
+	void Send(void* Packet) const;
+	void Recv();
 
 	void ChangeState(void* pk);
 	void UseItem(void* pk);
-	void Move(void* pk);
+
 	void ChangeHP(short hp);
 	void LogIn(void* pk);
 
