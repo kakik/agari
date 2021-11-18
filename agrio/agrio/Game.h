@@ -145,7 +145,6 @@ private:
 	char state;
 	short hp;
 	short items[8];
-	
 	int animFrame = 0;
 
 public:
@@ -156,7 +155,7 @@ public:
 	void ItemCount(void* pk);
 	void UseItem(int index);
 	virtual void Render(HDC& hdc);
-
+	char GetState() { return state; };
 
 	virtual void test();
 };
