@@ -152,9 +152,11 @@ private:
 	STATE state;
 	short hp;
 	short items[8];
-	int animFrame = 0;
+	int animFrame;
 
 public:
+	Player();
+
 	STATE GetState() { return state; }
 	void SetState(STATE newState) { state = newState; }
 
