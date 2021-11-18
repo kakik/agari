@@ -89,7 +89,6 @@ struct sc_packet_get_item : packet {
 	char playerID;
 	char itemID;
 };
-
 struct sc_packet_item_count : packet {
 	char playerID;
 	char itemID;
