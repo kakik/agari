@@ -59,6 +59,7 @@ public:
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) return i;
 		}
+		return -1;
 	}
 	bool is_player(int id) {
 		return (id >= 0) && (id < 4);
@@ -69,6 +70,7 @@ public:
 
 	void send_put_obj(int id,int target);
 	void send_move_obj(int id, int mover);
+	void send_change_state(int id, int target);
 
 	void update(float elapsedTime);
 

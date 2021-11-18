@@ -11,7 +11,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		pk.packetType = SC_PACKET_MOVE_OBJ;
 		pk.lookDir = direction;
 		pk.objectID = id;
-
+		
 		short speed = static_cast<short>( 100 * elapsedTime);
 		switch (direction)
 		{
@@ -104,10 +104,17 @@ bool Player::Recv() {
 		retval = recv(sock, reinterpret_cast<char*>((&recvPecket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 		
 		id = net->get_id();
+		if (id == -1) {
+			std::cout << "남는 아이디가 없습니다." << std::endl;
+			return false;
+		}
+		std::cout << "id : " << (int)id << std::endl;
+		sprite = recvPecket.playerSkin;
 		isActive = true;
 		direction = (char)DIR::N;
 
 
+		SendLogIn();
 		/*
 		* 새로 접속한 클라이언트에게 현재 그려야할 플레이어를 알려줌
 		*/
@@ -124,7 +131,6 @@ bool Player::Recv() {
 			if (id == Client->GetId()) continue;
 			net->send_put_obj(Client->GetId(), id);
 		}
-		SendLogIn();
 	}
 	break;
 	case CS_PACKET_PLAYER_MOVE:
@@ -150,17 +156,28 @@ bool Player::Recv() {
 		case (char)STATE::idle:
 		{
 			isMove = false;
+			state = STATE::idle;
+			for (int i = 0; i < MAX_USER; ++i) {
+				//net->send_change_state(i, id);
+			}
 		}
 		break;
 
 		case (char)STATE::move:
 		{
 			isMove = true;
+			state = STATE::move;
+			for (int i = 0; i < MAX_USER; ++i) {
+				//net->send_change_state(i, id);
+			}
 		}
 		break;
 		case (char)STATE::attack:
 		{
-			
+			state = STATE::attack;
+			for (int i = 0; i < MAX_USER; ++i) {
+				//net->send_change_state(i, id);
+			}
 		}
 		break;
 		default:

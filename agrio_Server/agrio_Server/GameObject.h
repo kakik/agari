@@ -14,6 +14,8 @@ public:
 	float velocity;
 	unsigned short width, height;
 	unsigned char id;
+	char sprite;
+
 	bool isMove = false;
 public:
 	bool isActive = false;
@@ -35,7 +37,7 @@ class Player : public GameObject
 public:
 
 	char curEquip;
-	char state;
+	STATE state;
 	short hp;
 	short items[8];
 	SOCKET sock;
