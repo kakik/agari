@@ -79,7 +79,8 @@ enum class SPRITE
 	Izuna, Izuna_Atk, GenAn, GenAn_Atk, Hinagiku, Hinagiku_Atk, Ichika, Ichika_Atk, Kagen, Kagen_Atk, Mitsumoto, Mitsumoto_Atk, Shino, Shino_Atk, Sizune, Sizune_Atk,
 	pistol, uzi, shotgun, box,
 	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
-	itemBox
+	itemBox, 
+	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW
 };
 
 // Win API
@@ -98,7 +99,7 @@ struct KEY_ACTION
 {
 	bool left = false, right = false;
 	bool up = false, down = false;
-	bool keyDown = false, keyUp = false;
+	bool reqSend = false;
 };
 KEY_ACTION keyAction;
 
@@ -110,7 +111,8 @@ int selTimer = 100;
 int selPlayer = (int)SPRITE::Izuna;
 
 // 플레이어의 인덱스 값
-int playerID;
+int playerID = 0;
+int selectedWeapon = 0;
 
 // 씬
 SCENE scene = SCENE::title;
@@ -148,17 +150,19 @@ public:
 
 class Player : public GameObject {
 private:
-	char curGun;
+	int curGun;
 	STATE state;
 	short hp;
-	short items[8];
 	int animFrame;
 
 public:
+	short items[8];
+
 	Player();
 
 	STATE GetState() { return state; }
 	void SetState(STATE newState) { state = newState; }
+	void SetWeapon(int newWeapon) { curGun = newWeapon; }
 
 	void PlayerState(void* pk);
 	void ChangeWeapon(void* pk);
@@ -173,7 +177,7 @@ public:
 
 
 std::vector<GameObject*> gameObject;
-CImage sprites[32];
+CImage sprites[40];
 
 /******************************************** 함수 ********************************************/
 LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);

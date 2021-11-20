@@ -1,7 +1,7 @@
 #include "Game.h"
 
-#define SERVERIP	"121.139.87.12"
-#define SERVERPORT	9000
+#define SERVERIP	"127.0.0.1"
+#define SERVERPORT	8000
 #define BUFSIZE		512
 
 /********************************** Main **********************************/
@@ -119,6 +119,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_box.png"));	// uiposition 이미지 만들어야함
 
 			sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
+
+			sprites[(int)SPRITE::bulletN].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletNE].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletE].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletSE].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletS].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletSW].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletW].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletNW].Load(TEXT("resource/itembox.png"));
 		}
 
 		/*********************************************이미지 로드*****************************************************/
@@ -235,17 +244,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			hbrush = CreateSolidBrush(RGB(255, 255, 255));
 			oldbrush = (HBRUSH)SelectObject(memdc2, hbrush);
+
+			Player* p = (Player*)gameObject[playerID];
+
 			for (int i = 0; i < 5; ++i)
 			{
-				RECT print_rect = weapon_image_rect[i];		// 개수 받아올수 있도록 수정해야함
-				wsprintf(bullet_num, TEXT("%d"), 0);
+				RECT print_rect = weapon_image_rect[i];
+				wsprintf(bullet_num, TEXT("%d"), p->items[i]);
 				wsprintf(weapon_num, TEXT("%d"), i + 1);
 
-				//if (selected_weapon == i)  //선택된 무기는 25픽셀 위에 출력
-				//{
-				//	print_rect.top -= 25;
-				//	print_rect.bottom -= 25;
-				//}
+				if (selectedWeapon - 1 == i)  //선택된 무기는 25픽셀 위에 출력
+				{
+					print_rect.top -= 25;
+					print_rect.bottom -= 25;
+				}
 				RoundRect(memdc2, print_rect.left, print_rect.top, print_rect.right, print_rect.bottom, 10, 10);
 
 				sprites[(int)SPRITE::uiPistol + i].Draw(memdc2, print_rect);
@@ -411,32 +423,52 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		// Lobby packet test
-		if (scene == SCENE::lobby)
+		else if (scene == SCENE::gameover)
+		{
+
+		}
+
+		// lobby / stages input
+		else
 		{
 			Player* p = (Player*)gameObject[playerID];
 			switch (wParam)
 			{
 			case VK_LEFT:
-				keyAction.keyDown = true;
-				keyAction.left = true;
+				if (keyAction.left == false)
+				{
+					keyAction.left = true;
+					keyAction.reqSend = true;
+				}
 				break;
 
 			case VK_RIGHT:
-				keyAction.keyDown = true;
-				keyAction.right = true;
+				if (keyAction.right == false)
+				{
+					keyAction.right = true;
+					keyAction.reqSend = true;
+				}
 				break;
 
 			case VK_UP:
-				keyAction.keyDown = true;
-				keyAction.up = true;
+				if (keyAction.up == false)
+				{
+					keyAction.up = true;
+					keyAction.reqSend = true;
+				}
 				break;
 
 			case VK_DOWN:
-				keyAction.keyDown = true;
-				keyAction.down = true;
+				if (keyAction.down == false)
+				{
+					keyAction.down = true;
+					keyAction.reqSend = true;
+				}
 				break;
 
+				// 다음에 수정해야 할꺼
+				// 무기 공격, 아이템 사용
+				// 총알 발사제한, 개수제한도 클라에서 걸꺼임
 			case VK_SPACE:
 				cs_packet_shoot_bullet sendPacket;
 				sendPacket.packetSize = sizeof(sendPacket);
@@ -452,7 +484,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 	case WM_KEYUP:
 	{
-		if (scene == SCENE::lobby)
+		if (scene == SCENE::title)
+		{
+
+		}
+
+		else if (scene == SCENE::gameover)
+		{
+
+		}
+
+		else 
 		{
 			Player* p = (Player*)gameObject[playerID];
 			switch (wParam)
@@ -462,23 +504,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 
 			case VK_LEFT:
-				keyAction.keyUp = true;
 				keyAction.left = false;
+				keyAction.reqSend = true;
 				break;
 
 			case VK_RIGHT:
-				keyAction.keyUp = true;
 				keyAction.right = false;
+				keyAction.reqSend = true;
 				break;
 
 			case VK_UP:
-				keyAction.keyUp = true;
 				keyAction.up = false;
+				keyAction.reqSend = true;
 				break;
 
 			case VK_DOWN:
-				keyAction.keyUp = true;
 				keyAction.down = false;
+				keyAction.reqSend = true;
+				break;
+
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+				int key = (int)(wParam - '0');
+				selectedWeapon = key;
+				p->SetWeapon(key);
 				break;
 			}
 		}
@@ -561,7 +613,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	// lobby, stage1, stage2 등등등...
 	else 
 	{
-		if (keyAction.keyDown || keyAction.keyUp)
+		if (keyAction.reqSend)
 		{
 			if (keyAction.left && keyAction.up)
 				gameObject[playerID]->SetDir(DIR::NW);
@@ -589,35 +641,35 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 			Player* p = (Player*)gameObject[playerID];
 
-			if (keyAction.keyDown)
+			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
 			{
-				p->SetState(STATE::move);
+				p->SetState(STATE::idle);
+				cs_packet_player_state sendPacket;
+				sendPacket.packetSize = sizeof(sendPacket);
+				sendPacket.packetType = CS_PACKET_PLAYER_STATE;
+				sendPacket.playerState = (char)p->GetState();
+				Send(&sendPacket);
+			}
+			else
+			{
+				if (p->GetState() == STATE::idle)
+				{
+					p->SetState(STATE::move);
+					cs_packet_player_state sendPacket;
+					sendPacket.packetSize = sizeof(sendPacket);
+					sendPacket.packetType = CS_PACKET_PLAYER_STATE;
+					sendPacket.playerState = (char)p->GetState();
+					Send(&sendPacket);
+				}
 
 				cs_packet_player_move sendPacket;
 				sendPacket.packetSize = sizeof(sendPacket);
 				sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
 				sendPacket.dir = (char)p->GetDir();
 				Send(&sendPacket);
-
-				cs_packet_player_state sendStatePacket;
-				sendStatePacket.packetSize = sizeof(sendStatePacket);
-				sendStatePacket.packetType = CS_PACKET_PLAYER_STATE;
-				sendStatePacket.playerState = (char)p->GetState();
-				Send(&sendStatePacket);
 			}
-			else if (keyAction.keyUp)
-			{
-				p->SetState(STATE::idle);
-				cs_packet_player_state sendStatePacket;
-				sendStatePacket.packetSize = sizeof(sendStatePacket);
-				sendStatePacket.packetType = CS_PACKET_PLAYER_STATE;
-				sendStatePacket.playerState = (char)p->GetState();
-				Send(&sendStatePacket);
-			}
+			keyAction.reqSend = false;
 		}
-		
-		keyAction.keyDown = false;
-		keyAction.keyUp = false;
 	}
 
 	TIMER = GetTickCount64();
@@ -689,7 +741,7 @@ Player::Player()
 	curGun = 0;
 	state = STATE::idle;
 	hp = 0;
-	animFrame = 0;
+	animFrame = 2;
 	for (int i = 0; i < 8; ++i)
 		items[i] = 0;
 }
@@ -748,6 +800,17 @@ void Recv(SOCKET sock) {
 		return;
 	}
 
+	//	SC_PACKET_LOGIN_OK = 1;
+	//	SC_PACKET_CHANGE_SCENE = 2;
+	//	SC_PACKET_MOVE_OBJ = 3;
+	//	SC_PACKET_PLAYER_STATE = 4;
+	//	SC_PACKET_PUT_OBJ = 5;
+	//	SC_PACKET_REMOVE_OBJ = 6;
+	//	SC_PACKET_CHANGE_HP = 7;
+	//	SC_PACKET_GET_ITEM = 8;
+	//	SC_PACKET_ITEM_COUNT = 9;
+	//	SC_PACKET_CHAGE_WEAPON = 10;
+
 	switch (pkSize.packetType)
 	{
 	case SC_PACKET_LOGIN_OK:
@@ -790,7 +853,6 @@ void Recv(SOCKET sock) {
 
 DWORD WINAPI ProcessClient(LPVOID arg)
 {
-	// 전역 Sock이 있는데 이거 쓰는거 맞나?
 	//SOCKET sock = reinterpret_cast<SOCKET>(arg);
 	//서버와 데이터 통신
 	int len;
