@@ -120,14 +120,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
 
-			sprites[(int)SPRITE::bulletN].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletNE].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletE].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletSE].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletS].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletSW].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletW].Load(TEXT("resource/itembox.png"));
-			sprites[(int)SPRITE::bulletNW].Load(TEXT("resource/itembox.png"));
+			sprites[(int)SPRITE::bulletN].Load(TEXT("resource/b0.png"));
+			sprites[(int)SPRITE::bulletNE].Load(TEXT("resource/b1.png"));
+			sprites[(int)SPRITE::bulletE].Load(TEXT("resource/b2.png"));
+			sprites[(int)SPRITE::bulletSE].Load(TEXT("resource/b3.png"));
+			sprites[(int)SPRITE::bulletS].Load(TEXT("resource/b4.png"));
+			sprites[(int)SPRITE::bulletSW].Load(TEXT("resource/b5.png"));
+			sprites[(int)SPRITE::bulletW].Load(TEXT("resource/b6.png"));
+			sprites[(int)SPRITE::bulletNW].Load(TEXT("resource/b7.png"));
 		}
 
 		/*********************************************이미지 로드*****************************************************/
@@ -142,9 +142,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GameObject* obj = new GameObject;
 			gameObject.push_back(obj);
 		}
-
-
-		gameObject[5]->test();	////////////////////////// 임시
 
 
 		/////////////////////////////////////////////////////////////////////////////////////////
@@ -484,14 +481,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				// 무기 공격, 아이템 사용
 				// 총알 발사제한, 개수제한도 클라에서 걸꺼임
 			case VK_SPACE:
-				cs_packet_shoot_bullet sendPacket;
-				sendPacket.packetSize = sizeof(sendPacket);
-				sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
-				Coordinate pos = gameObject[playerID]->GetPos();
-				sendPacket.shootX = pos.x;
-				sendPacket.shootY = pos.y;
-				sendPacket.dir = (char)gameObject[playerID]->GetDir();
-				Send(&sendPacket);
+				keyAction.space = true;
 				break;
 			}
 		}
@@ -537,6 +527,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case VK_DOWN:
 				keyAction.down = false;
 				keyAction.reqSend = true;
+				break;
+
+			case VK_SPACE:
+				keyAction.space = false;
+				itemTimer = 0;
 				break;
 
 			case '1':
@@ -617,7 +612,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		{
 			selAnimation++;
 			selAnimation %= 4;
-			selTimer = 100;
+			selTimer = ANIMATION_TIME;
 		}
 	}
 
@@ -629,33 +624,33 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	// lobby, stage1, stage2 등등등...
 	else 
 	{
+		Player* p = (Player*)gameObject[playerID];
 		if (keyAction.reqSend)
 		{
+
 			if (keyAction.left && keyAction.up)
-				gameObject[playerID]->SetDir(DIR::NW);
+				p->SetDir(DIR::NW);
 
 			else if (keyAction.right && keyAction.up)
-				gameObject[playerID]->SetDir(DIR::NE);
+				p->SetDir(DIR::NE);
 
 			else if (keyAction.left && keyAction.down)
-				gameObject[playerID]->SetDir(DIR::SW);
+				p->SetDir(DIR::SW);
 
 			else if (keyAction.right && keyAction.down)				
-				gameObject[playerID]->SetDir(DIR::SE);
+				p->SetDir(DIR::SE);
 
 			else if (keyAction.left)
-				gameObject[playerID]->SetDir(DIR::W);
+				p->SetDir(DIR::W);
 
 			else if (keyAction.right)
-				gameObject[playerID]->SetDir(DIR::E);
+				p->SetDir(DIR::E);
 
 			else if (keyAction.up)
-				gameObject[playerID]->SetDir(DIR::N);
+				p->SetDir(DIR::N);
 
 			else if (keyAction.down)
-				gameObject[playerID]->SetDir(DIR::S);
-
-			Player* p = (Player*)gameObject[playerID];
+				p->SetDir(DIR::S);
 
 			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
 			{
@@ -685,6 +680,39 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 				Send(&sendPacket);
 			}
 			keyAction.reqSend = false;
+		}
+
+		if (keyAction.space)
+		{
+			itemTimer -= GetTickCount64() - TIMER;
+			if (itemTimer < 0)
+			{
+				Coordinate pos = p->GetPos();
+				DIR dir = p->GetDir();
+
+				if (selectedWeapon == pistol || selectedWeapon == uzi)
+				{
+					SetBulletPos(dir, pos, 20);
+					cs_packet_shoot_bullet sendPacket;
+					sendPacket.packetSize = sizeof(sendPacket);
+					sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
+					sendPacket.dir = (char)dir;
+					sendPacket.shootX = pos.x;
+					sendPacket.shootY = pos.y;
+				}
+
+				else if (selectedWeapon == shotgun)
+				{
+
+				}
+
+				else if (selectedWeapon == potion || selectedWeapon == box)
+				{
+
+				}
+
+				itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
+			}
 		}
 	}
 
@@ -882,18 +910,46 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void GameObject::test()
+void SetBulletPos(DIR direction, Coordinate& pos, short dist)
 {
-	isActive = true;
-	width = 30;
-	height = 40;
-	sprite = (int)SPRITE::box;
-	pos.x = 850;
-	pos.y = 900;
-}
+	switch (direction)
+	{
+	case DIR::N:
+		pos.y -= dist;
+		break;
+	case DIR::NE:
+		pos.x += dist;
+		pos.y -= dist;
+		break;
 
-void Player::test()
-{
+	case DIR::NW:
+		pos.x -= dist;
+		pos.y -= dist;
+		break;
 
+	case DIR::S:
+		pos.y += dist;
+		break;
+
+	case DIR::SE:
+		pos.x += dist;
+		pos.y += dist;
+		break;
+
+	case DIR::SW:
+		pos.x -= dist;
+		pos.y += dist;
+		break;
+
+	case DIR::E:
+		pos.x += dist;
+		break;
+
+	case DIR::W:
+		pos.x -= dist;
+		break;
+
+	default:
+		break;
+	}
 }

@@ -13,7 +13,7 @@ const char MAX_USER = 3;
 enum class DIR { N, NE, E, SE, S, SW, W, NW };
 
 //	아이템 ID
-enum ITEM { pistol, uzi, shotgun, potion, box };
+enum ITEM { empty, pistol, uzi, shotgun, potion, box };
 
 //	오브젝트 타입
 enum OBJ_TYPE { PLAYER, BOX, BULLET};
