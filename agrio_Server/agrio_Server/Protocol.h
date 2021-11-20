@@ -15,6 +15,9 @@ enum class DIR { N, NE, E, SE, S, SW, W, NW };
 //	아이템 ID
 enum ITEM { pistol, uzi, shotgun, potion, box };
 
+//	오브젝트 타입
+enum OBJ_TYPE { PLAYER, BOX, BULLET};
+
 //	패킷 타입(Client->Server)
 const char CS_PACKET_LOGIN = 1;
 const char CS_PACKET_PLAYER_MOVE = 2;
@@ -35,6 +38,7 @@ const char SC_PACKET_CHANGE_HP = 7;
 const char SC_PACKET_GET_ITEM = 8;
 const char SC_PACKET_ITEM_COUNT = 9;
 const char SC_PACKET_CHAGE_WEAPON = 10;
+
 
 //	패킷 정의(Client->Server)
 #pragma pack(push,1)
@@ -59,13 +63,7 @@ struct cs_packet_shoot_bullet : packet {
 struct cs_packet_used_item : packet {
 	char itemNum;
 };
-struct cs_packet_keydown : packet {
-	short shootX, shootY;
-	char dir;
-};
-struct cs_packet_keyup : packet {
-	
-};
+
 //	패킷 정의(Server->Client)
 struct sc_packet_login_ok : packet {
 	char playerID;

@@ -3,65 +3,86 @@
 #include "GameObject.h"
 
 
-void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
+void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 {
 	if (isMove) {
-		sc_packet_move_obj pk;
+		sc_packet_move_obj& pk = *reinterpret_cast<sc_packet_move_obj*>(buf);
 		pk.packetSize = sizeof(pk);
 		pk.packetType = SC_PACKET_MOVE_OBJ;
 		pk.lookDir = direction;
 		pk.objectID = id;
 		
-		short speed = static_cast<short>( 100 * elapsedTime);
+		short speed = static_cast<short>(velocity * elapsedTime);
+		int x = pos.x;
+		int y = pos.y;
 		switch (direction)
 		{
 		case (char)DIR::N:
 			//pos.x += 1;
-			pos.y -= speed;
+			y -= speed;
 			break;
 		case (char)DIR::NE:
-			pos.x += speed;
-			pos.y -= speed;
+			x += speed;
+			y -= speed;
 			break;
 
 		case (char)DIR::NW:
-			pos.x -= speed;
-			pos.y -= speed;
+			x -= speed;
+			y -= speed;
 			break;
 
 		case (char)DIR::S:
 			//pos.x += 1;
-			pos.y += speed;
+			y += speed;
 			break;
 
 		case (char)DIR::SE:
-			pos.x += speed;
-			pos.y += speed;
+			x += speed;
+			y += speed;
 			break;
 
 		case (char)DIR::SW:
-			pos.x -= speed;
-			pos.y += speed;
+			x -= speed;
+			y += speed;
 			break;
 
 		case (char)DIR::E:
-			pos.x += speed;
+			x += speed;
 			break;
 
 		case (char)DIR::W:
-			pos.x -= speed;
+			x -= speed;
 			break;
 
 		default:
 			break;
 		}
-		pk.x = pos.x;
-		pk.y = pos.y;
-		memcpy(buf + bufStart, &pk, sizeof(pk));
-		bufStart += sizeof(pk);
+		pk.x = x;
+		pk.y = y;
+
+		for (auto obj : Network::GetInstance()->GameObjects) {
+			if (false == obj->isActive)continue;
+			if (id == obj->id)continue;
+			if (Network::GetInstance()->is_collision(id, obj->id)) { 
+				//충돌처리 해줄 것
+				if (Network::GetInstance()->is_player(id)) {
+					//hp --
+				std::cout << "충돌\n";
+
+				}
+				else {
+					isActive = false;
+					isMove = false;
+				}
+				return; 
+			}
+
+		}
+		pos.x = x;
+		pos.y = y;
+		memcpy(buf + bufPos, &pk, sizeof(pk));
+		bufPos += sizeof(pk);
 	}
-
-
 }
 
 
@@ -103,7 +124,7 @@ bool Player::Recv() {
 		cs_packet_login recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>((&recvPecket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 		
-		id = net->get_id();
+		id = net->get_player_id();
 		if (id == -1) {
 			std::cout << "남는 아이디가 없습니다." << std::endl;
 			return false;
@@ -112,8 +133,8 @@ bool Player::Recv() {
 		sprite = recvPecket.playerSkin;
 		isActive = true;
 		direction = (char)DIR::N;
-
-
+		type = PLAYER;
+		velocity = PLAYER_SPEED;
 		SendLogIn();
 		/*
 		* 새로 접속한 클라이언트에게 현재 그려야할 플레이어를 알려줌
@@ -126,10 +147,11 @@ bool Player::Recv() {
 		/*
 		* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
 		*/
-		for (const auto& Client : net->GameObjects) {
-			if (false == net->is_player(Client->GetId())) continue;
-			if (id == Client->GetId()) continue;
-			net->send_put_obj(Client->GetId(), id);
+		for (int i = 0; i < MAX_USER;++i) {
+			Player* p = reinterpret_cast<Player*>(net->GameObjects[i]);
+			if (false == net->is_player(p->GetId())) continue;
+			if (id == p->GetId()) continue;
+			net->send_put_obj(p->GetId(), id);
 		}
 	}
 	break;
@@ -156,6 +178,7 @@ bool Player::Recv() {
 		case (char)STATE::idle:
 		{
 			isMove = false;
+			isAttack = false;
 			state = STATE::idle;
 			for (int i = 0; i < MAX_USER; ++i) {
 				//net->send_change_state(i, id);
@@ -190,14 +213,26 @@ bool Player::Recv() {
 		cs_packet_shoot_bullet recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>(&recvPecket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
+		int obj_id = net->get_obj_id();
+		GameObject* pistol = net->GameObjects[obj_id];
+		pistol->direction = direction;
+		pistol->velocity = 50.f;
+		pistol->width = BULLET_WIDTH;
+		pistol->height = BULLET_HEIGHT;
+		pistol->id = obj_id;
+		pistol->sprite = (char)SPRITE::bulletN + direction;
+		pistol->type = BULLET;
+		pistol->isActive = true;
+		pistol->isMove = true;
+
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
-		//for (const auto& Client : net->GameObjects) {
-		//	if (Client.id != id) {//
-		//		//net->send_move_obj(Client.id);
-		//	}
-		//}
+		for (const auto Client : net->GameObjects) {
+			if (false == Client->isActive) continue;
+			if (id == Client->GetId()) continue;
+			net->send_put_obj(id, Client->GetId());
+		}
 
 	}
 	break;

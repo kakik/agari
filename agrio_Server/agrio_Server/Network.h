@@ -16,14 +16,14 @@
 void err_quit(const char* msg);
 void err_display(const char* msg);
 
-
+const int MAX_OBJECT = 100;
 
 class Network
 {
 	static Network* instance;
 	char buf[BUFSIZE];
 public:
-	
+
 	std::vector<std::thread> threads;
 	std::vector<GameObject*> GameObjects;
 
@@ -31,7 +31,10 @@ public:
 	static Network* GetInstance();
 	Network() {
 		assert(instance == nullptr);
-		for (int i = 0; i < 100;++i) {
+		for (int i = 0; i < MAX_USER; ++i) {
+			GameObjects.push_back(new Player);
+		}
+		for (int i = MAX_USER; i < MAX_OBJECT; ++i) {
 			GameObjects.push_back(new GameObject);
 		}
 		instance = this;
@@ -55,10 +58,18 @@ public:
 		GameObjects[id]->isActive = false;
 		GameObjects[id]->isMove = false;
 	}
-	char get_id() {
+	char get_player_id() {
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) return i;
 		}
+		std::cout << "can not return player id" << std::endl;
+		return -1;
+	}
+	char get_obj_id() {
+		for (int i = 0; i < MAX_USER; ++i) {
+			if (false == GameObjects[i]->isActive) return i;
+		}
+		std::cout << "can not return object id" << std::endl;
 		return -1;
 	}
 	bool is_player(int id) {
@@ -67,8 +78,20 @@ public:
 	void start_accept() {
 		threads.emplace_back(&Network::AcceptThread, this);
 	}
+	bool is_collision(int a_id, int b_id) {
+		GameObject* a = GameObjects[a_id];
+		GameObject* b = GameObjects[b_id];
 
-	void send_put_obj(int id,int target);
+		RECT aRect{ a->pos.x - a->width / 2, a->pos.y - a->height / 2,a->pos.x + a->width / 2,  a->pos.y + a->height };
+		RECT bRect{ b->pos.x - b->width / 2, b->pos.y - b->height / 2,b->pos.x + b->width / 2,  b->pos.y + b->height };
+
+		RECT tmp;
+		if (IntersectRect(&tmp,&aRect, &bRect))
+			return true;
+		else
+			return false;
+	}
+	void send_put_obj(int id, int target);
 	void send_move_obj(int id, int mover);
 	void send_change_state(int id, int target);
 

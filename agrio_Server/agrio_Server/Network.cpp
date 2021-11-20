@@ -80,6 +80,7 @@ void Network::send_put_obj(int id, const int target) {
 	sendPutPacket.sprite = GameObjects[target]->sprite;
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPutPacket);
 }
+
 void Network::send_move_obj(int id, int mover) {
 	sc_packet_move_obj sendMovePacket;
 	sendMovePacket.packetSize = sizeof(sendMovePacket);
@@ -108,6 +109,7 @@ void Network::update(float elapsedTime) {
 		//if (!obj)continue;
 		if (false == obj->isActive) continue;
 		obj->Update(elapsedTime, buf, bufstart);
+		
 	}
 
 	if (0 < bufstart)
