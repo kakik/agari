@@ -57,11 +57,11 @@ public:
 		p->isActive = false;
 		p->isMove = false;
 
-		sc_packet_remove_obj pk;
-		pk.packetSize = sizeof(pk);
-		pk.packetType = SC_PACKET_REMOVE_OBJ;
-		pk.objectID = id;
-		p->Send(&pk);
+		for (int i = 0; i < MAX_USER; ++i) {
+			if (false == GameObjects[id]->isActive) continue;
+			if (id == i) continue;
+			send_remove_obj(i, id);
+		}
 		closesocket(p->sock);
 	}
 	char get_player_id() {
@@ -100,7 +100,7 @@ public:
 	void send_put_obj(int id, int target);
 	void send_move_obj(int id, int mover);
 	void send_change_state(int id, int target);
-
+	void send_remove_obj(int id, int victm);
 	void update(float elapsedTime);
 
 

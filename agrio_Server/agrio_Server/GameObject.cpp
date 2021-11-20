@@ -2,50 +2,7 @@
 #include "Network.h"
 #include "GameObject.h"
 
-void MoveDir(int direction, float speed, int& x, int& y) {
-	switch (direction)
-	{
-	case (char)DIR::N:
-		//pos.x += 1;
-		y -= speed;
-		break;
-	case (char)DIR::NE:
-		x += speed;
-		y -= speed;
-		break;
 
-	case (char)DIR::NW:
-		x -= speed;
-		y -= speed;
-		break;
-
-	case (char)DIR::S:
-		//pos.x += 1;
-		y += speed;
-		break;
-
-	case (char)DIR::SE:
-		x += speed;
-		y += speed;
-		break;
-
-	case (char)DIR::SW:
-		x -= speed;
-		y += speed;
-		break;
-
-	case (char)DIR::E:
-		x += speed;
-		break;
-
-	case (char)DIR::W:
-		x -= speed;
-		break;
-
-	default:
-		break;
-	}
-}
 
 void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 {
@@ -60,7 +17,48 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 		int x = pos.x;
 		int y = pos.y;
 		
+		switch (direction)
+		{
+		case (char)DIR::N:
+			//pos.x += 1;
+			y -= speed;
+			break;
+		case (char)DIR::NE:
+			x += speed;
+			y -= speed;
+			break;
 
+		case (char)DIR::NW:
+			x -= speed;
+			y -= speed;
+			break;
+
+		case (char)DIR::S:
+			//pos.x += 1;
+			y += speed;
+			break;
+
+		case (char)DIR::SE:
+			x += speed;
+			y += speed;
+			break;
+
+		case (char)DIR::SW:
+			x -= speed;
+			y += speed;
+			break;
+
+		case (char)DIR::E:
+			x += speed;
+			break;
+
+		case (char)DIR::W:
+			x -= speed;
+			break;
+
+		default:
+			break;
+		}
 		//충돌일 경우 원래 위치로 돌리기위해 잠깐 사용
 		pk.x = pos.x;
 		pk.y = pos.y;
@@ -79,8 +77,12 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 					pos.y = pk.y;
 				}
 				else {
-					//isActive = false;
-					//isMove = false;
+					isActive = false;
+					isMove = false;
+					for (int i = 0; i < MAX_USER; ++i) {
+						if (false == Network::GetInstance()->GameObjects[id]->isActive) continue;
+						Network::GetInstance()->send_remove_obj(i, id);
+					}
 				}
 				return;
 			}

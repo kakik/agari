@@ -103,6 +103,15 @@ void Network::send_change_state(int id, int target) {
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket);
 }
 
+void Network::send_remove_obj(int id, int victm) {
+	sc_packet_remove_obj sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_PLAYER_STATE;
+	sendPacket.objectID = victm;
+	
+	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket);
+}
+
 void Network::update(float elapsedTime) {
 	int bufstart = 0;
 	for (auto obj : GameObjects) {
