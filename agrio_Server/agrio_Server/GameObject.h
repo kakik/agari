@@ -3,8 +3,7 @@
 const short PLAYER_WIDTH = 18;
 const short PLAYER_HEIGHT = 30;
 
-const short BULLET_WIDTH = 37;
-const short BULLET_HEIGHT = 37;
+
 
 const float PLAYER_SPEED = 100.f;
 enum class SPRITE
