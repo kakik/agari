@@ -58,11 +58,12 @@ public:
 		p->isMove = false;
 
 		for (int i = 0; i < MAX_USER; ++i) {
-			if (false == GameObjects[id]->isActive) continue;
-			if (id == i) continue;
+			if (false == GameObjects[i]->isActive) continue;
 			send_remove_obj(i, id);
 		}
+
 		closesocket(p->sock);
+		threads[id].join();
 	}
 	char get_player_id() {
 		for (int i = 0; i < MAX_USER; ++i) {

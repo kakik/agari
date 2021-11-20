@@ -12,7 +12,7 @@ Network* Network::GetInstance()
 void Network::ProcessClient(int id)
 {
 	Player* client = reinterpret_cast<Player*>(GameObjects[id]);
-
+	
 
 	while (client->Recv()) {
 
@@ -24,9 +24,18 @@ void Network::AcceptThread() {
 	SOCKADDR_IN ClientAddr;
 	int addrlen;
 	int id = 0;
-	while (id < 4) {
+	while (true) {
+		
+		id = get_player_id();
+		if (id == -1) {
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			continue;
+		}
 		addrlen = sizeof(ClientAddr);
 		SOCKET client_sock = accept(listen_sock, (SOCKADDR*)&ClientAddr, &addrlen);
+
+		GameObjects[id]->isActive = true;
+		GameObjects[id]->id = id;
 		if (client_sock == INVALID_SOCKET) {
 			err_display("accept()");
 			return;
@@ -37,7 +46,7 @@ void Network::AcceptThread() {
 		reinterpret_cast<Player*> (GameObjects[id])->SetSockId(client_sock, id);
 
 
-		threads.emplace_back(&Network::ProcessClient, Network::GetInstance(), id++);
+		threads.emplace_back(&Network::ProcessClient, Network::GetInstance(), id);
 
 	}
 }
@@ -106,7 +115,7 @@ void Network::send_change_state(int id, int target) {
 void Network::send_remove_obj(int id, int victm) {
 	sc_packet_remove_obj sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
-	sendPacket.packetType = SC_PACKET_PLAYER_STATE;
+	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
 	
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket);

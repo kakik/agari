@@ -135,11 +135,7 @@ bool Player::Recv() {
 		cs_packet_login recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>((&recvPecket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		id = net->get_player_id();
-		if (id == -1) {
-			std::cout << "남는 아이디가 없습니다." << std::endl;
-			return false;
-		}
+
 		std::cout << "id : " << (int)id << std::endl;
 		sprite = recvPecket.playerSkin;
 		isActive = true;
@@ -147,6 +143,17 @@ bool Player::Recv() {
 		type = PLAYER;
 		velocity = PLAYER_SPEED;
 		SendLogIn();
+
+		/*
+* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
+*/
+		for (int i = 0; i < MAX_USER; ++i) {
+			Player* p = reinterpret_cast<Player*>(net->GameObjects[i]);
+			if (false == p->isActive) continue;
+			if (id == i) continue;
+			net->send_put_obj(i, id);
+		}
+
 		/*
 		* 새로 접속한 클라이언트에게 현재 그려야할 플레이어를 알려줌
 		*/
@@ -155,15 +162,7 @@ bool Player::Recv() {
 			if (id == Client->GetId()) continue;
 			net->send_put_obj(id, Client->GetId());
 		}
-		/*
-		* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
-		*/
-		for (int i = 0; i < MAX_USER; ++i) {
-			Player* p = reinterpret_cast<Player*>(net->GameObjects[i]);
-			if (false == net->is_player(p->GetId())) continue;
-			if (id == p->GetId()) continue;
-			net->send_put_obj(p->GetId(), id);
-		}
+
 	}
 	break;
 	case CS_PACKET_PLAYER_MOVE:
@@ -240,10 +239,11 @@ bool Player::Recv() {
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
-		for (const auto Client : net->GameObjects) {
-			if (false == Client->isActive) continue;
-			if (id == Client->GetId()) continue;
-			net->send_put_obj(id, Client->GetId());
+		for (int i = 0; i < MAX_USER;++i) {
+			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+			if (false == player->isActive) continue;
+			if (id == i) continue;
+			net->send_put_obj(i, id);
 		}
 
 	}
