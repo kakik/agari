@@ -479,9 +479,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				}
 				break;
 
-				// 다음에 수정해야 할꺼
-				// 무기 공격, 아이템 사용
-				// 총알 발사제한, 개수제한도 클라에서 걸꺼임
 			case VK_SPACE:
 				keyAction.space = true;
 				break;
@@ -718,6 +715,25 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 				itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
 			}
 		}
+
+		for (int i = 0; i < 3; ++i)
+		{
+			Player* player = (Player*)gameObject[i];
+			if (player->GetState() == STATE::idle)
+			{
+				player->animFrame = 2;
+			}
+			else if (player->GetState() == STATE::move)
+			{
+				player->animTimer -= GetTickCount64() - TIMER;
+				if (player->animTimer < 0)
+				{
+					player->animFrame++;
+					player->animFrame %= 4;
+					player->animTimer = ANIMATION_TIME;
+				}
+			}
+		}
 	}
 
 	TIMER = GetTickCount64();
@@ -790,6 +806,7 @@ Player::Player()
 	state = STATE::idle;
 	hp = 0;
 	animFrame = 2;
+	animTimer = 0;
 	for (int i = 0; i < 8; ++i)
 		items[i] = 0;
 }

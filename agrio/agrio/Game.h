@@ -161,9 +161,10 @@ private:
 	int curGun;
 	STATE state;
 	short hp;
-	int animFrame;
 
 public:
+	int animFrame;
+	int animTimer;
 	short items[8];
 
 	Player();
