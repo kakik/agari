@@ -99,20 +99,28 @@ struct KEY_ACTION
 {
 	bool left = false, right = false;
 	bool up = false, down = false;
+	bool space = false;
 	bool reqSend = false;
 };
 KEY_ACTION keyAction;
 
 unsigned __int64 TIMER;
 
+// 애니메이션 출력 속도
+const int ANIMATION_TIME = 100;
+
+// 총알 발사 속도
+const int ITEM_TIME[5] = { 200, 0,0,0,0 };
+
 // 타이틀 창에서 캐릭터 선택하게 해주는 변수들
 int selAnimation = 0;
-int selTimer = 100;
+int selTimer = ANIMATION_TIME;
 int selPlayer = (int)SPRITE::Izuna;
 
-// 플레이어의 인덱스 값
-int playerID = 0;
-int selectedWeapon = 0;
+// 플레이어
+int playerID = 0;		// 인덱스 값
+int selectedWeapon = 0;	// 선택한 무기
+int itemTimer = 0;
 
 // 씬
 SCENE scene = SCENE::title;
@@ -144,8 +152,6 @@ public:
 	void PutObj(void* pk);
 	void RemoveObj();
 	virtual void Render(HDC& hdc);
-
-	virtual void test();
 };
 
 class Player : public GameObject {
@@ -172,8 +178,6 @@ public:
 	void ItemCount(void* pk);
 	void UseItem(int index);
 	virtual void Render(HDC& hdc);
-
-	virtual void test();
 };
 
 
@@ -209,5 +213,8 @@ void err_display(const char* msg)
 	MessageBox(NULL, (LPCTSTR)lpMsgBuf, (LPCWSTR)msg, MB_ICONERROR);
 	LocalFree(lpMsgBuf);
 }
+
 void Recv(SOCKET sock);
 DWORD WINAPI ProcessClient(LPVOID arg);
+
+void SetBulletPos(DIR direction, Coordinate& pos, short dist);
