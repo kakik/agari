@@ -131,13 +131,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		}
 
 		/*********************************************이미지 로드*****************************************************/
-		gameObject.reserve(1000);
+		gameObject.reserve(100);
 		for (int i = 0; i < 3; ++i)
 		{
 			Player* player = new Player;
-			gameObject.push_back(reinterpret_cast<GameObject*>(player));
+			gameObject.push_back(player);
 		}
-		for (int i = 0; i < 100; ++i)
+		for (int i = 3; i < 100; ++i)
 		{
 			GameObject* obj = new GameObject;
 			gameObject.push_back(obj);
@@ -474,6 +474,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				sendPacket.packetSize = sizeof(sendPacket);
 				sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
 				Coordinate pos = gameObject[playerID]->GetPos();
+				sendPacket.shootX = pos.x;
+				sendPacket.shootY = pos.y;
 				sendPacket.dir = (char)gameObject[playerID]->GetDir();
 				Send(&sendPacket);
 				break;

@@ -57,7 +57,7 @@ struct cs_packet_player_state : packet {
 	char playerState;
 };
 struct cs_packet_shoot_bullet : packet {
-	char shootX, shootY;
+	short shootX, shootY;
 	char dir;
 };
 struct cs_packet_used_item : packet {

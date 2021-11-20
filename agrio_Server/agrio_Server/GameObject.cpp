@@ -2,6 +2,50 @@
 #include "Network.h"
 #include "GameObject.h"
 
+void MoveDir(int direction, float speed, int& x, int& y) {
+	switch (direction)
+	{
+	case (char)DIR::N:
+		//pos.x += 1;
+		y -= speed;
+		break;
+	case (char)DIR::NE:
+		x += speed;
+		y -= speed;
+		break;
+
+	case (char)DIR::NW:
+		x -= speed;
+		y -= speed;
+		break;
+
+	case (char)DIR::S:
+		//pos.x += 1;
+		y += speed;
+		break;
+
+	case (char)DIR::SE:
+		x += speed;
+		y += speed;
+		break;
+
+	case (char)DIR::SW:
+		x -= speed;
+		y += speed;
+		break;
+
+	case (char)DIR::E:
+		x += speed;
+		break;
+
+	case (char)DIR::W:
+		x -= speed;
+		break;
+
+	default:
+		break;
+	}
+}
 
 void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 {
@@ -11,75 +55,40 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 		pk.packetType = SC_PACKET_MOVE_OBJ;
 		pk.lookDir = direction;
 		pk.objectID = id;
-		
+
 		short speed = static_cast<short>(velocity * elapsedTime);
 		int x = pos.x;
 		int y = pos.y;
-		switch (direction)
-		{
-		case (char)DIR::N:
-			//pos.x += 1;
-			y -= speed;
-			break;
-		case (char)DIR::NE:
-			x += speed;
-			y -= speed;
-			break;
+		
 
-		case (char)DIR::NW:
-			x -= speed;
-			y -= speed;
-			break;
+		//충돌일 경우 원래 위치로 돌리기위해 잠깐 사용
+		pk.x = pos.x;
+		pk.y = pos.y;
 
-		case (char)DIR::S:
-			//pos.x += 1;
-			y += speed;
-			break;
+		pos.x = x;
+		pos.y = y;
+		for (auto obj : Network::GetInstance()->GameObjects) {
+			if (false == obj->isActive)continue;
+			if (id == obj->id)continue;
+			if (Network::GetInstance()->is_collision(id, obj->id)) {
+				//충돌처리 해줄 것
+				if (Network::GetInstance()->is_player(id)) {
+					//hp --
+					std::cout << "충돌\n";
+					pos.x = pk.x;
+					pos.y = pk.y;
+				}
+				else {
+					//isActive = false;
+					//isMove = false;
+				}
+				return;
+			}
 
-		case (char)DIR::SE:
-			x += speed;
-			y += speed;
-			break;
-
-		case (char)DIR::SW:
-			x -= speed;
-			y += speed;
-			break;
-
-		case (char)DIR::E:
-			x += speed;
-			break;
-
-		case (char)DIR::W:
-			x -= speed;
-			break;
-
-		default:
-			break;
 		}
 		pk.x = x;
 		pk.y = y;
 
-		for (auto obj : Network::GetInstance()->GameObjects) {
-			if (false == obj->isActive)continue;
-			if (id == obj->id)continue;
-			if (Network::GetInstance()->is_collision(id, obj->id)) { 
-				//충돌처리 해줄 것
-				if (Network::GetInstance()->is_player(id)) {
-					//hp --
-				std::cout << "충돌\n";
-
-				}
-				else {
-					isActive = false;
-					isMove = false;
-				}
-				return; 
-			}
-
-		}
-		pos.x = x;
-		pos.y = y;
 		memcpy(buf + bufPos, &pk, sizeof(pk));
 		bufPos += sizeof(pk);
 	}
@@ -123,7 +132,7 @@ bool Player::Recv() {
 	{
 		cs_packet_login recvPecket;
 		retval = recv(sock, reinterpret_cast<char*>((&recvPecket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-		
+
 		id = net->get_player_id();
 		if (id == -1) {
 			std::cout << "남는 아이디가 없습니다." << std::endl;
@@ -147,7 +156,7 @@ bool Player::Recv() {
 		/*
 		* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
 		*/
-		for (int i = 0; i < MAX_USER;++i) {
+		for (int i = 0; i < MAX_USER; ++i) {
 			Player* p = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == net->is_player(p->GetId())) continue;
 			if (id == p->GetId()) continue;
@@ -215,7 +224,7 @@ bool Player::Recv() {
 
 		int obj_id = net->get_obj_id();
 		GameObject* pistol = net->GameObjects[obj_id];
-		pistol->direction = direction;
+		pistol->direction = recvPecket.dir;
 		pistol->velocity = 50.f;
 		pistol->width = BULLET_WIDTH;
 		pistol->height = BULLET_HEIGHT;
@@ -224,6 +233,7 @@ bool Player::Recv() {
 		pistol->type = BULLET;
 		pistol->isActive = true;
 		pistol->isMove = true;
+		pistol->pos = Coordinate{ recvPecket.shootX , recvPecket.shootY };
 
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함

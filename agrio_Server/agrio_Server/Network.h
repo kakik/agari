@@ -54,9 +54,15 @@ public:
 	}
 	void disconnect(int id) {
 		Player* p = reinterpret_cast<Player*>(GameObjects[id]);
+		p->isActive = false;
+		p->isMove = false;
+
+		sc_packet_remove_obj pk;
+		pk.packetSize = sizeof(pk);
+		pk.packetType = SC_PACKET_REMOVE_OBJ;
+		pk.objectID = id;
+		p->Send(&pk);
 		closesocket(p->sock);
-		GameObjects[id]->isActive = false;
-		GameObjects[id]->isMove = false;
 	}
 	char get_player_id() {
 		for (int i = 0; i < MAX_USER; ++i) {
@@ -66,7 +72,7 @@ public:
 		return -1;
 	}
 	char get_obj_id() {
-		for (int i = 0; i < MAX_USER; ++i) {
+		for (int i = MAX_USER; i < MAX_OBJECT; ++i) {
 			if (false == GameObjects[i]->isActive) return i;
 		}
 		std::cout << "can not return object id" << std::endl;
@@ -82,8 +88,8 @@ public:
 		GameObject* a = GameObjects[a_id];
 		GameObject* b = GameObjects[b_id];
 
-		RECT aRect{ a->pos.x - a->width / 2, a->pos.y - a->height / 2,a->pos.x + a->width / 2,  a->pos.y + a->height };
-		RECT bRect{ b->pos.x - b->width / 2, b->pos.y - b->height / 2,b->pos.x + b->width / 2,  b->pos.y + b->height };
+		RECT aRect{ a->pos.x - a->width / 2, a->pos.y - a->width / 2,a->pos.x + a->width / 2,  a->pos.y + a->width };
+		RECT bRect{ b->pos.x - b->width / 2, b->pos.y - b->width / 2,b->pos.x + b->width / 2,  b->pos.y + b->width };
 
 		RECT tmp;
 		if (IntersectRect(&tmp,&aRect, &bRect))
