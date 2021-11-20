@@ -161,6 +161,7 @@ public:
 	Player();
 
 	STATE GetState() { return state; }
+	short GetHp() { return hp; }
 	void SetState(STATE newState) { state = newState; }
 	void SetWeapon(int newWeapon) { curGun = newWeapon; }
 
