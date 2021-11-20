@@ -152,6 +152,8 @@ public:
 	void PutObj(void* pk);
 	void RemoveObj();
 	virtual void Render(HDC& hdc);
+
+	void test();
 };
 
 class Player : public GameObject {

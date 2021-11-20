@@ -146,6 +146,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 
+		gameObject[80]->test();
+
 		TIMER = GetTickCount64();
 		SetTimer(hWnd, 0, 10, (TIMERPROC)TimerProc);	// updateLoop
 	}
@@ -692,13 +694,15 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 				if (selectedWeapon == pistol || selectedWeapon == uzi)
 				{
-					SetBulletPos(dir, pos, 20);
+					// 총알 시작 위치 다시 지정해야함
+					SetBulletPos(dir, pos, 100);
 					cs_packet_shoot_bullet sendPacket;
 					sendPacket.packetSize = sizeof(sendPacket);
 					sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
 					sendPacket.dir = (char)dir;
 					sendPacket.shootX = pos.x;
 					sendPacket.shootY = pos.y;
+					Send(&sendPacket);
 				}
 
 				else if (selectedWeapon == shotgun)
@@ -952,4 +956,15 @@ void SetBulletPos(DIR direction, Coordinate& pos, short dist)
 	default:
 		break;
 	}
+}
+
+
+void GameObject::test()
+{
+	isActive = true;
+	width = 30;
+	height = 40;
+	sprite = (int)SPRITE::box;
+	pos.x = 850;
+	pos.y = 900;
 }

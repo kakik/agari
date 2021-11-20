@@ -242,8 +242,8 @@ bool Player::Recv() {
 		for (int i = 0; i < MAX_USER;++i) {
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == player->isActive) continue;
-			if (id == i) continue;
-			net->send_put_obj(i, id);
+			//if (id == i) continue;
+			net->send_put_obj(i, obj_id);
 		}
 
 	}
