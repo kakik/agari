@@ -40,8 +40,8 @@ const char SC_PACKET_ITEM_COUNT = 9;
 const char SC_PACKET_CHAGE_WEAPON = 10;
 
 //상수
-const short BULLET_WIDTH = 37;
-const short BULLET_HEIGHT = 37;
+const short BULLET_WIDTH = 11;
+const short BULLET_HEIGHT = 11;
 
 //	패킷 정의(Client->Server)
 #pragma pack(push,1)
