@@ -132,12 +132,12 @@ bool Player::Recv() {
 	{
 	case CS_PACKET_LOGIN:
 	{
-		cs_packet_login recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>((&recvPecket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		cs_packet_login recvPacket;
+		retval = recv(sock, reinterpret_cast<char*>((&recvPacket)) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 
 		std::cout << "id : " << (int)id << std::endl;
-		sprite = recvPecket.playerSkin;
+		sprite = recvPacket.playerSkin;
 		isActive = true;
 		direction = (char)DIR::N;
 		type = PLAYER;
@@ -145,8 +145,8 @@ bool Player::Recv() {
 		SendLogIn();
 
 		/*
-* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
-*/
+		* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
+		*/
 		for (int i = 0; i < MAX_USER; ++i) {
 			Player* p = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == p->isActive) continue;
@@ -167,13 +167,13 @@ bool Player::Recv() {
 	break;
 	case CS_PACKET_PLAYER_MOVE:
 	{
-		cs_packet_player_move recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>(&recvPecket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		cs_packet_player_move recvPacket;
+		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		/*
 		* 각 클라이언트들한테 플레이어가 이동했으니 해당 플레이어 오브젝트를 이동 하라고함
 		*/
-		direction = (char)recvPecket.dir;
+		direction = (char)recvPacket.dir;
 
 		isMove = true;
 
@@ -181,9 +181,9 @@ bool Player::Recv() {
 	break;
 	case CS_PACKET_PLAYER_STATE:
 	{
-		cs_packet_player_state recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>(&recvPecket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-		switch (recvPecket.playerState)
+		cs_packet_player_state recvPacket;
+		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		switch (recvPacket.playerState)
 		{
 		case (char)STATE::idle:
 		{
@@ -220,12 +220,12 @@ bool Player::Recv() {
 	break;
 	case CS_PACKET_SHOOT_BULLET:
 	{
-		cs_packet_shoot_bullet recvPecket;
-		retval = recv(sock, reinterpret_cast<char*>(&recvPecket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		cs_packet_shoot_bullet recvPacket;
+		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		int obj_id = net->get_obj_id();
 		GameObject* pistol = net->GameObjects[obj_id];
-		pistol->direction = recvPecket.dir;
+		pistol->direction = recvPacket.dir;
 		pistol->velocity = 50.f;
 		pistol->width = BULLET_WIDTH;
 		pistol->height = BULLET_HEIGHT;
@@ -234,7 +234,7 @@ bool Player::Recv() {
 		pistol->type = BULLET;
 		pistol->isActive = true;
 		pistol->isMove = true;
-		pistol->pos = Coordinate{ recvPecket.shootX , recvPecket.shootY };
+		pistol->pos = Coordinate{ recvPacket.shootX , recvPacket.shootY };
 
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
@@ -250,7 +250,32 @@ bool Player::Recv() {
 	break;
 	case CS_PACKET_USED_ITEM:
 	{
+		cs_packet_used_item recvPacket;
+		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		switch (recvPacket.itemNum)
+		{
+		case (char)ITEM::potion:
+		{
+			/*
+			* 각 클라이언트들한테 플레이어가 포션을 사용하였으므로 해당 플레이어의 체력을 Chage 하라고함
+			*/
+			for (int i = 0; i < MAX_USER; ++i) {
+				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+				if (false == player->isActive) continue;
+				//if (id == i) continue;
+				net->send_put_obj(i, id);
+			}
 
+		}
+		break;
+		case (char)ITEM::box:
+		{
+			
+		}
+		break;
+		default:
+			break;
+		}
 	}
 	break;
 	default:

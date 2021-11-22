@@ -101,6 +101,7 @@ public:
 	void send_put_obj(int id, int target);
 	void send_move_obj(int id, int mover);
 	void send_change_state(int id, int target);
+	void send_change_hp(int id, int target);
 	void send_remove_obj(int id, int victm);
 	void update(float elapsedTime);
 

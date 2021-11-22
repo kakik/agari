@@ -116,7 +116,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::uiUzi].Load(TEXT("resource/ui_uzi.png"));
 			sprites[(int)SPRITE::uiShotgun].Load(TEXT("resource/ui_shotgun.png"));
 			sprites[(int)SPRITE::uiBox].Load(TEXT("resource/ui_box.png"));
-			sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_box.png"));	// uiposition 이미지 만들어야함
+			sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_healpack.png"));	// uiposition 이미지 만들어야함
 
 			sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
 
@@ -211,8 +211,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
 				Rectangle(memdc1, p_pos.x - 19, p_pos.y - 39, int(p_pos.x - 19 + ((float)p_hp / (float)100 * 38.0)), p_pos.y - 34);
 			}
-			SelectObject(memdc1, oldbrush);
-			DeleteObject(hbrush);
 
 			////////////////////////////////////////// 화면 영역 ///////////////////////////////////////////////
 			// UI 오버레이들만 memdc2에 출력함
@@ -626,7 +624,6 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		Player* p = (Player*)gameObject[playerID];
 		if (keyAction.reqSend)
 		{
-
 			if (keyAction.left && keyAction.up)
 				p->SetDir(DIR::NW);
 
@@ -709,7 +706,11 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 				else if (selectedWeapon == potion || selectedWeapon == box)
 				{
-
+					cs_packet_used_item sendPacket;
+					sendPacket.packetSize = sizeof(sendPacket);
+					sendPacket.packetType = CS_PACKET_USED_ITEM;
+					sendPacket.itemNum = selectedWeapon;
+					Send(&sendPacket);
 				}
 
 				itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
@@ -823,7 +824,8 @@ void Player::ChangeWeapon(void* pk)
 
 void Player::ChangeHp(void* pk)
 {
-
+	sc_packet_change_hp* recvPacket = (sc_packet_change_hp*)pk;
+	hp += (short)recvPacket->hp;
 }
 
 void Player::GetItem(void* pk)
@@ -909,6 +911,14 @@ void Recv(SOCKET sock) {
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
 		gameObject[(int)recvPacket.objectID]->RemoveObj();
+	}
+	case SC_PACKET_CHANGE_HP:
+	{
+		sc_packet_change_hp recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		Player* player = (Player*)gameObject[(int)recvPacket.playerID];
+
+		player->ChangeHp(&recvPacket);
 	}
 	break;
 	default:
