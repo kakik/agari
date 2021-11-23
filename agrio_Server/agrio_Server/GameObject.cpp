@@ -4,10 +4,10 @@
 
 
 
-void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
+void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 {
 	if (isMove) {
-		sc_packet_move_obj& pk = *reinterpret_cast<sc_packet_move_obj*>(buf);
+		sc_packet_move_obj& pk = *reinterpret_cast<sc_packet_move_obj*>(buf+bufStart);
 		pk.packetSize = sizeof(pk);
 		pk.packetType = SC_PACKET_MOVE_OBJ;
 		pk.lookDir = direction;
@@ -90,9 +90,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufPos)
 		}
 		pk.x = x;
 		pk.y = y;
-
-		memcpy(buf + bufPos, &pk, sizeof(pk));
-		bufPos += sizeof(pk);
+		bufStart += sizeof(pk);
 	}
 }
 
@@ -108,12 +106,12 @@ void Player::SendLogIn() {
 	width = sendPacket.width = PLAYER_WIDTH;
 	height = sendPacket.height = PLAYER_HEIGHT;
 
-	Send(&sendPacket);
+	Send(&sendPacket, sendPacket.packetSize);
 }
-void Player::Send(void* Packet) const
+void Player::Send(void* Packet, int packSize) const
 {
-	int retval = send(sock, reinterpret_cast<char*>(Packet), reinterpret_cast<packet*>(Packet)->packetSize, 0);
-	//std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
+	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
+	std::cout << "[TCP 서버]" <<id <<" : " << retval << "바이트 보냈습니다\n";
 }
 
 bool Player::Recv() {

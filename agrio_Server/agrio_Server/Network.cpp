@@ -87,7 +87,7 @@ void Network::send_put_obj(int id, const int target) {
 	sendPutPacket.height = GameObjects[target]->height;
 	sendPutPacket.objectID = target;
 	sendPutPacket.sprite = GameObjects[target]->sprite;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPutPacket);
+	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPutPacket, sendPutPacket.packetSize);
 }
 
 void Network::send_move_obj(int id, int mover) {
@@ -99,7 +99,7 @@ void Network::send_move_obj(int id, int mover) {
 
 	sendMovePacket.x = GameObjects[mover]->pos.x;
 	sendMovePacket.y = GameObjects[mover]->pos.y;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendMovePacket);
+	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendMovePacket, sendMovePacket.packetSize);
 }
 
 void Network::send_change_state(int id, int target) {
@@ -109,7 +109,7 @@ void Network::send_change_state(int id, int target) {
 	sendPacket.objectID = target;
 	sendPacket.playerState = (char)reinterpret_cast<Player*>(GameObjects[id])->state;
 
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket);
+	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::send_change_hp(int id, int target) {
@@ -119,7 +119,7 @@ void Network::send_change_hp(int id, int target) {
 	sendPacket.playerID = target;
 	sendPacket.hp = 10;
 
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket);
+	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::send_remove_obj(int id, int victm) {
@@ -128,7 +128,7 @@ void Network::send_remove_obj(int id, int victm) {
 	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
 	
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket);
+	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::update(float elapsedTime) {
@@ -143,7 +143,7 @@ void Network::update(float elapsedTime) {
 	if (0 < bufstart)
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;
-			reinterpret_cast<Player*>(GameObjects[i])->Send(buf);
+			reinterpret_cast<Player*>(GameObjects[i])->Send(buf, bufstart);
 		}
 	//플레이어가 한 프레임 마다 생성된 버퍼 전송
 }

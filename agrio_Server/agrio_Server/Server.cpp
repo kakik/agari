@@ -47,8 +47,8 @@ int main()
 
 			
 			pre_t = cur_t;
-			if (system_clock::now() - pre_t < 16ms) {
-				this_thread::sleep_for(16ms - (system_clock::now() - cur_t));
+			if (system_clock::now() - pre_t < 32ms) {
+				this_thread::sleep_for(32ms - (system_clock::now() - cur_t));
 				//cout << "update " << chrono::duration_cast<chrono::milliseconds>(end_t - start_t).count() << "ms\n";
 			}
 		}

@@ -737,7 +737,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			}
 		}
 	}
-	std::cout << GetTickCount64() - TIMER << std::endl;
+	//std::cout << GetTickCount64() - TIMER << std::endl;
 
 	TIMER = GetTickCount64();
 	InvalidateRect(hWnd, NULL, false);
@@ -904,6 +904,7 @@ void Recv(SOCKET sock) {
 		sc_packet_move_obj recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
+		std::cout << (int)recvPacket.objectID << std::endl;
 		gameObject[(int)recvPacket.objectID]->ObjMove(&recvPacket);
 	}
 	break;

@@ -65,7 +65,7 @@ public:
 		id = clientId;
 		sock = socket;
 	};
-	void Send(void* Packet) const;
+	void Send(void* Packet, int packetSize) const;
 	bool Recv();
 
 	void ChangeState(void* pk);
