@@ -1,4 +1,10 @@
 #pragma once
+#ifdef UNICODE
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
+#else
+#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
+#endif
+
 
 #pragma comment(lib, "ws2_32")
 #include <winsock2.h>

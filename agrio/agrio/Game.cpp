@@ -4,6 +4,7 @@
 #define SERVERPORT	8000
 #define BUFSIZE		512
 
+
 /********************************** Main **********************************/
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPreInstance, LPSTR lpszCmdParam, int nCmdShow)
 {
@@ -736,6 +737,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			}
 		}
 	}
+	std::cout << GetTickCount64() - TIMER << std::endl;
 
 	TIMER = GetTickCount64();
 	InvalidateRect(hWnd, NULL, false);
