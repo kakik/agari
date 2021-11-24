@@ -33,7 +33,7 @@ int main()
 		if (retval == SOCKET_ERROR) err_quit("listen()");
 
 		//접속 받기 시작
-		net->start_accept();
+		net->StartAccept();
 
 		int nClient = 0;
 		nClient++;
@@ -42,9 +42,7 @@ int main()
 		while (1) {
 			auto cur_t = system_clock::now();
 			float elapsed = duration_cast<chrono::milliseconds>(cur_t - pre_t).count()/float(1000);
-			net->update(elapsed);
-			
-
+			net->Update(elapsed);
 			
 			pre_t = cur_t;
 			if (system_clock::now() - pre_t < 32ms) {

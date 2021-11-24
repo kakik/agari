@@ -23,6 +23,7 @@ struct Coordinate
 class GameObject
 {
 public:
+	Coordinate pos;
 	char direction;
 	float velocity;
 	unsigned short width, height;
@@ -31,18 +32,14 @@ public:
 	char type;
 	bool isMove = false;
 	bool isAttack = false;
-public:
+
 	bool isActive = false;
-	Coordinate pos;
+
 	unsigned char GetId() const {
 		return id;
 	}
 
-	void Move(void* pk);
-	void SetBullet(void* pk);
-	void SetBox(void* pk);
 	void Update(float elapsedTime,char* buf, int& bufPos);
-	void IsCollision(GameObject* other);
 };
 
 
@@ -68,11 +65,5 @@ public:
 	void Send(void* Packet, int packetSize) const;
 	bool Recv();
 
-	void ChangeState(void* pk);
-	void UseItem(void* pk);
-
-	void ChangeHP(short hp);
 	void SendLogIn();
-
-
 };

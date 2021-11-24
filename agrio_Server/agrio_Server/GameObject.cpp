@@ -68,25 +68,25 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		for (auto obj : Network::GetInstance()->GameObjects) {
 			if (false == obj->isActive)continue;
 			if (id == obj->id)continue;
-			if (Network::GetInstance()->is_collision(id, obj->id)) {
+			if (Network::GetInstance()->IsCollision(id, obj->id)) {
 				//충돌처리 해줄 것
-				if (Network::GetInstance()->is_player(id)) {
+				if (Network::GetInstance()->IsPlayer(id)) {
 					//hp --
-					std::cout << "충돌\n";
+					
 					pos.x = pk.x;
 					pos.y = pk.y;
 				}
 				else {
+					std::cout << "충돌\n";
 					isActive = false;
 					isMove = false;
 					for (int i = 0; i < MAX_USER; ++i) {
-						if (false == Network::GetInstance()->GameObjects[id]->isActive) continue;
-						Network::GetInstance()->send_remove_obj(i, id);
+						if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+						Network::GetInstance()->SendRemoveObj(i, id);
 					}
 				}
 				return;
 			}
-
 		}
 		pk.x = x;
 		pk.y = y;
@@ -119,7 +119,7 @@ bool Player::Recv() {
 	packet pkSize;
 	int retval = recv(sock, reinterpret_cast<char*>(&pkSize), sizeof(packet), MSG_WAITALL);
 	if (retval == SOCKET_ERROR) {
-		net->disconnect(id);
+		net->Disconnect(id);
 		err_display("recv()");
 		return false;
 	}
@@ -149,7 +149,7 @@ bool Player::Recv() {
 			Player* p = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == p->isActive) continue;
 			if (id == i) continue;
-			net->send_put_obj(i, id);
+			net->SendPutObj(i, id);
 		}
 
 		/*
@@ -158,7 +158,7 @@ bool Player::Recv() {
 		for (const auto Client : net->GameObjects) {
 			if (false == Client->isActive) continue;
 			if (id == Client->GetId()) continue;
-			net->send_put_obj(id, Client->GetId());
+			net->SendPutObj(id, Client->GetId());
 		}
 
 	}
@@ -221,10 +221,10 @@ bool Player::Recv() {
 		cs_packet_shoot_bullet recvPacket;
 		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		int obj_id = net->get_obj_id();
+		int obj_id = net->GetObjID();
 		GameObject* pistol = net->GameObjects[obj_id];
 		pistol->direction = recvPacket.dir;
-		pistol->velocity = 50.f;
+		pistol->velocity = 300.0f;
 		pistol->width = BULLET_WIDTH;
 		pistol->height = BULLET_HEIGHT;
 		pistol->id = obj_id;
@@ -241,7 +241,7 @@ bool Player::Recv() {
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == player->isActive) continue;
 			//if (id == i) continue;
-			net->send_put_obj(i, obj_id);
+			net->SendPutObj(i, obj_id);
 		}
 
 	}
@@ -261,7 +261,7 @@ bool Player::Recv() {
 				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 				if (false == player->isActive) continue;
 				//if (id == i) continue;
-				net->send_put_obj(i, id);
+				net->SendPutObj(i, id);
 			}
 
 		}

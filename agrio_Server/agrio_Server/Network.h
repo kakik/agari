@@ -52,40 +52,40 @@ public:
 			delete go;
 		}
 	}
-	void disconnect(int id) {
+	void Disconnect(int id) {
 		Player* p = reinterpret_cast<Player*>(GameObjects[id]);
 		p->isActive = false;
 		p->isMove = false;
 
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;
-			send_remove_obj(i, id);
+			SendRemoveObj(i, id);
 		}
 
 		closesocket(p->sock);
 		threads[id].join();
 	}
-	char get_player_id() {
+	char GetPlayerId() {
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) return i;
 		}
 		std::cout << "can not return player id" << std::endl;
 		return -1;
 	}
-	char get_obj_id() {
+	char GetObjID() {
 		for (int i = MAX_USER; i < MAX_OBJECT; ++i) {
 			if (false == GameObjects[i]->isActive) return i;
 		}
 		std::cout << "can not return object id" << std::endl;
 		return -1;
 	}
-	bool is_player(int id) {
-		return (id >= 0) && (id < 4);
+	bool IsPlayer(int id) {
+		return (id >= 0) && (id < 3);
 	}
-	void start_accept() {
+	void StartAccept() {
 		threads.emplace_back(&Network::AcceptThread, this);
 	}
-	bool is_collision(int a_id, int b_id) {
+	bool IsCollision(int a_id, int b_id) {
 		GameObject* a = GameObjects[a_id];
 		GameObject* b = GameObjects[b_id];
 
@@ -98,12 +98,12 @@ public:
 		else
 			return false;
 	}
-	void send_put_obj(int id, int target);
-	void send_move_obj(int id, int mover);
-	void send_change_state(int id, int target);
-	void send_change_hp(int id, int target);
-	void send_remove_obj(int id, int victm);
-	void update(float elapsedTime);
+	void SendPutObj(int id, int target);
+	void SendMoveObj(int id, int mover);
+	void SendChangeState(int id, int target);
+	void SendChangeHp(int id, int target);
+	void SendRemoveObj(int id, int victm);
+	void Update(float elapsedTime);
 
 
 
