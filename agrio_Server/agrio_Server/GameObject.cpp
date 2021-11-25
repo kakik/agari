@@ -65,7 +65,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 
 		pos.x = x;
 		pos.y = y;
-		for (auto obj : Network::GetInstance()->GameObjects) {
+		for (auto* obj : Network::GetInstance()->GameObjects) {
 			if (false == obj->isActive)continue;
 			if (id == obj->id)continue;
 			if (Network::GetInstance()->IsCollision(id, obj->id)) {

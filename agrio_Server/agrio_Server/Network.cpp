@@ -112,7 +112,7 @@ void Network::SendChangeState(int id, int target) {
 void Network::SendChangeHp(int id, int target) {
 	sc_packet_change_hp sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
-	sendPacket.packetType = SC_PACKET_PLAYER_STATE;
+	sendPacket.packetType = SC_PACKET_CHANGE_HP;
 	sendPacket.playerID = target;
 	sendPacket.hp = 10;
 
@@ -124,7 +124,7 @@ void Network::SendRemoveObj(int id, int victm) {
 	sendPacket.packetSize = sizeof(sendPacket);
 	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
-	
+
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }
 
