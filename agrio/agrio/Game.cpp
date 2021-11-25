@@ -915,6 +915,7 @@ void Recv(SOCKET sock) {
 
 		gameObject[(int)recvPacket.objectID]->RemoveObj();
 	}
+	break;
 	case SC_PACKET_CHANGE_HP:
 	{
 		sc_packet_change_hp recvPacket;
