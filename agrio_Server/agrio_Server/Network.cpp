@@ -114,7 +114,7 @@ void Network::SendChangeHp(int id, int target) {
 	sendPacket.packetSize = sizeof(sendPacket);
 	sendPacket.packetType = SC_PACKET_CHANGE_HP;
 	sendPacket.playerID = target;
-	sendPacket.hp = 10;
+	sendPacket.hp = reinterpret_cast<Player*>(GameObjects[target])->hp;
 
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }

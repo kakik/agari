@@ -254,14 +254,14 @@ bool Player::Recv() {
 		{
 		case (char)ITEM::potion:
 		{
+			ChangeHp(HEALING);
 			/*
 			* 각 클라이언트들한테 플레이어가 포션을 사용하였으므로 해당 플레이어의 체력을 Chage 하라고함
 			*/
 			for (int i = 0; i < MAX_USER; ++i) {
 				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 				if (false == player->isActive) continue;
-				//if (id == i) continue;
-				net->SendPutObj(i, id);
+				net->SendChangeHp(i, id);
 			}
 
 		}

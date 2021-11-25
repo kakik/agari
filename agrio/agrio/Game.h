@@ -100,6 +100,7 @@ const int character_height = 60;
 const int win_x_size = 900;      //윈도우 x사이즈
 const int win_y_size = 800;      //윈도우 y사이즈
 bool isLoginOk = false;			// 로그인ok가 올때까지 대기
+const int max_hp = 100;			// 플레이어의 최대 체력
 
 struct KEY_ACTION
 {
