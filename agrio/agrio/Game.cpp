@@ -1,6 +1,6 @@
 #include "Game.h"
 
-#define SERVERIP	"127.0.0.1"
+#define SERVERIP	"127.0.0.1"//"220.94.221.20"
 #define SERVERPORT	8000
 #define BUFSIZE		512
 
@@ -208,9 +208,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				short p_hp = p->GetHp();
 
 				Rectangle(memdc1, p_pos.x - 20, p_pos.y - 40, p_pos.x + 20, p_pos.y - 33);  //체력바
-				hbrush = CreateSolidBrush(RGB(255 - (int((float)p_hp / (float)100 * 255.0)), int((float)p_hp / (float)100 * 255.0), 0));   //체력 퍼센트따라서 색 다르게
+				hbrush = CreateSolidBrush(RGB(255 - (int((float)p_hp / (float)max_hp * 255.0)), int((float)p_hp / (float)max_hp * 255.0), 0));   //체력 퍼센트따라서 색 다르게
 				oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-				Rectangle(memdc1, p_pos.x - 19, p_pos.y - 39, int(p_pos.x - 19 + ((float)p_hp / (float)100 * 38.0)), p_pos.y - 34);
+				Rectangle(memdc1, p_pos.x - 19, p_pos.y - 39, int(p_pos.x - 19 + ((float)p_hp / (float)max_hp * 38.0)), p_pos.y - 34);
+				SelectObject(memdc1, oldbrush);
+				DeleteObject(hbrush);
 			}
 
 			////////////////////////////////////////// 화면 영역 ///////////////////////////////////////////////
@@ -807,7 +809,7 @@ Player::Player()
 {
 	curGun = 0;
 	state = STATE::idle;
-	hp = 0;
+	hp = 50;
 	animFrame = 2;
 	animTimer = 0;
 	for (int i = 0; i < 8; ++i)
@@ -827,7 +829,7 @@ void Player::ChangeWeapon(void* pk)
 void Player::ChangeHp(void* pk)
 {
 	sc_packet_change_hp* recvPacket = (sc_packet_change_hp*)pk;
-	hp += (short)recvPacket->hp;
+	hp = (short)recvPacket->hp;
 }
 
 void Player::GetItem(void* pk)
