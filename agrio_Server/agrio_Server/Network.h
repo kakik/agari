@@ -37,6 +37,33 @@ public:
 		for (int i = MAX_USER; i < MAX_OBJECT; ++i) {
 			GameObjects.push_back(new GameObject);
 		}
+		GameObjects[4]->isActive = true;
+		GameObjects[4]->pos = Coordinate{ WINDOW_WIDTH /2,30};
+		GameObjects[4]->width = 90;
+		GameObjects[4]->height = 90;
+		GameObjects[4]->sprite = (int)SPRITE::uiBox;
+		GameObjects[4]->id = 4;
+
+		GameObjects[5]->isActive = true;
+		GameObjects[5]->pos = Coordinate{ WINDOW_WIDTH / 2,WINDOW_HEIGHT };
+		GameObjects[5]->width = 90;
+		GameObjects[5]->height = 90;
+		GameObjects[5]->sprite = (int)SPRITE::uiBox;
+		GameObjects[5]->id = 5;
+
+		GameObjects[6]->isActive = true;
+		GameObjects[6]->pos = Coordinate{ 0,WINDOW_HEIGHT/2 };
+		GameObjects[6]->width = 90;
+		GameObjects[6]->height = 90;
+		GameObjects[6]->sprite = (int)SPRITE::uiBox;
+		GameObjects[6]->id = 6;
+
+		GameObjects[7]->isActive = true;
+		GameObjects[7]->pos = Coordinate{ WINDOW_WIDTH,WINDOW_HEIGHT/2 };
+		GameObjects[7]->width = 90;
+		GameObjects[7]->height = 90;
+		GameObjects[7]->sprite = (int)SPRITE::uiBox;
+		GameObjects[7]->id = 7;
 		instance = this;
 		WSADATA wsa;
 		if (WSAStartup(MAKEWORD(2, 2), &wsa) != 0)

@@ -42,7 +42,8 @@ const char SC_PACKET_CHAGE_WEAPON = 10;
 //상수
 const short BULLET_WIDTH = 11;
 const short BULLET_HEIGHT = 11;
-
+const int WINDOW_WIDTH = 900;      //윈도우 x사이즈
+const int WINDOW_HEIGHT = 800;
 //	패킷 정의(Client->Server)
 #pragma pack(push,1)
 struct packet {
