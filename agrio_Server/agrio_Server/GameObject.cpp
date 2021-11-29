@@ -111,7 +111,7 @@ void Player::SendLogIn() {
 void Player::Send(void* Packet, int packSize) const
 {
 	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
-	std::cout << "[TCP 서버]" <<id <<" : " << retval << "바이트 보냈습니다\n";
+	std::cout << "[TCP 서버]" << (int)id <<" : " << retval << "바이트 보냈습니다\n";
 }
 
 bool Player::Recv() {
@@ -213,6 +213,10 @@ bool Player::Recv() {
 		break;
 		default:
 			break;
+		}
+		for (int i = 0; i < MAX_USER; ++i) 
+		{
+			net->SendChangeState(i, (int)id);
 		}
 	}
 	break;

@@ -104,7 +104,7 @@ void Network::SendChangeState(int id, int target) {
 	sendPacket.packetSize = sizeof(sendPacket);
 	sendPacket.packetType = SC_PACKET_PLAYER_STATE;
 	sendPacket.objectID = target;
-	sendPacket.playerState = (char)reinterpret_cast<Player*>(GameObjects[target])->state;
+	sendPacket.playerState = (char)(reinterpret_cast<Player*>(GameObjects[target])->state);
 
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }

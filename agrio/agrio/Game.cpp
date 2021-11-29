@@ -643,13 +643,12 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
 			{
 				p->SetState(STATE::idle);
-				SendStatePacket();
 
 				if (keyAction.space)
 				{
 					p->SetState(STATE::attack);
-					SendStatePacket();
 				}
+				SendStatePacket();
 			}
 			else
 			{
@@ -860,8 +859,9 @@ void Player::Render(HDC& hdc)
 			sprites[sprite + 1].Draw(hdc, pos.x - ((width + 6) / 2), pos.y - ((height + 2) / 2), width + 12, height + 2,
 				char_atk_sprite_rect[(int)direction][animFrame].left, char_atk_sprite_rect[(int)direction][animFrame].top, 30, 32);
 
-			sprites[(int)SPRITE::pistol - pistol + curGun].Draw(hdc, pos.x - ((width + 26) / 2), pos.y - ((height + 22) / 2), width + 32, height + 22,
-				char_weapon_sprite_rect[(int)direction][animFrame].left, char_weapon_sprite_rect[(int)direction][animFrame].top, 50, 52);
+			if (curGun != empty)
+				sprites[(int)SPRITE::pistol - pistol + curGun].Draw(hdc, pos.x - ((width + 26) / 2), pos.y - ((height + 22) / 2), width + 32, height + 22,
+					char_weapon_sprite_rect[(int)direction][animFrame].left, char_weapon_sprite_rect[(int)direction][animFrame].top, 50, 52);
 		}
 
 		// 일반모션
