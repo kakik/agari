@@ -229,3 +229,4 @@ void Recv(SOCKET sock);
 DWORD WINAPI ProcessClient(LPVOID arg);
 
 void SetBulletPos(DIR direction, Coordinate& pos, short dist);
+void SendStatePacket();
