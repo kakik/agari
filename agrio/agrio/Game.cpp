@@ -117,7 +117,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::uiUzi].Load(TEXT("resource/ui_uzi.png"));
 			sprites[(int)SPRITE::uiShotgun].Load(TEXT("resource/ui_shotgun.png"));
 			sprites[(int)SPRITE::uiBox].Load(TEXT("resource/ui_box.png"));
-			sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_healpack.png"));	// uiposition 이미지 만들어야함
+			sprites[(int)SPRITE::uiPotion].Load(TEXT("resource/ui_healpack.png"));
 
 			sprites[(int)SPRITE::itemBox].Load(TEXT("resource/itembox.png"));
 
@@ -201,20 +201,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				gameobj->Render(memdc1);
 			}
 
-			//////////////////////////////////////////체력바 출력///////////////////////////////////////////////
-			for (int i = 0; i < MAX_USER; ++i) {
-				Player* p = (Player*)gameObject[i];
-				Coordinate p_pos = p->GetPos();
-				short p_hp = p->GetHp();
-
-				Rectangle(memdc1, p_pos.x - 20, p_pos.y - 40, p_pos.x + 20, p_pos.y - 33);  //체력바
-				hbrush = CreateSolidBrush(RGB(255 - (int((float)p_hp / (float)max_hp * 255.0)), int((float)p_hp / (float)max_hp * 255.0), 0));   //체력 퍼센트따라서 색 다르게
-				oldbrush = (HBRUSH)SelectObject(memdc1, hbrush);
-				Rectangle(memdc1, p_pos.x - 19, p_pos.y - 39, int(p_pos.x - 19 + ((float)p_hp / (float)max_hp * 38.0)), p_pos.y - 34);
-				SelectObject(memdc1, oldbrush);
-				DeleteObject(hbrush);
-			}
-
 			////////////////////////////////////////// 화면 영역 ///////////////////////////////////////////////
 			// UI 오버레이들만 memdc2에 출력함
 
@@ -259,7 +245,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			hbrush = CreateSolidBrush(RGB(255, 255, 255));
 			oldbrush = (HBRUSH)SelectObject(memdc2, hbrush);
 
-			Player* p = (Player*)gameObject[playerID];
+			Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
 
 			for (int i = 0; i < 5; ++i)
 			{
@@ -445,7 +431,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		// lobby / stages input
 		else
 		{
-			Player* p = (Player*)gameObject[playerID];
+			Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
+
 			switch (wParam)
 			{
 			case VK_LEFT:
@@ -482,6 +469,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			case VK_SPACE:
 				keyAction.space = true;
+				keyAction.reqSend = true;
 				break;
 			}
 		}
@@ -500,9 +488,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		}
 
-		else 
+		else
 		{
-			Player* p = (Player*)gameObject[playerID];
+			Player* p = reinterpret_cast<Player*>(gameObject[playerID]);;
 			switch (wParam)
 			{
 			case VK_ESCAPE:
@@ -531,7 +519,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			case VK_SPACE:
 				keyAction.space = false;
-				itemTimer = 0;
+				keyAction.reqSend = true;
 				break;
 
 			case '1':
@@ -539,7 +527,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case '3':
 			case '4':
 			case '5':
-				int key = (int)(wParam - '0');
+				int key = static_cast<int>((wParam - '0'));
 				selectedWeapon = key;
 				p->SetWeapon(key);
 				break;
@@ -622,9 +610,9 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 	}
 
 	// lobby, stage1, stage2 등등등...
-	else 
+	else
 	{
-		Player* p = (Player*)gameObject[playerID];
+		Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
 		if (keyAction.reqSend)
 		{
 			if (keyAction.left && keyAction.up)
@@ -636,7 +624,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else if (keyAction.left && keyAction.down)
 				p->SetDir(DIR::SW);
 
-			else if (keyAction.right && keyAction.down)				
+			else if (keyAction.right && keyAction.down)
 				p->SetDir(DIR::SE);
 
 			else if (keyAction.left)
@@ -651,25 +639,29 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else if (keyAction.down)
 				p->SetDir(DIR::S);
 
+
 			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
 			{
 				p->SetState(STATE::idle);
-				cs_packet_player_state sendPacket;
-				sendPacket.packetSize = sizeof(sendPacket);
-				sendPacket.packetType = CS_PACKET_PLAYER_STATE;
-				sendPacket.playerState = (char)p->GetState();
-				Send(&sendPacket);
+				SendStatePacket();
+
+				if (keyAction.space)
+				{
+					p->SetState(STATE::attack);
+					SendStatePacket();
+				}
 			}
 			else
 			{
-				if (p->GetState() == STATE::idle)
+				if (p->GetState() == STATE::idle || keyAction.space == false)
 				{
 					p->SetState(STATE::move);
-					cs_packet_player_state sendPacket;
-					sendPacket.packetSize = sizeof(sendPacket);
-					sendPacket.packetType = CS_PACKET_PLAYER_STATE;
-					sendPacket.playerState = (char)p->GetState();
-					Send(&sendPacket);
+					SendStatePacket();
+				}
+				else if (keyAction.space && p->GetState() != STATE::attack)
+				{
+					p->SetState(STATE::attack);
+					SendStatePacket();
 				}
 
 				cs_packet_player_move sendPacket;
@@ -681,9 +673,13 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			keyAction.reqSend = false;
 		}
 
+		if (itemTimer >= 0)
+			itemTimer -= GetTickCount64() - TIMER;
+
 		if (keyAction.space)
 		{
-			itemTimer -= GetTickCount64() - TIMER;
+			//itemTimer -= GetTickCount64() - TIMER;
+
 			if (itemTimer < 0)
 			{
 				Coordinate pos = p->GetPos();
@@ -722,24 +718,34 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 		for (int i = 0; i < 3; ++i)
 		{
-			Player* player = (Player*)gameObject[i];
+			Player* player = reinterpret_cast<Player*>(gameObject[i]);
 			if (player->GetState() == STATE::idle)
 			{
 				player->animFrame = 2;
+				player->animTimer = 0;
 			}
-			else if (player->GetState() == STATE::move)
+			else
 			{
 				player->animTimer -= GetTickCount64() - TIMER;
 				if (player->animTimer < 0)
 				{
 					player->animFrame++;
-					player->animFrame %= 4;
 					player->animTimer = ANIMATION_TIME;
+
+					if (player->GetState() == STATE::attack)
+					{
+						player->animFrame %= 2;
+
+						std::cout << player->animFrame << std::endl;
+
+					}
+					else
+						player->animFrame %= 4;
+
 				}
 			}
 		}
 	}
-	//std::cout << GetTickCount64() - TIMER << std::endl;
 
 	TIMER = GetTickCount64();
 	InvalidateRect(hWnd, NULL, false);
@@ -798,10 +804,6 @@ void GameObject::Render(HDC& hdc)
 {
 	if (isActive)
 		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y + (height / 2), width, height);
-
-	// 번외, 총알은 어케 출력할 것 인가?
-	// 1안 총알은 방향별로 저장해서 위에꺼 그대로 사용 => 이거로 할꺼
-	// 2안 총알 이미지를 한번에 모두 저장해서 따로 방향에 맞춰서 처리 => 폐기
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -818,7 +820,8 @@ Player::Player()
 
 void Player::PlayerState(void* pk)
 {
-
+	sc_packet_player_state* recvPacket = (sc_packet_player_state*)pk;
+	state = static_cast<STATE>(recvPacket->playerState);
 }
 
 void Player::ChangeWeapon(void* pk)
@@ -850,8 +853,34 @@ void Player::UseItem(int index)
 void Player::Render(HDC& hdc)
 {
 	if (isActive)
-		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height,
-			char_move_sprite_rect[(int)direction][animFrame].left, char_move_sprite_rect[(int)direction][animFrame].top, 18, 30);
+	{
+		// 공격모션
+		if (state == STATE::attack)
+		{
+			sprites[sprite + 1].Draw(hdc, pos.x - ((width + 6) / 2), pos.y - ((height + 2) / 2), width + 12, height + 2,
+				char_atk_sprite_rect[(int)direction][animFrame].left, char_atk_sprite_rect[(int)direction][animFrame].top, 30, 32);
+
+			sprites[(int)SPRITE::pistol - pistol + curGun].Draw(hdc, pos.x - ((width + 26) / 2), pos.y - ((height + 22) / 2), width + 32, height + 22,
+				char_weapon_sprite_rect[(int)direction][animFrame].left, char_weapon_sprite_rect[(int)direction][animFrame].top, 50, 52);
+		}
+
+		// 일반모션
+		else
+		{
+			sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height,
+				char_move_sprite_rect[(int)direction][animFrame].left, char_move_sprite_rect[(int)direction][animFrame].top, 18, 30);
+		}
+
+
+		// 체력바
+		HBRUSH hbrush, oldbrush;
+		Rectangle(hdc, pos.x - 20, pos.y - 40, pos.x + 20, pos.y - 33);  //체력바
+		hbrush = CreateSolidBrush(RGB(255 - (int((float)hp / (float)max_hp * 255.0)), int((float)hp / (float)max_hp * 255.0), 0));   //체력 퍼센트따라서 색 다르게
+		oldbrush = (HBRUSH)SelectObject(hdc, hbrush);
+		Rectangle(hdc, pos.x - 19, pos.y - 39, int(pos.x - 19 + ((float)hp / (float)max_hp * 38.0)), pos.y - 34);
+		SelectObject(hdc, oldbrush);
+		DeleteObject(hbrush);
+	}
 }
 
 
@@ -893,6 +922,26 @@ void Recv(SOCKET sock) {
 		isLoginOk = true;
 	}
 	break;
+	case SC_PACKET_CHANGE_SCENE:
+	{
+
+	}
+	break;
+	case SC_PACKET_MOVE_OBJ:
+	{
+		sc_packet_move_obj recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+
+		gameObject[(int)recvPacket.objectID]->ObjMove(&recvPacket);
+	}
+	break;
+	case SC_PACKET_PLAYER_STATE:
+	{
+		sc_packet_player_state recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		reinterpret_cast<Player*>(gameObject[(int)recvPacket.objectID])->PlayerState(&recvPacket);
+	}
+	break;
 	case SC_PACKET_PUT_OBJ:
 	{
 		sc_packet_put_obj recvPacket;
@@ -901,15 +950,7 @@ void Recv(SOCKET sock) {
 		gameObject[(int)recvPacket.objectID]->PutObj(&recvPacket);
 	}
 	break;
-	case SC_PACKET_MOVE_OBJ:
-	{
-		sc_packet_move_obj recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 
-		std::cout << (int)recvPacket.objectID << std::endl;
-		gameObject[(int)recvPacket.objectID]->ObjMove(&recvPacket);
-	}
-	break;
 	case SC_PACKET_REMOVE_OBJ:
 	{
 		sc_packet_remove_obj recvPacket;
@@ -922,9 +963,24 @@ void Recv(SOCKET sock) {
 	{
 		sc_packet_change_hp recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-		Player* player = (Player*)gameObject[(int)recvPacket.playerID];
+		Player* player = reinterpret_cast<Player*>(gameObject[(int)recvPacket.playerID]);
 
 		player->ChangeHp(&recvPacket);
+	}
+	break;
+	case SC_PACKET_GET_ITEM:
+	{
+
+	}
+	break;
+	case SC_PACKET_ITEM_COUNT:
+	{
+
+	}
+	break;
+	case SC_PACKET_CHAGE_WEAPON:
+	{
+
 	}
 	break;
 	default:
@@ -990,6 +1046,17 @@ void SetBulletPos(DIR direction, Coordinate& pos, short dist)
 		break;
 	}
 }
+
+void SendStatePacket()
+{
+	Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
+	cs_packet_player_state sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = CS_PACKET_PLAYER_STATE;
+	sendPacket.playerState = (char)p->GetState();
+	Send(&sendPacket);
+}
+
 
 
 void GameObject::test()
