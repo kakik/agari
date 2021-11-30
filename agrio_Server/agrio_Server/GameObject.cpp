@@ -63,67 +63,95 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		pk.x = pos.x;
 		pk.y = pos.y;
 
+
 		pos.x = x;
 		pos.y = y;
-		for (auto* obj : Network::GetInstance()->GameObjects) {
+		Network* net = Network::GetInstance();
+		for (auto* obj : net->GameObjects) {
 			if (false == obj->isActive)continue;
 			if (id == obj->id)continue;
-			if (Network::GetInstance()->IsCollision(id, obj->id)) {
+			if (net->IsCollision(id, obj->id)) {
 				//충돌처리 해줄 것
 				if (type == PLAYER) {
-					pos.x = pk.x;
-					pos.y = pk.y;
+
 					switch (obj->type)
 					{
 					case BULLET:
 					{
-						reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[obj->id])->ChangeHp(ATTACKHP);
+						reinterpret_cast<Player*>(this)->ChangeHp(ATTACKHP);
 
-						isActive = false;
-						isMove = false;
+						GameObject* Object = (net->GameObjects[obj->id]);
+						Object->isActive = false;
+						Object->isMove = false;
 						for (int i = 0; i < MAX_USER; ++i) {
 
 							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-							Network::GetInstance()->SendChangeHp(i, id);
-							Network::GetInstance()->SendRemoveObj(i, obj->id);
+							net->SendChangeHp(i, id);
+							net->SendRemoveObj(i, obj->id);
 						}
 					}
 					break;
 					case ITEM:
 					{
-						int item = (Network::GetInstance()->GameObjects[id])->sprite - (int)SPRITE::uiPistol;
+						int item = (net->GameObjects[obj->id])->sprite - (int)SPRITE::uiPistol;
 						if (item <= shotgun)
-							reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[id])->items[item] += 5;
+							reinterpret_cast<Player*>(net->GameObjects[id])->items[item] += 5;
 						else
-							reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[id])->items[item] += 1;
+							reinterpret_cast<Player*>(net->GameObjects[id])->items[item] += 1;
+						net->GameObjects[obj->id]->isActive = false;
+						for (int i = 0; i < MAX_USER; ++i) {
 
-						Network::GetInstance()->SendGetItem(id, item);
+							if (false == net->GameObjects[i]->isActive) continue;
+							net->SendRemoveObj(i, obj->id);
+						}
+						//net->SendGetItem(id, item);
 					}
 					break;
+					case WALL:
+					case BOX:
+						pos.x = pk.x;
+						pos.y = pk.y;
+						break;
 					default:
 						break;
 					}
 
 				}
 				else {// 플레이어가 아닌(총알, 아이템, 벽)오브젝트가 충돌했을 때 충돌타입이(obj->type)이라면
-					pk.x = x;
-					pk.y = y;
+
 					switch (obj->type)
 					{
+					case PLAYER:
+					{
+						if (type == BULLET) {
+							reinterpret_cast<Player*>(net->GameObjects[obj->id])->ChangeHp(ATTACKHP);
+
+							GameObject* Object = (net->GameObjects[id]);
+							Object->isActive = false;
+							Object->isMove = false;
+							for (int i = 0; i < MAX_USER; ++i) {
+
+								if (false == net->GameObjects[i]->isActive) continue;
+								net->SendChangeHp(i, obj->id);
+								net->SendRemoveObj(i, id);
+							}
+						}
+					}
+					break;
 					case BOX:
 					case WALL:
 						if (type == BULLET) {
 
 							if (collisionCount > 2) {
 								for (int i = 0; i < MAX_USER; ++i) {
-									if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-									Network::GetInstance()->SendRemoveObj(i, id);
+									if (false == net->GameObjects[i]->isActive) continue;
+									net->SendRemoveObj(i, id);
 								}
 
 							}
 							else
 							{
-								
+
 								collisionCount++;
 								switch (direction)
 								{
@@ -143,8 +171,8 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 						{
 							if (collisionCount > 2) {
 								for (int i = 0; i < MAX_USER; ++i) {
-									if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-									Network::GetInstance()->SendRemoveObj(i, id);
+									if (false == net->GameObjects[i]->isActive) continue;
+									net->SendRemoveObj(i, id);
 								}
 							}
 							else {
@@ -192,7 +220,8 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 
 			}
 		}
-
+		pk.x = pos.x;
+		pk.y = pos.y;
 		bufStart += sizeof(pk);
 	}
 }
@@ -313,7 +342,6 @@ bool Player::Recv() {
 		for (int i = 0; i < MAX_USER; ++i)
 		{
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
-			if (false == player->isActive) continue;
 			net->SendChangeState(i, id);
 		}
 	}

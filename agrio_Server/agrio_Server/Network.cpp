@@ -193,8 +193,8 @@ void Network::Update(float elapsedTime) {
 			GameObject* pistol = GameObjects[obj_id];
 			pistol->direction = rand() % 8;
 			pistol->velocity = VELOCITY;
-			pistol->width = BULLET_WIDTH;
-			pistol->height = BULLET_HEIGHT;
+			pistol->width = BLOCK_WIDTH;
+			pistol->height = BLOCK_WIDTH;
 			pistol->id = obj_id;
 			pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
 			pistol->type = ITEM;
@@ -212,9 +212,9 @@ void Network::Update(float elapsedTime) {
 		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 		if (false == p->isActive) continue;
 		if (0 >= p->bufSize) continue;
-		
-		memcpy(buf + bufstart, p->eventPacketBuf, p->bufSize);
-		bufstart += p->bufSize;
+		p->Send(p->eventPacketBuf, p->bufSize);
+		//memcpy(buf + bufstart, p->eventPacketBuf, p->bufSize);
+		//bufstart += p->bufSize;
 		p->bufSize = 0;
 	}
 	

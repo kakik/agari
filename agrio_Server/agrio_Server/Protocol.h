@@ -9,6 +9,8 @@ enum class STATE
 //	최대 접속 가능 클라이언트
 const char MAX_USER = 3;
 
+const int MAX_OBJECT = 100;
+
 //	총알 발사 방향
 enum class DIR { N, NE, E, SE, S, SW, W, NW };
 
