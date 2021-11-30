@@ -70,72 +70,147 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 			if (id == obj->id)continue;
 			if (Network::GetInstance()->IsCollision(id, obj->id)) {
 				//충돌처리 해줄 것
-				if (Network::GetInstance()->IsPlayer(id)) {
-			
-
+				if (type == PLAYER) {
 					pos.x = pk.x;
 					pos.y = pk.y;
-				}
-				else {
-					std::cout << "충돌\n";
-
-					if (Network::GetInstance()->IsPlayer(obj->id) || collisionCount > 2)
+					switch (obj->type)
 					{
-						// 체력 감소 패킷 보낼 것
+					case BULLET:
+					{
 						reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[obj->id])->ChangeHp(ATTACKHP);
+
 						isActive = false;
 						isMove = false;
 						for (int i = 0; i < MAX_USER; ++i) {
 
 							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-
-							Network::GetInstance()->SendRemoveObj(i, id);
+							Network::GetInstance()->SendChangeHp(i, id);
+							Network::GetInstance()->SendRemoveObj(i, obj->id);
 						}
 					}
-					else {
-						collisionCount++;
+					break;
+					case ITEM:
+					{
+						int item = (Network::GetInstance()->GameObjects[id])->sprite - (int)SPRITE::uiPistol;
+						if (item <= shotgun)
+							reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[id])->items[item] += 5;
+						else
+							reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[id])->items[item] += 1;
 
-						switch (direction)
-						{
-						case (int)DIR::N:
-						case (int)DIR::E:
-						case (int)DIR::S:
-						case (int)DIR::W:
-							direction = (direction + 4) % 8;
-							break;
-						default:
-							direction = (direction + 2) % 8;
-							break;
+						Network::GetInstance()->SendGetItem(id, item);
+					}
+					break;
+					default:
+						break;
+					}
+
+				}
+				else {// 플레이어가 아닌(총알, 아이템, 벽)오브젝트가 충돌했을 때 충돌타입이(obj->type)이라면
+					pk.x = x;
+					pk.y = y;
+					switch (obj->type)
+					{
+					case BOX:
+					case WALL:
+						if (type == BULLET) {
+
+							if (collisionCount > 2) {
+								for (int i = 0; i < MAX_USER; ++i) {
+									if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+									Network::GetInstance()->SendRemoveObj(i, id);
+								}
+
+							}
+							else
+							{
+								
+								collisionCount++;
+								switch (direction)
+								{
+								case (int)DIR::N:
+								case (int)DIR::E:
+								case (int)DIR::S:
+								case (int)DIR::W:
+									direction = (direction + 4) % 8;
+									break;
+								default:
+									direction = (direction + 2) % 8;
+									break;
+								}
+							}
 						}
-						
+						else if (type == BOX)
+						{
+							if (collisionCount > 2) {
+								for (int i = 0; i < MAX_USER; ++i) {
+									if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+									Network::GetInstance()->SendRemoveObj(i, id);
+								}
+							}
+							else {
+								collisionCount++;
+							}
+						}
+						break;
+
+					case BULLET:
+						break;
+					default:
+						break;
 					}
 				}
-				return;
+
+				/* {
+					if (Network::GetInstance()->IsPlayer(id)) {
+						pos.x = pk.x;
+						pos.y = pk.y;
+					}
+					else {
+						std::cout << "충돌\n";
+
+						if (Network::GetInstance()->IsPlayer(obj->id) || collisionCount > 2)
+						{
+							// 체력 감소 패킷 보낼 것
+							reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[obj->id])->ChangeHp(ATTACKHP);
+
+							isActive = false;
+							isMove = false;
+							for (int i = 0; i < MAX_USER; ++i) {
+
+								if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+								Network::GetInstance()->SendChangeHp(i, obj->id);
+								Network::GetInstance()->SendRemoveObj(i, id);
+							}
+						}
+						else {
+
+
+						}
+					}
+				}*/
+
+
 			}
 		}
-		pk.x = x;
-		pk.y = y;
+
 		bufStart += sizeof(pk);
 	}
 }
 
 
-
-void Player::SendLogIn() {
-	sc_packet_login_ok sendPacket;
-	sendPacket.packetSize = sizeof(sendPacket);
-	sendPacket.packetType = SC_PACKET_LOGIN_OK;
-	sendPacket.playerID = id;
-	pos.x = sendPacket.x = (short)800;
-	pos.y = sendPacket.y = (short)900;
-	width = sendPacket.width = PLAYER_WIDTH;
-	height = sendPacket.height = PLAYER_HEIGHT;
-
-	Send(&sendPacket, sendPacket.packetSize);
+void Player::UpdateBuf(void* Packet, int packSize) {
+	buf_lock.lock();
+	memcpy(eventPacketBuf + bufSize, Packet, packSize);
+	bufSize += packSize;
+	buf_lock.unlock();
 }
-void Player::Send(void* Packet, int packSize) const
+void Player::Send(void* Packet, int packSize)
 {
+
 	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
+	if (retval == SOCKET_ERROR) {
+		std::cout << "오류 발생" << (int)id << std::endl;
+	}
 	std::cout << "[TCP 서버]" << (int)id << " : " << retval << "바이트 보냈습니다\n";
 }
 
@@ -165,8 +240,12 @@ bool Player::Recv() {
 		direction = (char)DIR::N;
 		type = PLAYER;
 		velocity = PLAYER_SPEED;
-		SendLogIn();
+		pos.x = (short)800;
+		pos.y = (short)900;
+		width = PLAYER_WIDTH;
+		height = PLAYER_HEIGHT;
 
+		net->SendLoginOk(id);
 		/*
 		* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
 		*/
@@ -235,7 +314,7 @@ bool Player::Recv() {
 		{
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == player->isActive) continue;
-			net->SendChangeState(i, (int)id);
+			net->SendChangeState(i, id);
 		}
 	}
 	break;
@@ -284,8 +363,7 @@ bool Player::Recv() {
 			* 각 클라이언트들한테 플레이어가 포션을 사용하였으므로 해당 플레이어의 체력을 Chage 하라고함
 			*/
 			for (int i = 0; i < MAX_USER; ++i) {
-				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
-				if (false == player->isActive) continue;
+				if (false == net->GameObjects[i]->isActive) continue;
 				net->SendChangeHp(i, id);
 			}
 

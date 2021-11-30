@@ -94,9 +94,21 @@ void err_display(const char* msg)
 		(LPSTR)&lpMsgBuf, 0, NULL
 	);
 	MessageBoxA(NULL, (LPCSTR)lpMsgBuf, (LPCSTR)msg, MB_ICONERROR);
+	
 	LocalFree(lpMsgBuf);
 }
-
+void Network::SendLoginOk(int id) {
+	sc_packet_login_ok sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_LOGIN_OK;
+	sendPacket.playerID = id;
+	sendPacket.x = (short)800;
+	sendPacket.y = (short)900;
+	sendPacket.width = PLAYER_WIDTH;
+	sendPacket.height = PLAYER_HEIGHT;
+	
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
 void Network::SendPutObj(int id, const int target) {
 	sc_packet_put_obj sendPutPacket;
 	sendPutPacket.packetSize = sizeof(sendPutPacket);
@@ -107,7 +119,7 @@ void Network::SendPutObj(int id, const int target) {
 	sendPutPacket.height = GameObjects[target]->height;
 	sendPutPacket.objectID = target;
 	sendPutPacket.sprite = GameObjects[target]->sprite;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPutPacket, sendPutPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPutPacket, sendPutPacket.packetSize);
 }
 
 void Network::SendMoveObj(int id, int mover) {
@@ -119,7 +131,7 @@ void Network::SendMoveObj(int id, int mover) {
 
 	sendMovePacket.x = GameObjects[mover]->pos.x;
 	sendMovePacket.y = GameObjects[mover]->pos.y;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendMovePacket, sendMovePacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendMovePacket, sendMovePacket.packetSize);
 }
 
 void Network::SendChangeState(int id, int target) {
@@ -129,7 +141,7 @@ void Network::SendChangeState(int id, int target) {
 	sendPacket.objectID = target;
 	sendPacket.playerState = (char)(reinterpret_cast<Player*>(GameObjects[target])->state);
 
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::SendChangeHp(int id, int target) {
@@ -139,7 +151,7 @@ void Network::SendChangeHp(int id, int target) {
 	sendPacket.playerID = target;
 	sendPacket.hp = reinterpret_cast<Player*>(GameObjects[target])->hp;
 
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::SendRemoveObj(int id, int victm) {
@@ -148,7 +160,16 @@ void Network::SendRemoveObj(int id, int victm) {
 	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
 	GameObjects[victm]->collisionCount = 0;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
+void Network::SendGetItem(int id, int itemtype) {
+	sc_packet_get_item sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_GET_ITEM;
+	sendPacket.playerID = id;
+	sendPacket.itemID = itemtype;
+
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::Update(float elapsedTime) {
@@ -160,6 +181,46 @@ void Network::Update(float elapsedTime) {
 		
 	}
 
+	if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
+	{
+		preItemSpawnTime = std::chrono::system_clock::now();
+
+		for (int i = 0; i < MAX_USER; ++i) {
+			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+			if (false == p->isActive) continue;
+
+			int obj_id = GetObjID();
+			GameObject* pistol = GameObjects[obj_id];
+			pistol->direction = rand() % 8;
+			pistol->velocity = VELOCITY;
+			pistol->width = BULLET_WIDTH;
+			pistol->height = BULLET_HEIGHT;
+			pistol->id = obj_id;
+			pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
+			pistol->type = ITEM;
+			pistol->isActive = true;
+			pistol->isMove = false;
+			pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
+
+			SendPutObj(i, obj_id);
+		}
+
+	}
+
+	//플레이어의 이벤트 버퍼에 있는 내용을 전송버퍼로 옮김
+	for (int i = 0; i < MAX_USER; ++i) {
+		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+		if (false == p->isActive) continue;
+		if (0 >= p->bufSize) continue;
+		
+		memcpy(buf + bufstart, p->eventPacketBuf, p->bufSize);
+		bufstart += p->bufSize;
+		p->bufSize = 0;
+	}
+	
+
+
+	
 	if (0 < bufstart)
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;

@@ -52,14 +52,21 @@ public:
 	char curEquip;
 	STATE state;
 	int hp = 50; // 힐량 확인을 위해 억지로 50으로 설정
-	short items[8];
+	short items[5];
 	SOCKET sock;
 
 	int nMagazine = 0;//최대 총알 갯수
+	char eventPacketBuf[BUFSIZE];
+	int bufSize = 0;
+	std::mutex buf_lock;
 public:
-	Player() {};
+	Player() {
+		for (auto& item : items)
+			item = 0;
+	};
 
-	~Player() {};
+	~Player() {
+	};
 
 	void SetSockId(SOCKET socket, int clientId) {
 		id = clientId;
@@ -68,16 +75,9 @@ public:
 	void ChangeHp(int value) {
 		hp += value;
 		hp = std::clamp(hp, 0, MAX_HP);
-		sc_packet_change_hp pk;
-		pk.packetSize = sizeof(pk);
-		pk.packetType = SC_PACKET_CHANGE_HP;
-		pk.playerID = id;
-		pk.hp = hp;
-
-		Send(&pk, pk.packetSize);
 	}
-	void Send(void* Packet, int packetSize) const;
+	void UpdateBuf(void* Packet, int packetSize);
+	void Send(void* Packet, int packetSize);
 	bool Recv();
 
-	void SendLogIn();
 };
