@@ -10,7 +10,7 @@
 #include "GameObject.h"
 
 
-#define BUFSIZE		512
+
 
 
 void err_quit(const char* msg);
@@ -32,7 +32,8 @@ enum Scene {
 class Network
 {
 	static Network* instance;
-	char buf[BUFSIZE];
+	char buf[BUFSIZE*4];
+
 public:
 
 	std::vector<std::thread> threads;
@@ -149,6 +150,7 @@ public:
 		else
 			return false;
 	}
+	void SendLoginOk(int id);
 	void SendPutObj(int id, int target);
 	void SendMoveObj(int id, int mover);
 	void SendChangeState(int id, int target);

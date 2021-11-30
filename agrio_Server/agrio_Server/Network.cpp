@@ -94,9 +94,21 @@ void err_display(const char* msg)
 		(LPSTR)&lpMsgBuf, 0, NULL
 	);
 	MessageBoxA(NULL, (LPCSTR)lpMsgBuf, (LPCSTR)msg, MB_ICONERROR);
+	
 	LocalFree(lpMsgBuf);
 }
-
+void Network::SendLoginOk(int id) {
+	sc_packet_login_ok sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_LOGIN_OK;
+	sendPacket.playerID = id;
+	sendPacket.x = (short)800;
+	sendPacket.y = (short)900;
+	sendPacket.width = PLAYER_WIDTH;
+	sendPacket.height = PLAYER_HEIGHT;
+	
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
 void Network::SendPutObj(int id, const int target) {
 	sc_packet_put_obj sendPutPacket;
 	sendPutPacket.packetSize = sizeof(sendPutPacket);
@@ -107,7 +119,7 @@ void Network::SendPutObj(int id, const int target) {
 	sendPutPacket.height = GameObjects[target]->height;
 	sendPutPacket.objectID = target;
 	sendPutPacket.sprite = GameObjects[target]->sprite;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPutPacket, sendPutPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPutPacket, sendPutPacket.packetSize);
 }
 
 void Network::SendMoveObj(int id, int mover) {
@@ -119,7 +131,7 @@ void Network::SendMoveObj(int id, int mover) {
 
 	sendMovePacket.x = GameObjects[mover]->pos.x;
 	sendMovePacket.y = GameObjects[mover]->pos.y;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendMovePacket, sendMovePacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendMovePacket, sendMovePacket.packetSize);
 }
 
 void Network::SendChangeState(int id, int target) {
@@ -129,7 +141,7 @@ void Network::SendChangeState(int id, int target) {
 	sendPacket.objectID = target;
 	sendPacket.playerState = (char)(reinterpret_cast<Player*>(GameObjects[target])->state);
 
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::SendChangeHp(int id, int target) {
@@ -139,7 +151,7 @@ void Network::SendChangeHp(int id, int target) {
 	sendPacket.playerID = target;
 	sendPacket.hp = reinterpret_cast<Player*>(GameObjects[target])->hp;
 
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::SendRemoveObj(int id, int victm) {
@@ -148,7 +160,7 @@ void Network::SendRemoveObj(int id, int victm) {
 	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
 	GameObjects[victm]->collisionCount = 0;
-	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
 void Network::Update(float elapsedTime) {
@@ -158,6 +170,16 @@ void Network::Update(float elapsedTime) {
 		if (false == obj->isActive) continue;
 		obj->Update(elapsedTime, buf, bufstart);
 		
+	}
+
+	for (int i = 0; i < MAX_USER; ++i) {
+		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+		if (false == p->isActive) continue;
+		if (0 >= p->bufSize) continue;
+		
+		memcpy(buf + bufstart, p->eventPacketBuf, p->bufSize);
+		bufstart += p->bufSize;
+		p->bufSize = 0;
 	}
 
 	if (0 < bufstart)

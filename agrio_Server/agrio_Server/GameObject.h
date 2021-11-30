@@ -56,10 +56,15 @@ public:
 	SOCKET sock;
 
 	int nMagazine = 0;//ÃÖ´ë ÃÑ¾Ë °¹¼ö
+	char eventPacketBuf[BUFSIZE];
+	int bufSize = 0;
+	std::mutex buf_lock;
 public:
-	Player() {};
+	Player() {
+	};
 
-	~Player() {};
+	~Player() {
+	};
 
 	void SetSockId(SOCKET socket, int clientId) {
 		id = clientId;
@@ -68,16 +73,9 @@ public:
 	void ChangeHp(int value) {
 		hp += value;
 		hp = std::clamp(hp, 0, MAX_HP);
-		sc_packet_change_hp pk;
-		pk.packetSize = sizeof(pk);
-		pk.packetType = SC_PACKET_CHANGE_HP;
-		pk.playerID = id;
-		pk.hp = hp;
-
-		Send(&pk, pk.packetSize);
 	}
-	void Send(void* Packet, int packetSize) const;
+	void UpdateBuf(void* Packet, int packetSize);
+	void Send(void* Packet, int packetSize);
 	bool Recv();
 
-	void SendLogIn();
 };

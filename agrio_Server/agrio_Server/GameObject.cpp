@@ -83,12 +83,13 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 					{
 						// 체력 감소 패킷 보낼 것
 						reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[obj->id])->ChangeHp(ATTACKHP);
+
 						isActive = false;
 						isMove = false;
 						for (int i = 0; i < MAX_USER; ++i) {
 
 							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-
+							Network::GetInstance()->SendChangeHp(i, obj->id);
 							Network::GetInstance()->SendRemoveObj(i, id);
 						}
 					}
@@ -120,22 +121,19 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 }
 
 
-
-void Player::SendLogIn() {
-	sc_packet_login_ok sendPacket;
-	sendPacket.packetSize = sizeof(sendPacket);
-	sendPacket.packetType = SC_PACKET_LOGIN_OK;
-	sendPacket.playerID = id;
-	pos.x = sendPacket.x = (short)800;
-	pos.y = sendPacket.y = (short)900;
-	width = sendPacket.width = PLAYER_WIDTH;
-	height = sendPacket.height = PLAYER_HEIGHT;
-
-	Send(&sendPacket, sendPacket.packetSize);
+void Player::UpdateBuf(void* Packet, int packSize) {
+	buf_lock.lock();
+	memcpy(eventPacketBuf+bufSize, Packet, packSize);
+	bufSize += packSize;
+	buf_lock.unlock();
 }
-void Player::Send(void* Packet, int packSize) const
+void Player::Send(void* Packet, int packSize)
 {
+
 	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
+	if (retval == SOCKET_ERROR) {
+		std::cout << "오류 발생" << (int)id << std::endl;
+	}
 	std::cout << "[TCP 서버]" << (int)id << " : " << retval << "바이트 보냈습니다\n";
 }
 
@@ -165,8 +163,12 @@ bool Player::Recv() {
 		direction = (char)DIR::N;
 		type = PLAYER;
 		velocity = PLAYER_SPEED;
-		SendLogIn();
+		pos.x = (short)800;
+		pos.y =(short)900;
+		width =  PLAYER_WIDTH;
+		height = PLAYER_HEIGHT;
 
+		net->SendLoginOk(id);
 		/*
 		* 각 클라이언트들한테 새로운 플레이어가 접속했으니 플레이어 오브젝트를 생성하라고함
 		*/
@@ -179,7 +181,7 @@ bool Player::Recv() {
 
 		/*
 		* 새로 접속한 클라이언트에게 현재 그려야할 플레이어를 알려줌
-		*/
+		*/ 
 		for (const auto Client : net->GameObjects) {
 			if (false == Client->isActive) continue;
 			if (id == Client->GetId()) continue;
@@ -235,7 +237,7 @@ bool Player::Recv() {
 		{
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == player->isActive) continue;
-			net->SendChangeState(i, (int)id);
+			net->SendChangeState(i, id);
 		}
 	}
 	break;
@@ -284,8 +286,7 @@ bool Player::Recv() {
 			* 각 클라이언트들한테 플레이어가 포션을 사용하였으므로 해당 플레이어의 체력을 Chage 하라고함
 			*/
 			for (int i = 0; i < MAX_USER; ++i) {
-				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
-				if (false == player->isActive) continue;
+				if (false == net->GameObjects[i]->isActive) continue;
 				net->SendChangeHp(i, id);
 			}
 
