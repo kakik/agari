@@ -162,6 +162,15 @@ void Network::SendRemoveObj(int id, int victm) {
 	GameObjects[victm]->collisionCount = 0;
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
+void Network::SendGetItem(int id, int itemtype) {
+	sc_packet_get_item sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_GET_ITEM;
+	sendPacket.playerID = id;
+	sendPacket.itemID = itemtype;
+
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
 
 void Network::Update(float elapsedTime) {
 	int bufstart = 0;
@@ -172,6 +181,33 @@ void Network::Update(float elapsedTime) {
 		
 	}
 
+	if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
+	{
+		preItemSpawnTime = std::chrono::system_clock::now();
+
+		for (int i = 0; i < MAX_USER; ++i) {
+			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+			if (false == p->isActive) continue;
+
+			int obj_id = GetObjID();
+			GameObject* pistol = GameObjects[obj_id];
+			pistol->direction = rand() % 8;
+			pistol->velocity = VELOCITY;
+			pistol->width = BULLET_WIDTH;
+			pistol->height = BULLET_HEIGHT;
+			pistol->id = obj_id;
+			pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
+			pistol->type = ITEM;
+			pistol->isActive = true;
+			pistol->isMove = false;
+			pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
+
+			SendPutObj(i, obj_id);
+		}
+
+	}
+
+	//플레이어의 이벤트 버퍼에 있는 내용을 전송버퍼로 옮김
 	for (int i = 0; i < MAX_USER; ++i) {
 		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 		if (false == p->isActive) continue;
@@ -181,7 +217,10 @@ void Network::Update(float elapsedTime) {
 		bufstart += p->bufSize;
 		p->bufSize = 0;
 	}
+	
 
+
+	
 	if (0 < bufstart)
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;

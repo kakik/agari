@@ -52,7 +52,7 @@ public:
 	char curEquip;
 	STATE state;
 	int hp = 50; // 힐량 확인을 위해 억지로 50으로 설정
-	short items[8];
+	short items[5];
 	SOCKET sock;
 
 	int nMagazine = 0;//최대 총알 갯수
@@ -61,6 +61,8 @@ public:
 	std::mutex buf_lock;
 public:
 	Player() {
+		for (auto& item : items)
+			item = 0;
 	};
 
 	~Player() {

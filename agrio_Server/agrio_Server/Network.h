@@ -34,6 +34,8 @@ class Network
 	static Network* instance;
 	char buf[BUFSIZE*4];
 
+	int ItemSpawnTime;
+	std::chrono::system_clock::time_point preItemSpawnTime;
 public:
 
 	std::vector<std::thread> threads;
@@ -44,7 +46,7 @@ public:
 	Network() {
 		assert(instance == nullptr);
 		instance = this;
-
+		ItemSpawnTime = 1;
 		for (int i = 0; i < MAX_USER; ++i) {
 			GameObjects.push_back(new Player);
 		}
@@ -58,6 +60,7 @@ public:
 			GameObjects[4]->width = WINDOW_WIDTH;
 			GameObjects[4]->height = objlength;
 			GameObjects[4]->sprite = (int)SPRITE::box;
+			GameObjects[4]->type = WALL;
 			GameObjects[4]->id = 4;
 
 			GameObjects[5]->isActive = true;
@@ -65,6 +68,7 @@ public:
 			GameObjects[5]->width = WINDOW_WIDTH;
 			GameObjects[5]->height = objlength;
 			GameObjects[5]->sprite = (int)SPRITE::box;
+			GameObjects[5]->type = WALL;
 			GameObjects[5]->id = 5;
 
 			GameObjects[6]->isActive = true;
@@ -72,6 +76,7 @@ public:
 			GameObjects[6]->width = objlength;
 			GameObjects[6]->height = WINDOW_HEIGHT;
 			GameObjects[6]->sprite = (int)SPRITE::box;
+			GameObjects[6]->type = WALL;
 			GameObjects[6]->id = 6;
 
 			GameObjects[7]->isActive = true;
@@ -79,6 +84,7 @@ public:
 			GameObjects[7]->width = objlength;
 			GameObjects[7]->height = WINDOW_HEIGHT;
 			GameObjects[7]->sprite = (int)SPRITE::box;
+			GameObjects[7]->type = WALL;
 			GameObjects[7]->id = 7;
 		}
 		for (int i = 8; i < 20; ++i) {
@@ -87,6 +93,7 @@ public:
 			GameObjects[i]->width = BLOCK_WIDTH;
 			GameObjects[i]->height = BLOCK_HEIGHT;
 			GameObjects[i]->sprite = (int)SPRITE::box;
+			GameObjects[i]->type = BOX;
 			GameObjects[i]->id = i;
 		}
 		WSADATA wsa;
@@ -156,6 +163,7 @@ public:
 	void SendChangeState(int id, int target);
 	void SendChangeHp(int id, int target);
 	void SendRemoveObj(int id, int victm);
+	void SendGetItem(int id, int victm);
 	void Update(float elapsedTime);
 
 
