@@ -147,7 +147,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		/////////////////////////////////////////////////////////////////////////////////////////
 
-		gameObject[80]->test();
+		
 
 		TIMER = GetTickCount64();
 		SetTimer(hWnd, 0, 10, (TIMERPROC)TimerProc);	// updateLoop
@@ -1063,8 +1063,8 @@ void GameObject::test()
 {
 	isActive = true;
 	width = 30;
-	height = 40;
+	height = 30;
 	sprite = (int)SPRITE::box;
-	pos.x = 850;
+	pos.x = 900;
 	pos.y = 900;
 }
