@@ -84,7 +84,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::btnExit].Load(TEXT("resource/EXIT.png"));
 			sprites[(int)SPRITE::btnReplay].Load(TEXT("resource/REPLAY.png"));
 			sprites[(int)SPRITE::bgTitle].Load(TEXT("resource/startBack(구).png"));
-			sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/stage.png"));
+			sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/lobby.png"));
 			sprites[(int)SPRITE::bgEnd].Load(TEXT("resource/endBack.png"));
 
 			sprites[(int)SPRITE::Izuna].Load(TEXT("resource/Izuna_move.png"));
@@ -142,10 +142,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			gameObject.push_back(obj);
 		}
 
-
 		/////////////////////////////////////////////////////////////////////////////////////////
-
-		
 
 		TIMER = GetTickCount64();
 		SetTimer(hWnd, 0, 10, (TIMERPROC)TimerProc);	// updateLoop
@@ -492,7 +489,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			switch (wParam)
 			{
 			case VK_ESCAPE:
-				PostQuitMessage(0);
+				std::cout << "현재 좌표: (" << p->GetPos().x << ", " << p->GetPos().y << ")" << std::endl;
+				//PostQuitMessage(0);
 				break;
 
 			case VK_LEFT:
@@ -722,7 +720,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 					{
 						player->animFrame %= 2;
 
-						std::cout << player->animFrame << std::endl;
+						// std::cout << player->animFrame << std::endl;
 
 					}
 					else
@@ -742,7 +740,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 void Send(void* Packet)
 {
 	int retval = send(sock, reinterpret_cast<char*>(Packet), reinterpret_cast<packet*>(Packet)->packetSize, 0);
-	std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
+	// std::cout << "[TCP 서버]" << retval << "바이트 보냈습니다\n";
 }
 
 void Recv(SOCKET sock) {
@@ -785,7 +783,7 @@ void Recv(SOCKET sock) {
 	{
 		sc_packet_move_obj recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-
+	
 		gameObject[(int)recvPacket.objectID]->ObjMove(&recvPacket);
 	}
 	break;
