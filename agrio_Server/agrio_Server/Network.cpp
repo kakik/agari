@@ -17,6 +17,24 @@ void Network::ProcessClient(int id)
 
 	return;
 }
+void Network::GameStart() {
+	sc_packet_change_scene pk;
+	pk.packetSize = sizeof(pk);
+	pk.packetType = SC_PACKET_CHANGE_SCENE;
+	pk.sceneNum = GAMESTART;// 게임 시작에 해당하는 번호
+	for (int i = 0; i < MAX_USER; ++i) {
+		if (false == GameObjects[i]->isActive) continue;
+		reinterpret_cast<Player*>(GameObjects[i])->Send(buf, pk.packetSize);
+	}
+	for (int i = 8; i < 20; ++i) {
+		GameObjects[i]->isActive = true;
+		GameObjects[i]->pos = Coordinate{ short(BLOCK_WIDTH * rand() % WINDOW_WIDTH),  short(BLOCK_HEIGHT * rand() % WINDOW_HEIGHT) };
+		GameObjects[i]->width = BLOCK_WIDTH;
+		GameObjects[i]->height = BLOCK_HEIGHT;
+		GameObjects[i]->sprite = (int)SPRITE::box;
+		GameObjects[i]->id = i;
+	}
+}
 void Network::AcceptThread() {
 	SOCKADDR_IN ClientAddr;
 	int addrlen;
@@ -25,7 +43,12 @@ void Network::AcceptThread() {
 		
 		id = GetPlayerId();
 		if (id == -1) {
+			
 			std::this_thread::sleep_for(std::chrono::seconds(1));
+			// 게임 시작 패킷 보내고
+			// 게임시작
+			// 게임 중에는 accept를 받지 않음, 게임이 시작하면 accpet를 다시 시작하자
+			// return;
 			continue;
 		}
 		addrlen = sizeof(ClientAddr);
@@ -124,7 +147,7 @@ void Network::SendRemoveObj(int id, int victm) {
 	sendPacket.packetSize = sizeof(sendPacket);
 	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
-
+	GameObjects[victm]->collisionCount = 0;
 	reinterpret_cast<Player*>(GameObjects[id])->Send(&sendPacket, sendPacket.packetSize);
 }
 
