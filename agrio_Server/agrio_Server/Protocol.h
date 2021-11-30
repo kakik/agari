@@ -39,9 +39,6 @@ const char SC_PACKET_GET_ITEM = 8;
 const char SC_PACKET_ITEM_COUNT = 9;
 const char SC_PACKET_CHAGE_WEAPON = 10;
 
-//상수
-const short BULLET_WIDTH = 11;
-const short BULLET_HEIGHT = 11;
 
 //	패킷 정의(Client->Server)
 #pragma pack(push,1)
@@ -76,6 +73,7 @@ struct sc_packet_login_ok : packet {
 struct sc_packet_change_scene : packet {
 	char sceneNum;
 };
+
 struct sc_packet_move_obj : packet {
 	char objectID;
 	char lookDir;
@@ -89,7 +87,7 @@ struct sc_packet_put_obj : packet {
 	char objectID;
 	char sprite;
 	short x, y;
-	unsigned char width, height;
+	short width, height;
 };
 struct sc_packet_remove_obj : packet {
 	char objectID;

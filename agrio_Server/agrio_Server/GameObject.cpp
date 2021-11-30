@@ -7,7 +7,7 @@
 void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 {
 	if (isMove) {
-		sc_packet_move_obj& pk = *reinterpret_cast<sc_packet_move_obj*>(buf+bufStart);
+		sc_packet_move_obj& pk = *reinterpret_cast<sc_packet_move_obj*>(buf + bufStart);
 		pk.packetSize = sizeof(pk);
 		pk.packetType = SC_PACKET_MOVE_OBJ;
 		pk.lookDir = direction;
@@ -16,7 +16,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		short speed = static_cast<short>(velocity * elapsedTime);
 		int x = pos.x;
 		int y = pos.y;
-		
+
 		switch (direction)
 		{
 		case (char)DIR::N:
@@ -71,18 +71,43 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 			if (Network::GetInstance()->IsCollision(id, obj->id)) {
 				//충돌처리 해줄 것
 				if (Network::GetInstance()->IsPlayer(id)) {
-					//hp --
-					
+			
+
 					pos.x = pk.x;
 					pos.y = pk.y;
 				}
 				else {
 					std::cout << "충돌\n";
-					isActive = false;
-					isMove = false;
-					for (int i = 0; i < MAX_USER; ++i) {
-						if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-						Network::GetInstance()->SendRemoveObj(i, id);
+
+					if (Network::GetInstance()->IsPlayer(obj->id) || collisionCount > 2)
+					{
+						// 체력 감소 패킷 보낼 것
+						reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[obj->id])->ChangeHp(ATTACKHP);
+						isActive = false;
+						isMove = false;
+						for (int i = 0; i < MAX_USER; ++i) {
+
+							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+
+							Network::GetInstance()->SendRemoveObj(i, id);
+						}
+					}
+					else {
+						collisionCount++;
+
+						switch (direction)
+						{
+						case (int)DIR::N:
+						case (int)DIR::E:
+						case (int)DIR::S:
+						case (int)DIR::W:
+							direction = (direction + 4) % 8;
+							break;
+						default:
+							direction = (direction + 2) % 8;
+							break;
+						}
+						
 					}
 				}
 				return;
@@ -111,7 +136,7 @@ void Player::SendLogIn() {
 void Player::Send(void* Packet, int packSize) const
 {
 	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
-	std::cout << "[TCP 서버]" << (int)id <<" : " << retval << "바이트 보냈습니다\n";
+	std::cout << "[TCP 서버]" << (int)id << " : " << retval << "바이트 보냈습니다\n";
 }
 
 bool Player::Recv() {
@@ -188,9 +213,6 @@ bool Player::Recv() {
 			isMove = false;
 			isAttack = false;
 			state = STATE::idle;
-			for (int i = 0; i < MAX_USER; ++i) {
-				//net->send_change_state(i, id);
-			}
 		}
 		break;
 
@@ -198,24 +220,21 @@ bool Player::Recv() {
 		{
 			isMove = true;
 			state = STATE::move;
-			for (int i = 0; i < MAX_USER; ++i) {
-				//net->send_change_state(i, id);
-			}
 		}
 		break;
 		case (char)STATE::attack:
 		{
 			state = STATE::attack;
-			for (int i = 0; i < MAX_USER; ++i) {
-				//net->send_change_state(i, id);
-			}
+			nMagazine++;
 		}
 		break;
 		default:
 			break;
 		}
-		for (int i = 0; i < MAX_USER; ++i) 
+		for (int i = 0; i < MAX_USER; ++i)
 		{
+			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+			if (false == player->isActive) continue;
 			net->SendChangeState(i, (int)id);
 		}
 	}
@@ -224,11 +243,12 @@ bool Player::Recv() {
 	{
 		cs_packet_shoot_bullet recvPacket;
 		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-
+		//if (nMagazine > 5) break;
+		//nMagazine++;
 		int obj_id = net->GetObjID();
 		GameObject* pistol = net->GameObjects[obj_id];
 		pistol->direction = recvPacket.dir;
-		pistol->velocity = 300.0f;
+		pistol->velocity = VELOCITY;
 		pistol->width = BULLET_WIDTH;
 		pistol->height = BULLET_HEIGHT;
 		pistol->id = obj_id;
@@ -238,10 +258,11 @@ bool Player::Recv() {
 		pistol->isMove = true;
 		pistol->pos = Coordinate{ recvPacket.shootX , recvPacket.shootY };
 
+
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
-		for (int i = 0; i < MAX_USER;++i) {
+		for (int i = 0; i < MAX_USER; ++i) {
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
 			if (false == player->isActive) continue;
 			//if (id == i) continue;
@@ -272,7 +293,7 @@ bool Player::Recv() {
 		break;
 		case (char)ITEM::box:
 		{
-			
+
 		}
 		break;
 		default:

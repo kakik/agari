@@ -2,8 +2,9 @@
 
 const short PLAYER_WIDTH = 18;
 const short PLAYER_HEIGHT = 30;
-const short MAX_HP = 100;
+const int MAX_HP = 100;
 const int HEALING = 20;
+const int ATTACKHP = -10;
 
 const float PLAYER_SPEED = 100.f;
 enum class SPRITE
@@ -30,6 +31,7 @@ public:
 	unsigned char id;
 	char sprite;
 	char type;
+	int collisionCount = 0;
 	bool isMove = false;
 	bool isAttack = false;
 
@@ -49,10 +51,11 @@ public:
 
 	char curEquip;
 	STATE state;
-	short hp = 50; // 힐량 확인을 위해 억지로 50으로 설정
+	int hp = 50; // 힐량 확인을 위해 억지로 50으로 설정
 	short items[8];
 	SOCKET sock;
 
+	int nMagazine = 0;//최대 총알 갯수
 public:
 	Player() {};
 
@@ -63,13 +66,15 @@ public:
 		sock = socket;
 	};
 	void ChangeHp(int value) {
-		std::cout << "내가 여러번 불린다니" << std::endl;
-		if (hp >= 0 && hp < MAX_HP) {
-			if (MAX_HP - hp < value) // 오버힐 방지
-				hp += MAX_HP - hp;
-			else
-				hp += value;
-		}
+		hp += value;
+		hp = std::clamp(hp, 0, MAX_HP);
+		sc_packet_change_hp pk;
+		pk.packetSize = sizeof(pk);
+		pk.packetType = SC_PACKET_CHANGE_HP;
+		pk.playerID = id;
+		pk.hp = hp;
+
+		Send(&pk, pk.packetSize);
 	}
 	void Send(void* Packet, int packetSize) const;
 	bool Recv();
