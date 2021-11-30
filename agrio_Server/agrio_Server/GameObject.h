@@ -7,6 +7,7 @@ const int HEALING = 20;
 const int ATTACKHP = -10;
 
 const float PLAYER_SPEED = 100.f;
+
 enum class SPRITE
 {
 	bgTitle, bgStage1, bgEnd, btnPlay, btnExit, btnReplay,
@@ -34,7 +35,7 @@ public:
 	int collisionCount = 0;
 	bool isMove = false;
 	bool isAttack = false;
-
+	bool isReady = false;
 	bool isActive = false;
 
 	unsigned char GetId() const {

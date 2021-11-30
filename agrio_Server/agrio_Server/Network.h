@@ -27,8 +27,9 @@ const short WINDOW_HEIGHT = 800 * 2;
 const float VELOCITY = 300.0f;
 
 enum Scene {
-	GAMESTART, GAMEEND, PLAYERDIE
+	GAMESTART, INGAME_ALIVE, INGAME_DIE, LEADERBOARD
 };
+
 class Network
 {
 	static Network* instance;
@@ -43,6 +44,8 @@ public:
 
 	SOCKET listen_sock;
 	static Network* GetInstance();
+
+
 	Network() {
 		assert(instance == nullptr);
 		instance = this;
@@ -162,6 +165,7 @@ public:
 	void SendMoveObj(int id, int mover);
 	void SendChangeState(int id, int target);
 	void SendChangeHp(int id, int target);
+	void SendChangeScene(int id, char snum);
 	void SendRemoveObj(int id, int victm);
 	void SendGetItem(int id, int victm);
 	void Update(float elapsedTime);

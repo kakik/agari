@@ -35,6 +35,7 @@ void Network::GameStart() {
 		GameObjects[i]->id = i;
 	}
 }
+
 void Network::AcceptThread() {
 	SOCKADDR_IN ClientAddr;
 	int addrlen;
@@ -70,6 +71,7 @@ void Network::AcceptThread() {
 
 	}
 }
+
 void err_quit(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -83,7 +85,6 @@ void err_quit(const char* msg)
 	LocalFree(lpMsgBuf);
 	exit(1);
 }
-
 void err_display(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -97,6 +98,7 @@ void err_display(const char* msg)
 	
 	LocalFree(lpMsgBuf);
 }
+
 void Network::SendLoginOk(int id) {
 	sc_packet_login_ok sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -154,6 +156,15 @@ void Network::SendChangeHp(int id, int target) {
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
+void Network::SendChangeScene(int id, char snum) {
+	sc_packet_change_scene sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_CHANGE_SCENE;
+	sendPacket.sceneNum = snum;
+
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
+
 void Network::SendRemoveObj(int id, int victm) {
 	sc_packet_remove_obj sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -178,14 +189,29 @@ void Network::Update(float elapsedTime) {
 		//if (!obj)continue;
 		if (false == obj->isActive) continue;
 		obj->Update(elapsedTime, buf, bufstart);
-		
 	}
 
-	if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
+	int ready_count = 0;
+	for (int i = 0; i < MAX_USER; ++i) {
+		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+		if (p->isActive && p->isReady) {
+			ready_count++;
+		};
+	}
+	if (ready_count == MAX_USER) {
+		for (int i = 0; i < MAX_USER; ++i) {
+			//SendChangeScene(i, GAMESTART);
+		}
+	}
+	ready_count = 0;
+
+	// 로비 테스트를 위해 잠시 비활성
+	/*if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
 	{
 		preItemSpawnTime = std::chrono::system_clock::now();
 
-		for (int i = 0; i < MAX_USER; ++i) {
+		
+		for (int i = 0; i < MAX_USER; ++i) { 
 			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 			if (false == p->isActive) continue;
 
@@ -204,8 +230,7 @@ void Network::Update(float elapsedTime) {
 
 			SendPutObj(i, obj_id);
 		}
-
-	}
+	}*/
 
 	//플레이어의 이벤트 버퍼에 있는 내용을 전송버퍼로 옮김
 	for (int i = 0; i < MAX_USER; ++i) {
@@ -218,13 +243,12 @@ void Network::Update(float elapsedTime) {
 		p->bufSize = 0;
 	}
 	
-
-
 	
-	if (0 < bufstart)
+	if (0 < bufstart) {
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;
 			reinterpret_cast<Player*>(GameObjects[i])->Send(buf, bufstart);
 		}
+	}
 	//플레이어가 한 프레임 마다 생성된 버퍼 전송
 }
