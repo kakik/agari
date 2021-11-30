@@ -1,26 +1,7 @@
 #pragma once
-#ifdef UNICODE
-#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
-#else
-#pragma comment(linker, "/entry:WinMainCRTStartup /subsystem:console")
-#endif
+#include "stdfx.h"
 
-
-#pragma comment(lib, "ws2_32")
-#include <winsock2.h>
-#include <cstdlib>
-#include"../../agrio_Server/agrio_Server/Protocol.h"
-
-#include <windows.h>
-#include <stdio.h>
-#include <tchar.h>
-#include <atlimage.h>
-#include <iostream>
-#include <vector>
-
-
-
-/******************************************** 좌표 ********************************************/
+/******************************************** 좌표********************************************/
 // 스프라이트
 const RECT char_move_sprite_rect[8][4] = //스프라이트 좌표
 { { { 0,0,18,30 },{ 32,0,50,30 },{ 64,0,82,30 },{ 96,0,114,30 } }/*N*/,{ { 133,0,151,30 },{ 165,0,173,30 },{ 197,0,215,30 },{ 229,0,247,30 } }/*NE*/,
@@ -68,15 +49,12 @@ const RECT exit2_button_rect = //exit버튼 위치       (게임엔드화면)    //exit버�
 	530,640,680,710
 };
 
-
-
 /******************************************** 변수 ********************************************/
 // enum
 enum class SCENE
 {
 	title, lobby, stage1, gameover
 };
-
 
 // 스프라이트
 enum class SPRITE
@@ -85,7 +63,7 @@ enum class SPRITE
 	Izuna, Izuna_Atk, GenAn, GenAn_Atk, Hinagiku, Hinagiku_Atk, Ichika, Ichika_Atk, Kagen, Kagen_Atk, Mitsumoto, Mitsumoto_Atk, Shino, Shino_Atk, Sizune, Sizune_Atk,
 	pistol, uzi, shotgun, box,
 	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
-	itemBox, 
+	itemBox,
 	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW
 };
 
@@ -93,6 +71,9 @@ enum class SPRITE
 MSG Message;
 HINSTANCE g_hInst;
 LPCTSTR lpszClass = _T("이름을 몰로 할까요????");
+
+// SOCKET
+SOCKET sock;
 
 // 전역변수
 const int character_width = 38;
@@ -102,6 +83,7 @@ const int win_y_size = 800;      //윈도우 y사이즈
 bool isLoginOk = false;			// 로그인ok가 올때까지 대기
 const int max_hp = 100;			// 플레이어의 최대 체력
 
+// 키 액션
 struct KEY_ACTION
 {
 	bool left = false, right = false;
@@ -131,102 +113,3 @@ int itemTimer = 0;
 
 // 씬
 SCENE scene = SCENE::title;
-
-
-/******************************************** 네트워크 게임 프로그래밍 ********************************************/
-struct Coordinate {
-	short x;
-	short y;
-};
-
-class GameObject {
-protected:
-	Coordinate pos;
-	DIR direction;
-	int sprite;
-	int width, height;
-	bool isActive = false;
-
-public:
-	GameObject();
-	// getter / setter
-	Coordinate GetPos() { return pos; }
-	DIR GetDir() { return direction; }
-	void SetDir(DIR newDir) { direction = newDir; }
-
-	void LoginOk(void* pk);
-	void ObjMove(void* pk);
-	void PutObj(void* pk);
-	void RemoveObj();
-	virtual void Render(HDC& hdc);
-
-	void test();
-};
-
-class Player : public GameObject {
-private:
-	int curGun;
-	STATE state;
-	short hp;
-
-public:
-	int animFrame;
-	int animTimer;
-	short items[8];
-
-	Player();
-
-	STATE GetState() { return state; }
-	short GetHp() { return hp; }
-	void SetState(STATE newState) { state = newState; }
-	void SetWeapon(int newWeapon) { curGun = newWeapon; }
-
-	void PlayerState(void* pk);
-	void ChangeWeapon(void* pk);
-	void ChangeHp(void* pk);
-	void GetItem(void* pk);
-	void ItemCount(void* pk);
-	void UseItem(int index);
-	virtual void Render(HDC& hdc);
-};
-
-
-std::vector<GameObject*> gameObject;
-CImage sprites[40];
-
-/******************************************** 함수 ********************************************/
-LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
-
-void err_quit(const char* msg)
-{
-	LPVOID lpMsgBuf;
-	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL,
-		WSAGetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR)&lpMsgBuf, 0, NULL
-	);
-	MessageBoxA(NULL, (LPCSTR)lpMsgBuf, (LPCSTR)msg, MB_ICONERROR);
-	LocalFree(lpMsgBuf);
-	exit(1);
-}
-
-void err_display(const char* msg)
-{
-	LPVOID lpMsgBuf;
-	FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-		NULL,
-		WSAGetLastError(),
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		(LPSTR)&lpMsgBuf, 0, NULL
-	);
-	MessageBoxA(NULL, (LPCSTR)lpMsgBuf, (LPCSTR)msg, MB_ICONERROR);
-	LocalFree(lpMsgBuf);
-}
-
-void Recv(SOCKET sock);
-DWORD WINAPI ProcessClient(LPVOID arg);
-
-void SetBulletPos(DIR direction, Coordinate& pos, short dist);
-void SendStatePacket();

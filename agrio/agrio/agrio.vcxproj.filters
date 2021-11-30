@@ -26,5 +26,14 @@
     <ClInclude Include="..\..\agrio_Server\agrio_Server\Protocol.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="stdfx.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GameObject.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
+    <ClInclude Include="GameFramework.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

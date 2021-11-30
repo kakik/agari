@@ -147,6 +147,9 @@
   <ItemGroup>
     <ClInclude Include="..\..\agrio_Server\agrio_Server\Protocol.h" />
     <ClInclude Include="Game.h" />
+    <ClInclude Include="GameFramework.h" />
+    <ClInclude Include="GameObject.h" />
+    <ClInclude Include="stdfx.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
