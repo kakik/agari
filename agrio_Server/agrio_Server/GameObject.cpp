@@ -292,6 +292,21 @@ void SetBulletPos(DIR direction, Coordinate& pos, short dist)
 	}
 }
 
+void SetPistol(int obj_id, char direction, Coordinate pos) {
+	if (direction == -1) direction = 7;
+	GameObject* pistol = Network::GetInstance()->GameObjects[obj_id];
+	pistol->direction = direction;
+	pistol->velocity = VELOCITY;
+	pistol->width = BULLET_WIDTH;
+	pistol->height = BULLET_HEIGHT;
+	pistol->id = obj_id;
+	pistol->sprite = (char)SPRITE::bulletN + direction;
+	pistol->type = BULLET;
+	pistol->isActive = true;
+	pistol->isMove = true;
+	pistol->pos = pos;
+	SetBulletPos((DIR)pistol->direction, pistol->pos, 50);
+}
 bool Player::Recv() {
 	Network* net = Network::GetInstance();
 	packet pkSize;
@@ -397,34 +412,45 @@ bool Player::Recv() {
 	{
 		cs_packet_shoot_bullet recvPacket;
 		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-		//if (nMagazine > 5) break;
+		if (items[curEquip-1] <= 0) break;
 		//nMagazine++;
-		int obj_id = net->GetObjID();
-		if (obj_id == -1) { 
-			std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
-			break;
+		items[curEquip - 1]--;
+
+		if (curEquip == shotgun) {
+			for (int i = -1; i < 2; ++i) {
+				int obj_id = net->GetObjID();
+				if (obj_id == -1) {
+					std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
+					break;
+				}
+				SetPistol(obj_id, (net->GameObjects[recvPacket.playerID]->direction+i)%8, net->GameObjects[recvPacket.playerID]->pos);
+				for (int i = 0; i < MAX_USER; ++i) {
+					Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+					if (false == player->isActive) continue;
+					//if (id == i) continue;
+					net->SendPutObj(i, obj_id);
+				}
+			}
 		}
-		GameObject* pistol = net->GameObjects[obj_id];
-		pistol->direction = net->GameObjects[recvPacket.playerID]->direction;
-		pistol->velocity = VELOCITY;
-		pistol->width = BULLET_WIDTH;
-		pistol->height = BULLET_HEIGHT;
-		pistol->id = obj_id;
-		pistol->sprite = (char)SPRITE::bulletN + direction;
-		pistol->type = BULLET;
-		pistol->isActive = true;
-		pistol->isMove = true;
-		pistol->pos = net->GameObjects[recvPacket.playerID]->pos;
-		SetBulletPos((DIR)pistol->direction, pistol->pos, 50);
+		else {
+			int obj_id = net->GetObjID();
+			if (obj_id == -1) {
+				std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
+				break;
+			}
+			SetPistol(obj_id, net->GameObjects[recvPacket.playerID]->direction, net->GameObjects[recvPacket.playerID]->pos);
+			for (int i = 0; i < MAX_USER; ++i) {
+				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+				if (false == player->isActive) continue;
+				//if (id == i) continue;
+				net->SendPutObj(i, obj_id);
+			}
+		}
+		
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
-		for (int i = 0; i < MAX_USER; ++i) {
-			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
-			if (false == player->isActive) continue;
-			//if (id == i) continue;
-			net->SendPutObj(i, obj_id);
-		}
+		
 
 	}
 	break;

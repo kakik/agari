@@ -161,6 +161,8 @@ void Network::SendGetItem(int id, int itemtype) {
 	sendPacket.packetType = SC_PACKET_GET_ITEM;
 	sendPacket.playerID = id;
 	sendPacket.itemID = itemtype;
+	Player* re = reinterpret_cast<Player*>(GameObjects[id]);
+	sendPacket.itemCount = re->items[itemtype];
 
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
