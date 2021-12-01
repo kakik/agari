@@ -63,10 +63,17 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		pk.x = pos.x;
 		pk.y = pos.y;
 
-
 		pos.x = x;
 		pos.y = y;
 		Network* net = Network::GetInstance();
+
+		if (type == PLAYER && net->MyScene == Scene::lobby) {
+			if ((830 < pk.x && 970 > pk.x) && (650 < pk.y && 780 > pk.y))
+				reinterpret_cast<Player*>(this)->isReady = true;
+			else
+				reinterpret_cast<Player*>(this)->isReady = false;
+		}
+
 		for (auto* obj : net->GameObjects) {
 			if (false == obj->isActive)continue;
 			if (id == obj->id)continue;
@@ -151,7 +158,6 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 							}
 							else
 							{
-
 								collisionCount++;
 								switch (direction)
 								{
@@ -235,7 +241,6 @@ void Player::UpdateBuf(void* Packet, int packSize) {
 }
 void Player::Send(void* Packet, int packSize)
 {
-
 	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
 	if (retval == SOCKET_ERROR) {
 		std::cout << "오류 발생" << (int)id << std::endl;
@@ -351,7 +356,6 @@ bool Player::Recv() {
 		direction = (char)recvPacket.dir;
 
 		isMove = true;
-
 	}
 	break;
 	case CS_PACKET_PLAYER_STATE:

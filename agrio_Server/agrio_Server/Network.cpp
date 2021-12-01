@@ -21,7 +21,7 @@ void Network::GameStart() {
 	sc_packet_change_scene pk;
 	pk.packetSize = sizeof(pk);
 	pk.packetType = SC_PACKET_CHANGE_SCENE;
-	pk.sceneNum = GAMESTART;// °ÔÀÓ ½ÃÀÛ¿¡ ÇØ´çÇÏ´Â ¹øÈ£
+	pk.sceneNum = (char)Scene::stage1;// ê²Œì„ ì‹œì‘ì— í•´ë‹¹í•˜ëŠ” ë²ˆí˜¸
 	for (int i = 0; i < MAX_USER; ++i) {
 		if (false == GameObjects[i]->isActive) continue;
 		reinterpret_cast<Player*>(GameObjects[i])->Send(buf, pk.packetSize);
@@ -35,6 +35,7 @@ void Network::GameStart() {
 		GameObjects[i]->id = i;
 	}
 }
+
 void Network::AcceptThread() {
 	SOCKADDR_IN ClientAddr;
 	int addrlen;
@@ -45,9 +46,9 @@ void Network::AcceptThread() {
 		if (id == -1) {
 			
 			std::this_thread::sleep_for(std::chrono::seconds(1));
-			// °ÔÀÓ ½ÃÀÛ ÆĞÅ¶ º¸³»°í
-			// °ÔÀÓ½ÃÀÛ
-			// °ÔÀÓ Áß¿¡´Â accept¸¦ ¹ŞÁö ¾ÊÀ½, °ÔÀÓÀÌ ½ÃÀÛÇÏ¸é accpet¸¦ ´Ù½Ã ½ÃÀÛÇÏÀÚ
+			// ê²Œì„ ì‹œì‘ íŒ¨í‚· ë³´ë‚´ê³ 
+			// ê²Œì„ì‹œì‘
+			// ê²Œì„ ì¤‘ì—ëŠ” acceptë¥¼ ë°›ì§€ ì•ŠìŒ, ê²Œì„ì´ ì‹œì‘í•˜ë©´ accpetë¥¼ ë‹¤ì‹œ ì‹œì‘í•˜ì
 			// return;
 			continue;
 		}
@@ -60,8 +61,8 @@ void Network::AcceptThread() {
 			err_display("accept()");
 			return;
 		}
-		std::cout << "\n[TCP ¼­¹ö] Å¬¶óÀÌ¾ğÆ® Á¢¼Ó: IP ÁÖ¼Ò=" << inet_ntoa(ClientAddr.sin_addr)
-			<< "Æ÷Æ® ¹øÈ£=" << ntohs(ClientAddr.sin_port) << std::endl;
+		std::cout << "\n[TCP ì„œë²„] í´ë¼ì´ì–¸íŠ¸ ì ‘ì†: IP ì£¼ì†Œ=" << inet_ntoa(ClientAddr.sin_addr)
+			<< "í¬íŠ¸ ë²ˆí˜¸=" << ntohs(ClientAddr.sin_port) << std::endl;
 
 		reinterpret_cast<Player*> (GameObjects[id])->SetSockId(client_sock, id);
 
@@ -70,6 +71,7 @@ void Network::AcceptThread() {
 
 	}
 }
+
 void err_quit(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -83,7 +85,6 @@ void err_quit(const char* msg)
 	LocalFree(lpMsgBuf);
 	exit(1);
 }
-
 void err_display(const char* msg)
 {
 	LPVOID lpMsgBuf;
@@ -97,6 +98,7 @@ void err_display(const char* msg)
 	
 	LocalFree(lpMsgBuf);
 }
+
 void Network::SendLoginOk(int id) {
 	sc_packet_login_ok sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -154,6 +156,15 @@ void Network::SendChangeHp(int id, int target) {
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
+void Network::SendChangeScene(int id, char snum) {
+	sc_packet_change_scene sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_CHANGE_SCENE;
+	sendPacket.sceneNum = snum;
+
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
+
 void Network::SendRemoveObj(int id, int victm) {
 	sc_packet_remove_obj sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -178,40 +189,58 @@ void Network::Update(float elapsedTime) {
 		//if (!obj)continue;
 		if (false == obj->isActive) continue;
 		obj->Update(elapsedTime, buf, bufstart);
-		
 	}
-
-	if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
-	{
-		preItemSpawnTime = std::chrono::system_clock::now();
-
+	if (MyScene == Scene::lobby) {
+		int ready_count = 0;
 		for (int i = 0; i < MAX_USER; ++i) {
 			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
-			if (false == p->isActive) continue;
-
-			int obj_id = GetObjID();
-			if (obj_id == -1) {
-				std::cout << "¸ğµç ¿ÀºêÁ§Æ®¸¦ »ç¿ëÇÏ¿´½À´Ï´Ù." << std::endl;
-				break;
-			}
-			GameObject* pistol = GameObjects[obj_id];
-			pistol->direction = rand() % 8;
-			pistol->velocity = VELOCITY;
-			pistol->width = BLOCK_WIDTH;
-			pistol->height = BLOCK_WIDTH;
-			pistol->id = obj_id;
-			pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
-			pistol->type = ITEM;
-			pistol->isActive = true;
-			pistol->isMove = false;
-			pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
-
-			SendPutObj(i, obj_id);
+			if (p->isActive && p->isReady) {
+				ready_count++;
+			};
 		}
 
+		if (ready_count == MAX_USER) {
+			for (int i = 0; i < MAX_USER; ++i) {
+				SendChangeScene(i, (char)Scene::stage1);
+				MyScene = Scene::stage1;
+			}
+		}
+		ready_count = 0;
 	}
 
-	//ÇÃ·¹ÀÌ¾îÀÇ ÀÌº¥Æ® ¹öÆÛ¿¡ ÀÖ´Â ³»¿ëÀ» Àü¼Û¹öÆÛ·Î ¿Å±è
+	if (MyScene == Scene::stage1) {
+		if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
+		{
+			preItemSpawnTime = std::chrono::system_clock::now();
+
+
+			for (int i = 0; i < MAX_USER; ++i) {
+				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+        if (false == p->isActive) continue;
+
+        int obj_id = GetObjID();
+        if (obj_id == -1) {
+          std::cout << "ëª¨ë“  ì˜¤ë¸Œì íŠ¸ë¥¼ ì‚¬ìš©í•˜ì˜€ìŠµë‹ˆë‹¤." << std::endl;
+          break;
+        }
+        GameObject* pistol = GameObjects[obj_id];
+        pistol->direction = rand() % 8;
+        pistol->velocity = VELOCITY;
+        pistol->width = BLOCK_WIDTH;
+        pistol->height = BLOCK_WIDTH;
+        pistol->id = obj_id;
+        pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
+        pistol->type = ITEM;
+        pistol->isActive = true;
+        pistol->isMove = false;
+        pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
+
+        SendPutObj(i, obj_id);
+			}
+		}
+	}
+
+	//í”Œë ˆì´ì–´ì˜ ì´ë²¤íŠ¸ ë²„í¼ì— ìˆëŠ” ë‚´ìš©ì„ ì „ì†¡ë²„í¼ë¡œ ì˜®ê¹€
 	for (int i = 0; i < MAX_USER; ++i) {
 		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 		if (false == p->isActive) continue;
@@ -222,13 +251,12 @@ void Network::Update(float elapsedTime) {
 		p->bufSize = 0;
 	}
 	
-
-
 	
-	if (0 < bufstart)
+	if (0 < bufstart) {
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;
 			reinterpret_cast<Player*>(GameObjects[i])->Send(buf, bufstart);
 		}
-	//ÇÃ·¹ÀÌ¾î°¡ ÇÑ ÇÁ·¹ÀÓ ¸¶´Ù »ı¼ºµÈ ¹öÆÛ Àü¼Û
+	}
+	//í”Œë ˆì´ì–´ê°€ í•œ í”„ë ˆì„ ë§ˆë‹¤ ìƒì„±ëœ ë²„í¼ ì „ì†¡
 }
