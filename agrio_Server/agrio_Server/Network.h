@@ -53,36 +53,37 @@ public:
 			GameObjects.push_back(new GameObject);
 		}
 		{
-			short objlength = 90;
+			short objlength = 100;
+			// À§
 			GameObjects[4]->isActive = true;
 			GameObjects[4]->pos = Coordinate{ WINDOW_WIDTH / 2,0 };
 			GameObjects[4]->width = WINDOW_WIDTH;
 			GameObjects[4]->height = objlength;
-			GameObjects[4]->sprite = (int)SPRITE::box;
+			GameObjects[4]->sprite = (int)SPRITE::wallRow;
 			GameObjects[4]->type = WALL;
 			GameObjects[4]->id = 4;
 
 			GameObjects[5]->isActive = true;
-			GameObjects[5]->pos = Coordinate{ WINDOW_WIDTH / 2, short(WINDOW_HEIGHT - objlength * 2) };
+			GameObjects[5]->pos = Coordinate{ WINDOW_WIDTH / 2, WINDOW_HEIGHT };
 			GameObjects[5]->width = WINDOW_WIDTH;
 			GameObjects[5]->height = objlength;
-			GameObjects[5]->sprite = (int)SPRITE::box;
+			GameObjects[5]->sprite = (int)SPRITE::wallRow;
 			GameObjects[5]->type = WALL;
 			GameObjects[5]->id = 5;
 
 			GameObjects[6]->isActive = true;
-			GameObjects[6]->pos = Coordinate{ objlength,WINDOW_HEIGHT / 2 };
+			GameObjects[6]->pos = Coordinate{ 0, WINDOW_HEIGHT / 2 };
 			GameObjects[6]->width = objlength;
 			GameObjects[6]->height = WINDOW_HEIGHT;
-			GameObjects[6]->sprite = (int)SPRITE::box;
+			GameObjects[6]->sprite = (int)SPRITE::wallCol;
 			GameObjects[6]->type = WALL;
 			GameObjects[6]->id = 6;
 
 			GameObjects[7]->isActive = true;
-			GameObjects[7]->pos = Coordinate{ short(WINDOW_WIDTH - objlength),WINDOW_HEIGHT / 2 };
+			GameObjects[7]->pos = Coordinate{ WINDOW_WIDTH, WINDOW_HEIGHT / 2 };
 			GameObjects[7]->width = objlength;
 			GameObjects[7]->height = WINDOW_HEIGHT;
-			GameObjects[7]->sprite = (int)SPRITE::box;
+			GameObjects[7]->sprite = (int)SPRITE::wallCol;
 			GameObjects[7]->type = WALL;
 			GameObjects[7]->id = 7;
 		}
