@@ -111,7 +111,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 							if (false == net->GameObjects[i]->isActive) continue;
 							net->SendRemoveObj(i, obj->id);
 						}
-						//net->SendGetItem(id, item);
+						net->SendGetItem(id, item);
 					}
 					break;
 					case WALL:
@@ -248,6 +248,50 @@ void Player::Send(void* Packet, int packSize)
 	std::cout << "[TCP 서버]" << (int)id << " : " << retval << "바이트 보냈습니다\n";
 }
 
+void SetBulletPos(DIR direction, Coordinate& pos, short dist)
+{
+	switch (direction)
+	{
+	case DIR::N:
+		pos.y -= dist;
+		break;
+	case DIR::NE:
+		pos.x += dist;
+		pos.y -= dist;
+		break;
+
+	case DIR::NW:
+		pos.x -= dist;
+		pos.y -= dist;
+		break;
+
+	case DIR::S:
+		pos.y += dist;
+		break;
+
+	case DIR::SE:
+		pos.x += dist;
+		pos.y += dist;
+		break;
+
+	case DIR::SW:
+		pos.x -= dist;
+		pos.y += dist;
+		break;
+
+	case DIR::E:
+		pos.x += dist;
+		break;
+
+	case DIR::W:
+		pos.x -= dist;
+		break;
+
+	default:
+		break;
+	}
+}
+
 bool Player::Recv() {
 	Network* net = Network::GetInstance();
 	packet pkSize;
@@ -346,6 +390,7 @@ bool Player::Recv() {
 		for (int i = 0; i < MAX_USER; ++i)
 		{
 			Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+			if (false == player->isActive) continue;
 			net->SendChangeState(i, id);
 		}
 	}
@@ -357,8 +402,12 @@ bool Player::Recv() {
 		//if (nMagazine > 5) break;
 		//nMagazine++;
 		int obj_id = net->GetObjID();
+		if (obj_id == -1) { 
+			std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
+			break;
+		}
 		GameObject* pistol = net->GameObjects[obj_id];
-		pistol->direction = recvPacket.dir;
+		pistol->direction = net->GameObjects[recvPacket.playerID]->direction;
 		pistol->velocity = VELOCITY;
 		pistol->width = BULLET_WIDTH;
 		pistol->height = BULLET_HEIGHT;
@@ -367,9 +416,8 @@ bool Player::Recv() {
 		pistol->type = BULLET;
 		pistol->isActive = true;
 		pistol->isMove = true;
-		pistol->pos = Coordinate{ recvPacket.shootX , recvPacket.shootY };
-
-
+		pistol->pos = net->GameObjects[recvPacket.playerID]->pos;
+		SetBulletPos((DIR)pistol->direction, pistol->pos, 50);
 		/*
 		* 각 클라이언트들한테 플레이어가 총을 발사 해당 플레이어 오브젝트를 Render 하라고함
 		*/
