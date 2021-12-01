@@ -15,7 +15,8 @@ enum class SPRITE
 	pistol, uzi, shotgun, box,
 	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
 	itemBox,
-	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW
+	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW,
+	wallCol, wallRow
 };
 
 struct Coordinate
