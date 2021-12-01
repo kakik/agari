@@ -208,3 +208,5 @@ void GameObject::test()
 }
 
 std::vector<GameObject*> gameObject;
+
+void SendStatePacket(STATE state);

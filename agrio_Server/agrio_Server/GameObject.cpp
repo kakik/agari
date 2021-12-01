@@ -354,8 +354,6 @@ bool Player::Recv() {
 		* 각 클라이언트들한테 플레이어가 이동했으니 해당 플레이어 오브젝트를 이동 하라고함
 		*/
 		direction = (char)recvPacket.dir;
-
-		isMove = true;
 	}
 	break;
 	case CS_PACKET_PLAYER_STATE:
