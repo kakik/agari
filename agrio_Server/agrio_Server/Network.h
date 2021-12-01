@@ -27,7 +27,7 @@ const short WINDOW_HEIGHT = 800 * 2;
 const float VELOCITY = 300.0f;
 
 enum class Scene {
-	title, lobby, stage1, gameover
+	title, lobby, stage1, gameover, leaderboard
 };
 
 class Network
