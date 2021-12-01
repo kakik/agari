@@ -195,8 +195,8 @@ void Network::Update(float elapsedTime) {
 		
 		if (ready_count == MAX_USER) {
 			for (int i = 0; i < MAX_USER; ++i) {
-				SendChangeScene(i, (char)Scene::stage1);
-				MyScene = Scene::stage1;
+				SendChangeScene(i, (char)SCENE::stage1);
+				MyScene = SCENE::stage1;
 				CUR_WINDOW_WIDTH = WINDOW_WIDTH * 0.75f;
 				CUR_WINDOW_HEIGHT = WINDOW_HEIGHT * 0.75f;
 				CUR_WINDOW_START_X = 15;

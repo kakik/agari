@@ -176,7 +176,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 
 
 									net->SendRemoveObj(i, obj->id);
-									net->SendChangeScene(obj->id, (char)Scene::gameover);
+									net->SendChangeScene(obj->id, (char)SCENE::gameover);
 								}
 							}
 						}
