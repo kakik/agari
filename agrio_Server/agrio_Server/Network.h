@@ -22,6 +22,10 @@ const short WINDOW_WIDTH = 900 * 2;      //윈도우 x사이즈
 const short WINDOW_HEIGHT = 800 * 2;
 const float VELOCITY = 300.0f;
 
+const int WALL_ID_UP = 4;
+const int WALL_ID_DOWN = 5;
+const int WALL_ID_LEFT = 6;
+const int WALL_ID_RIGHT = 7;
 enum class Scene {
 	title, lobby, stage1, gameover, winner
 };
@@ -55,37 +59,37 @@ public:
 		{
 			short objlength = 100;
 			// 위
-			GameObjects[4]->isActive = true;
-			GameObjects[4]->pos = Coordinate{ WINDOW_WIDTH / 2,0 };
-			GameObjects[4]->width = WINDOW_WIDTH;
-			GameObjects[4]->height = objlength;
-			GameObjects[4]->sprite = (int)SPRITE::wallRow;
-			GameObjects[4]->type = WALL;
-			GameObjects[4]->id = 4;
+			GameObjects[WALL_ID_UP]->isActive = true;
+			GameObjects[WALL_ID_UP]->pos = Coordinate{ WINDOW_WIDTH / 2,0 };
+			GameObjects[WALL_ID_UP]->width = WINDOW_WIDTH;
+			GameObjects[WALL_ID_UP]->height = objlength;
+			GameObjects[WALL_ID_UP]->sprite = (int)SPRITE::wallRow;
+			GameObjects[WALL_ID_UP]->type = WALL;
+			GameObjects[WALL_ID_UP]->id = 4;
 
-			GameObjects[5]->isActive = true;
-			GameObjects[5]->pos = Coordinate{ WINDOW_WIDTH / 2, WINDOW_HEIGHT };
-			GameObjects[5]->width = WINDOW_WIDTH;
-			GameObjects[5]->height = objlength;
-			GameObjects[5]->sprite = (int)SPRITE::wallRow;
-			GameObjects[5]->type = WALL;
-			GameObjects[5]->id = 5;
+			GameObjects[WALL_ID_DOWN]->isActive = true;
+			GameObjects[WALL_ID_DOWN]->pos = Coordinate{ WINDOW_WIDTH / 2, WINDOW_HEIGHT };
+			GameObjects[WALL_ID_DOWN]->width = WINDOW_WIDTH;
+			GameObjects[WALL_ID_DOWN]->height = objlength;
+			GameObjects[WALL_ID_DOWN]->sprite = (int)SPRITE::wallRow;
+			GameObjects[WALL_ID_DOWN]->type = WALL;
+			GameObjects[WALL_ID_DOWN]->id = 5;
 
-			GameObjects[6]->isActive = true;
-			GameObjects[6]->pos = Coordinate{ 0, WINDOW_HEIGHT / 2 };
-			GameObjects[6]->width = objlength;
-			GameObjects[6]->height = WINDOW_HEIGHT;
-			GameObjects[6]->sprite = (int)SPRITE::wallCol;
-			GameObjects[6]->type = WALL;
-			GameObjects[6]->id = 6;
+			GameObjects[WALL_ID_LEFT]->isActive = true;
+			GameObjects[WALL_ID_LEFT]->pos = Coordinate{ 0, WINDOW_HEIGHT / 2 };
+			GameObjects[WALL_ID_LEFT]->width = objlength;
+			GameObjects[WALL_ID_LEFT]->height = WINDOW_HEIGHT;
+			GameObjects[WALL_ID_LEFT]->sprite = (int)SPRITE::wallCol;
+			GameObjects[WALL_ID_LEFT]->type = WALL;
+			GameObjects[WALL_ID_LEFT]->id = 6;
 
-			GameObjects[7]->isActive = true;
-			GameObjects[7]->pos = Coordinate{ WINDOW_WIDTH, WINDOW_HEIGHT / 2 };
-			GameObjects[7]->width = objlength;
-			GameObjects[7]->height = WINDOW_HEIGHT;
-			GameObjects[7]->sprite = (int)SPRITE::wallCol;
-			GameObjects[7]->type = WALL;
-			GameObjects[7]->id = 7;
+			GameObjects[WALL_ID_RIGHT]->isActive = true;
+			GameObjects[WALL_ID_RIGHT]->pos = Coordinate{ WINDOW_WIDTH, WINDOW_HEIGHT / 2 };
+			GameObjects[WALL_ID_RIGHT]->width = objlength;
+			GameObjects[WALL_ID_RIGHT]->height = WINDOW_HEIGHT;
+			GameObjects[WALL_ID_RIGHT]->sprite = (int)SPRITE::wallCol;
+			GameObjects[WALL_ID_RIGHT]->type = WALL;
+			GameObjects[WALL_ID_RIGHT]->id = 7;
 		}
 		for (int i = 8; i < 20; ++i) {
 			GameObjects[i]->isActive = true;
