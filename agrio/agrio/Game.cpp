@@ -673,14 +673,10 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 				if (selectedWeapon == pistol || selectedWeapon == uzi)
 				{
-					// 총알 시작 위치 다시 지정해야함
-					SetBulletPos(dir, pos, 100);
 					cs_packet_shoot_bullet sendPacket;
 					sendPacket.packetSize = sizeof(sendPacket);
 					sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
-					sendPacket.dir = (char)dir;
-					sendPacket.shootX = pos.x;
-					sendPacket.shootY = pos.y;
+					sendPacket.playerID = playerID;
 					Send(&sendPacket);
 				}
 
@@ -824,20 +820,25 @@ void Recv(SOCKET sock) {
 	break;
 	case SC_PACKET_GET_ITEM:
 	{
-
+		sc_packet_get_item recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 	}
 	break;
 	case SC_PACKET_ITEM_COUNT:
 	{
-
+		sc_packet_get_item recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 	}
 	break;
 	case SC_PACKET_CHAGE_WEAPON:
 	{
-
+		sc_packet_get_item recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 	}
 	break;
 	default:
+		char tmp[20];
+		retval += recv(sock, tmp, pkSize.packetSize - 2, MSG_WAITALL);
 		break;
 	}
 }
@@ -858,49 +859,6 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void SetBulletPos(DIR direction, Coordinate& pos, short dist)
-{
-	switch (direction)
-	{
-	case DIR::N:
-		pos.y -= dist;
-		break;
-	case DIR::NE:
-		pos.x += dist;
-		pos.y -= dist;
-		break;
-
-	case DIR::NW:
-		pos.x -= dist;
-		pos.y -= dist;
-		break;
-
-	case DIR::S:
-		pos.y += dist;
-		break;
-
-	case DIR::SE:
-		pos.x += dist;
-		pos.y += dist;
-		break;
-
-	case DIR::SW:
-		pos.x -= dist;
-		pos.y += dist;
-		break;
-
-	case DIR::E:
-		pos.x += dist;
-		break;
-
-	case DIR::W:
-		pos.x -= dist;
-		break;
-
-	default:
-		break;
-	}
-}
 
 void SendStatePacket()
 {

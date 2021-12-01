@@ -190,6 +190,10 @@ void Network::Update(float elapsedTime) {
 			if (false == p->isActive) continue;
 
 			int obj_id = GetObjID();
+			if (obj_id == -1) {
+				std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
+				break;
+			}
 			GameObject* pistol = GameObjects[obj_id];
 			pistol->direction = rand() % 8;
 			pistol->velocity = VELOCITY;
