@@ -4,7 +4,7 @@
 #include"../../agrio_Server/agrio_Server/Protocol.h"
 
 // 스프라이트
-CImage sprites[50];
+CImage sprites[45];
 
 /******************************************** GameObject ********************************************/
 struct Coordinate {

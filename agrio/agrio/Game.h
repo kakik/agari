@@ -66,7 +66,7 @@ enum class SPRITE
 	itemBox,
 	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW,
 	wallCol, wallRow,
-	uiWinner, uiGameover
+	bgWinner, bgGameover
 };
 
 // Win API

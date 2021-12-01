@@ -131,8 +131,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::wallCol].Load(TEXT("resource/wall_col1.png"));
 			sprites[(int)SPRITE::wallRow].Load(TEXT("resource/wall_row1.png"));
 
-			sprites[(int)SPRITE::uiWinner].Load(TEXT("resource/ui_you.png"));
-			sprites[(int)SPRITE::uiGameover].Load(TEXT("resource/wall_row1.png"));
+			sprites[(int)SPRITE::bgWinner].Load(TEXT("resource/ui_you_win.png"));
+			sprites[(int)SPRITE::bgGameover].Load(TEXT("resource/ui_game_over.png"));
 		}
 
 		/*********************************************이미지 로드*****************************************************/
@@ -174,7 +174,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			dc.Create(win_x_size, win_y_size, 24);	// 배경 영역 DC
 			memdc1 = dc.GetDC();					// 배경 영역 DC
-
 			sprites[(int)SPRITE::bgTitle].Draw(memdc1, 0, 0, win_x_size, win_y_size);
 			sprites[(int)SPRITE::btnPlay].Draw(memdc1, play_button_rect);
 			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit_button_rect);
@@ -392,8 +391,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dc.Create(win_x_size, win_y_size, 24);
 			memdc1 = dc.GetDC();
 			sprites[(int)SPRITE::bgEnd].Draw(memdc1, 0, 0, win_x_size, win_y_size);
-
-
+			sprites[(int)SPRITE::bgGameover].Draw(memdc1, GAMEOVER_rect);
 			sprites[(int)SPRITE::btnReplay].Draw(memdc1, replay_button_rect);	//replay버튼
 			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit2_button_rect);		//exit버튼
 
@@ -408,8 +406,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dc.Create(win_x_size, win_y_size, 24);
 			memdc1 = dc.GetDC();
 			sprites[(int)SPRITE::bgEnd].Draw(memdc1, 0, 0, win_x_size, win_y_size);
-
-
+			sprites[(int)SPRITE::bgWinner].Draw(memdc1, GAMEOVER_rect);
 			sprites[(int)SPRITE::btnReplay].Draw(memdc1, replay_button_rect);	//replay버튼
 			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit2_button_rect);		//exit버튼
 
@@ -440,7 +437,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				exit_button = true;
 			}
 		}
-		else if (scene == SCENE::gameover)
+		else if (scene == SCENE::gameover || scene == SCENE::winner)
 		{
 			if ((replay_button_rect.left <= MOUSE_X) && (replay_button_rect.top <= MOUSE_Y) && (MOUSE_X <= replay_button_rect.right) && (MOUSE_Y <= replay_button_rect.bottom))  //replay버튼 선택, 눌렀다 떼야 작동
 			{
@@ -473,7 +470,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				break;
 			}
 		}
-		else if (scene == SCENE::gameover)
+		else if (scene == SCENE::gameover || scene == SCENE::winner)
 		{
 			if (replay_button == true)
 			{
@@ -537,7 +534,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 
-		else if (scene == SCENE::gameover)
+		else if (scene == SCENE::gameover || scene == SCENE::winner)
 		{
 
 		}
@@ -708,7 +705,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		}
 	}
 
-	else if (scene == SCENE::gameover)
+	else if (scene == SCENE::gameover || scene == SCENE::winner)
 	{
 
 	}
@@ -744,7 +741,6 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 			else if (keyAction.down)
 				p->SetDir(DIR::S);
-
 
 
 			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
