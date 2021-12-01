@@ -820,20 +820,25 @@ void Recv(SOCKET sock) {
 	break;
 	case SC_PACKET_GET_ITEM:
 	{
-
+		sc_packet_get_item recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 	}
 	break;
 	case SC_PACKET_ITEM_COUNT:
 	{
-
+		sc_packet_get_item recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 	}
 	break;
 	case SC_PACKET_CHAGE_WEAPON:
 	{
-
+		sc_packet_get_item recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 	}
 	break;
 	default:
+		char tmp[20];
+		retval += recv(sock, tmp, pkSize.packetSize - 2, MSG_WAITALL);
 		break;
 	}
 }
