@@ -785,6 +785,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 					Send(&sendPacket);
 				}
 
+				p->UseItem(selectedWeapon - 1);	// 플레이어가 가지고 있는 개수 수정
+
 				itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
 			}
 		}
@@ -882,7 +884,9 @@ void Recv(SOCKET sock) {
 	{
 		sc_packet_player_state recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-		reinterpret_cast<Player*>(gameObject[(int)recvPacket.objectID])->PlayerState(&recvPacket);
+		Player* player = reinterpret_cast<Player*>(gameObject[(int)recvPacket.objectID]);
+
+		player->PlayerState(&recvPacket);
 	}
 	break;
 	case SC_PACKET_PUT_OBJ:
@@ -915,18 +919,27 @@ void Recv(SOCKET sock) {
 	{
 		sc_packet_get_item recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		Player* player = reinterpret_cast<Player*>(gameObject[(int)recvPacket.playerID]);
+
+		player->GetItem(&recvPacket);
 	}
 	break;
-	case SC_PACKET_ITEM_COUNT:
-	{
-		sc_packet_get_item recvPacket;
-		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
-	}
+	//case SC_PACKET_ITEM_COUNT:
+	//{
+	//	sc_packet_get_item recvPacket;
+	//	retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+	//	Player* player = reinterpret_cast<Player*>(gameObject[(int)recvPacket.playerID]);
+
+	//	player->ItemCount();
+	//}
 	break;
 	case SC_PACKET_CHAGE_WEAPON:
 	{
 		sc_packet_get_item recvPacket;
 		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		Player* player = reinterpret_cast<Player*>(gameObject[(int)recvPacket.playerID]);
+
+		player->ChangeWeapon(&recvPacket);
 	}
 	break;
 	default:

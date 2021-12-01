@@ -54,7 +54,6 @@ struct cs_packet_login : packet {
 struct cs_packet_player_move : packet {
 	char dir;
 };
-
 struct cs_packet_player_state : packet {
 	char playerState;
 };
@@ -100,12 +99,12 @@ struct sc_packet_change_hp : packet {
 struct sc_packet_get_item : packet {
 	char playerID;
 	char itemID;
-};
-struct sc_packet_item_count : packet {
-	char playerID;
-	char itemID;
 	char itemCount;
 };
+//struct sc_packet_item_count : packet {
+//	char playerID;
+//	char itemID;
+//};
 struct sc_packet_change_weapon : packet {
 	char playerID;
 	char gunID; // == itemID
