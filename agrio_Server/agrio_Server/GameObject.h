@@ -2,10 +2,10 @@
 
 const short PLAYER_WIDTH = 18;
 const short PLAYER_HEIGHT = 30;
+
 const int MAX_HP = 100;
 const int HEALING = 20;
 const int ATTACKHP = -10;
-
 const float PLAYER_SPEED = 100.f;
 
 enum class SPRITE
@@ -40,9 +40,7 @@ public:
 	bool isReady = false;
 	bool isActive = false;
 
-	unsigned char GetId() const {
-		return id;
-	}
+	unsigned char GetId() const { return id; }
 
 	void Update(float elapsedTime,char* buf, int& bufPos);
 };
@@ -51,7 +49,6 @@ public:
 class Player : public GameObject
 {
 public:
-
 	char curEquip;
 	STATE state;
 	int hp = 50; // 힐량 확인을 위해 억지로 50으로 설정
@@ -81,5 +78,4 @@ public:
 	void UpdateBuf(void* Packet, int packetSize);
 	void Send(void* buf, int bufSize);
 	bool Recv();
-
 };

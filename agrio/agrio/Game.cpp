@@ -2,8 +2,8 @@
 #include "GameObject.h"
 #include "GameFramework.h"
 
-#define SERVERIP	"121.139.87.12"
-#define SERVERPORT	9000
+#define SERVERIP	"127.0.0.1"
+#define SERVERPORT	8000
 #define BUFSIZE		512
 
 

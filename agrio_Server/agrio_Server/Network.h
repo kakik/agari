@@ -5,9 +5,7 @@
 #include <winsock2.h>
 
 #include "Protocol.h"
-#include "Client.h"
 #include "GameObject.h"
-
 
 void err_quit(const char* msg);
 void err_display(const char* msg);
@@ -29,9 +27,6 @@ const int WALL_ID_UP = 4;
 const int WALL_ID_DOWN = 5;
 const int WALL_ID_LEFT = 6;
 const int WALL_ID_RIGHT = 7;
-enum class Scene {
-	title, lobby, stage1, gameover, winner
-};
 
 class Network
 {
@@ -47,7 +42,7 @@ public:
 
 	SOCKET listen_sock;
 	static Network* GetInstance();
-	Scene MyScene = Scene::lobby;
+	SCENE MyScene = SCENE::lobby;
 
 	Network() {
 		assert(instance == nullptr);
@@ -69,7 +64,7 @@ public:
 			GameObjects[WALL_ID_UP]->sprite = (int)SPRITE::wallRow;
 			GameObjects[WALL_ID_UP]->type = WALL;
 			GameObjects[WALL_ID_UP]->id = 4;
-
+			// 아래
 			GameObjects[WALL_ID_DOWN]->isActive = true;
 			GameObjects[WALL_ID_DOWN]->pos = Coordinate{ WINDOW_WIDTH / 2, WINDOW_HEIGHT };
 			GameObjects[WALL_ID_DOWN]->width = WINDOW_WIDTH;
@@ -77,7 +72,7 @@ public:
 			GameObjects[WALL_ID_DOWN]->sprite = (int)SPRITE::wallRow;
 			GameObjects[WALL_ID_DOWN]->type = WALL;
 			GameObjects[WALL_ID_DOWN]->id = 5;
-
+			// 왼쪽
 			GameObjects[WALL_ID_LEFT]->isActive = true;
 			GameObjects[WALL_ID_LEFT]->pos = Coordinate{ 0, WINDOW_HEIGHT / 2 };
 			GameObjects[WALL_ID_LEFT]->width = objlength;
@@ -85,7 +80,7 @@ public:
 			GameObjects[WALL_ID_LEFT]->sprite = (int)SPRITE::wallCol;
 			GameObjects[WALL_ID_LEFT]->type = WALL;
 			GameObjects[WALL_ID_LEFT]->id = 6;
-
+			// 오른쪽
 			GameObjects[WALL_ID_RIGHT]->isActive = true;
 			GameObjects[WALL_ID_RIGHT]->pos = Coordinate{ WINDOW_WIDTH, WINDOW_HEIGHT / 2 };
 			GameObjects[WALL_ID_RIGHT]->width = objlength;
@@ -175,8 +170,6 @@ public:
 	void SendGetItem(int id, int victm);
 	void SendChangeWeapon(int id, int target);
 	void Update(float elapsedTime);
-
-
 
 	void ProcessClient(int id);
 	void LobbyThread();

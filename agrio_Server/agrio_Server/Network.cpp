@@ -1,7 +1,5 @@
 #include "stdfx.h"
-
 #include "Network.h"
-
 
 Network* Network::instance = nullptr;
 
@@ -53,9 +51,7 @@ void Network::LobbyThread() {
 
 		reinterpret_cast<Player*> (GameObjects[id])->SetSockId(client_sock, id);
 
-
 		threads.emplace_back(&Network::ProcessClient, Network::GetInstance(), id);
-
 	}
 }
 
@@ -110,7 +106,6 @@ void Network::SendPutObj(int id, const int target) {
 	sendPutPacket.sprite = GameObjects[target]->sprite;
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPutPacket, sendPutPacket.packetSize);
 }
-
 void Network::SendMoveObj(int id, int mover) {
 	sc_packet_move_obj sendMovePacket;
 	sendMovePacket.packetSize = sizeof(sendMovePacket);
@@ -122,7 +117,6 @@ void Network::SendMoveObj(int id, int mover) {
 	sendMovePacket.y = GameObjects[mover]->pos.y;
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendMovePacket, sendMovePacket.packetSize);
 }
-
 void Network::SendChangeState(int id, int target) {
 	sc_packet_player_state sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -132,7 +126,6 @@ void Network::SendChangeState(int id, int target) {
 
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
-
 void Network::SendChangeHp(int id, int target) {
 	sc_packet_change_hp sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -142,7 +135,6 @@ void Network::SendChangeHp(int id, int target) {
 
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
-
 void Network::SendChangeScene(int id, char snum) {
 	sc_packet_change_scene sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -151,7 +143,6 @@ void Network::SendChangeScene(int id, char snum) {
 
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
-
 void Network::SendRemoveObj(int id, int victm) {
 	sc_packet_remove_obj sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
@@ -159,6 +150,7 @@ void Network::SendRemoveObj(int id, int victm) {
 	sendPacket.objectID = victm;
 	GameObjects[victm]->collisionCount = 0;
 	GameObjects[victm]->isActive = false;
+
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 void Network::SendGetItem(int id, int itemtype) {
@@ -172,7 +164,6 @@ void Network::SendGetItem(int id, int itemtype) {
 
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
-
 void Network::SendChangeWeapon(int id, int target)
 {
 	sc_packet_change_weapon sendPacket;
@@ -184,7 +175,6 @@ void Network::SendChangeWeapon(int id, int target)
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
-
 void Network::Update(float elapsedTime) {
 	int bufstart = 0;
 	for (auto obj : GameObjects) {
@@ -192,7 +182,9 @@ void Network::Update(float elapsedTime) {
 		if (false == obj->isActive) continue;
 		obj->Update(elapsedTime, buf, bufstart);
 	}
-	if (MyScene == Scene::lobby) {
+
+	// 모두 READY 상태인지 검사
+	if (MyScene == SCENE::lobby) {
 		int ready_count = 0;
 		for (int i = 0; i < MAX_USER; ++i) {
 			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
@@ -200,7 +192,7 @@ void Network::Update(float elapsedTime) {
 				ready_count++;
 			};
 		}
-
+		
 		if (ready_count == MAX_USER) {
 			for (int i = 0; i < MAX_USER; ++i) {
 				SendChangeScene(i, (char)Scene::stage1);
@@ -214,12 +206,10 @@ void Network::Update(float elapsedTime) {
 		ready_count = 0;
 	}
 
-	if (MyScene == Scene::stage1) {
-		if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
-		{
+	if (MyScene == SCENE::stage1) {
+		if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime)) {
 			preItemSpawnTime = std::chrono::system_clock::now();
 			int obj_id = GetObjID();
-
 
 			if (obj_id == -1) {
 				std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
@@ -242,11 +232,11 @@ void Network::Update(float elapsedTime) {
 				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 				if (false == p->isActive) continue;
 
-
 				SendPutObj(i, obj_id);
 			}
 		}
 
+		// 1명 남았는지 검사
 		int playerCount = MAX_USER;
 		for (int i = 0; i < MAX_USER; ++i) {
 			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
@@ -256,8 +246,8 @@ void Network::Update(float elapsedTime) {
 			for (int i = 0; i < MAX_USER; ++i) {
 				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 				if (p->hp > 0)
-					SendChangeScene(i, (char)Scene::winner);
-				MyScene = Scene::winner;
+					SendChangeScene(i, (char)SCENE::winner);
+				MyScene = SCENE::winner;
 			}
 		}
 	}
@@ -272,7 +262,6 @@ void Network::Update(float elapsedTime) {
 		//bufstart += p->bufSize;
 		p->bufSize = 0;
 	}
-
 
 	if (0 < bufstart) {
 		for (int i = 0; i < MAX_USER; ++i) {

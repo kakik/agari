@@ -1,5 +1,6 @@
 #pragma once
 #include "stdfx.h"
+#include"../../agrio_Server/agrio_Server/Protocol.h"
 
 /******************************************** 좌표********************************************/
 // 스프라이트
@@ -50,12 +51,6 @@ const RECT exit2_button_rect = //exit버튼 위치       (게임엔드화면)    //exit버�
 };
 
 /******************************************** 변수 ********************************************/
-// enum
-enum class SCENE
-{
-	title, lobby, stage1, gameover, winner
-};
-
 // 스프라이트
 enum class SPRITE
 {
@@ -66,7 +61,7 @@ enum class SPRITE
 	itemBox,
 	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW,
 	wallCol, wallRow,
-	bgWinner, bgGameover
+	bgWinner, bgGameover 
 };
 
 // Win API

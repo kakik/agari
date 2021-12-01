@@ -2,8 +2,6 @@
 #include "Network.h"
 #include "GameObject.h"
 
-
-
 void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 {
 	if (isMove) {
@@ -67,7 +65,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		pos.y = y;
 		Network* net = Network::GetInstance();
 
-		if (type == PLAYER && net->MyScene == Scene::lobby) {
+		if (type == PLAYER && net->MyScene == SCENE::lobby) {
 			if ((830 < pk.x && 970 > pk.x) && (650 < pk.y && 780 > pk.y))
 				reinterpret_cast<Player*>(this)->isReady = true;
 			else
@@ -113,7 +111,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 									//net->SendRemoveObj(i, j);
 								}
 								net->SendRemoveObj(i, id);
-								net->SendChangeScene(id, (char)Scene::gameover);
+								net->SendChangeScene(id, (char)SCENE::gameover);
 							}
 
 						}
