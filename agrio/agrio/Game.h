@@ -114,3 +114,5 @@ int itemTimer = 0;
 
 // ¾À
 SCENE scene = SCENE::title;
+
+void GameLoop(HWND hWnd);
