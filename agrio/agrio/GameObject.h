@@ -140,7 +140,7 @@ void Player::PlayerState(void* pk)
 void Player::ChangeWeapon(void* pk)
 {
 	sc_packet_change_weapon* recvPacket = (sc_packet_change_weapon*)pk;
-	curGun = recvPacket->gunID;
+	curGun = (int)recvPacket->gunID;
 }
 
 void Player::ChangeHp(void* pk)

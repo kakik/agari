@@ -619,6 +619,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			case '1':
 			case '2':
 			case '3':
+				cs_packet_used_item sendPacket;
+				sendPacket.packetSize = sizeof(sendPacket);
+				sendPacket.packetType = CS_PACKET_USED_ITEM;
+				sendPacket.itemNum = static_cast<int>((wParam - '0'));
+				Send(&sendPacket);
 			case '4':
 			case '5':
 				int key = static_cast<int>((wParam - '0'));
@@ -759,21 +764,16 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 
 			if (itemTimer < 0)
 			{
-				Coordinate pos = p->GetPos();
-				DIR dir = p->GetDir();
-
-				if (selectedWeapon == pistol || selectedWeapon == uzi)
+				if (selectedWeapon == pistol || selectedWeapon == uzi || selectedWeapon == shotgun)
 				{
 					cs_packet_shoot_bullet sendPacket;
 					sendPacket.packetSize = sizeof(sendPacket);
 					sendPacket.packetType = CS_PACKET_SHOOT_BULLET;
 					sendPacket.playerID = playerID;
 					Send(&sendPacket);
-				}
 
-				else if (selectedWeapon == shotgun)
-				{
-
+					p->UseItem(selectedWeapon - 1);	// 플레이어가 가지고 있는 개수 수정
+					itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
 				}
 
 				else if (selectedWeapon == potion || selectedWeapon == box)
@@ -783,11 +783,10 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 					sendPacket.packetType = CS_PACKET_USED_ITEM;
 					sendPacket.itemNum = selectedWeapon;
 					Send(&sendPacket);
+
+					p->UseItem(selectedWeapon - 1);	// 플레이어가 가지고 있는 개수 수정
+					itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
 				}
-
-				p->UseItem(selectedWeapon - 1);	// 플레이어가 가지고 있는 개수 수정
-
-				itemTimer = ITEM_TIME[selectedWeapon - 1];	// 선택한 무기의 발사 시간으로
 			}
 		}
 

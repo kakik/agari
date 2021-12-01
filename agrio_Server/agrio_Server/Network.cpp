@@ -165,6 +165,18 @@ void Network::SendGetItem(int id, int itemtype) {
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 
+void Network::SendChangeWeapon(int id, int target)
+{
+	sc_packet_change_weapon sendPacket;
+	sendPacket.packetSize = sizeof(sendPacket);
+	sendPacket.packetType = SC_PACKET_CHAGE_WEAPON;
+	sendPacket.playerID = target;
+	sendPacket.gunID = reinterpret_cast<Player*>(GameObjects[target])->curEquip;
+
+	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
+}
+
+
 void Network::Update(float elapsedTime) {
 	int bufstart = 0;
 	for (auto obj : GameObjects) {

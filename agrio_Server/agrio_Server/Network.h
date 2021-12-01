@@ -169,6 +169,7 @@ public:
 	void SendChangeScene(int id, char snum);
 	void SendRemoveObj(int id, int victm);
 	void SendGetItem(int id, int victm);
+	void SendChangeWeapon(int id, int target);
 	void Update(float elapsedTime);
 
 
