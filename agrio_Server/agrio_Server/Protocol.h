@@ -18,7 +18,7 @@ enum class DIR { N, NE, E, SE, S, SW, W, NW };
 enum ITEM { empty, pistol, uzi, shotgun, potion, box };
 
 //	오브젝트 타입
-enum OBJ_TYPE { PLAYER, BOX, BULLET, ITEM, WALL};
+enum OBJ_TYPE { PLAYER, BOX, BULLET, ITEM, WALL };
 
 //	패킷 타입(Client->Server)
 const char CS_PACKET_LOGIN = 1;

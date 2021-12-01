@@ -67,7 +67,7 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 		pos.y = y;
 		Network* net = Network::GetInstance();
 
-		if (type == PLAYER) { // Player가 레디존 안으로 들어올 경우
+		if (type == PLAYER && net->MyScene == Scene::lobby) {
 			if ((830 < pk.x && 970 > pk.x) && (650 < pk.y && 780 > pk.y))
 				reinterpret_cast<Player*>(this)->isReady = true;
 			else

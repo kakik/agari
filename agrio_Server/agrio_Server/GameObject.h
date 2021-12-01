@@ -10,7 +10,7 @@ const float PLAYER_SPEED = 100.f;
 
 enum class SPRITE
 {
-	bgTitle, bgStage1, bgEnd, btnPlay, btnExit, btnReplay,
+	bgTitle, bgLobby, bgStage1, bgEnd, btnPlay, btnExit, btnReplay,
 	Izuna, Izuna_Atk, GenAn, GenAn_Atk, Hinagiku, Hinagiku_Atk, Ichika, Ichika_Atk, Kagen, Kagen_Atk, Mitsumoto, Mitsumoto_Atk, Shino, Shino_Atk, Sizune, Sizune_Atk,
 	pistol, uzi, shotgun, box,
 	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,

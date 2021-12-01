@@ -84,7 +84,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::btnExit].Load(TEXT("resource/EXIT.png"));
 			sprites[(int)SPRITE::btnReplay].Load(TEXT("resource/REPLAY.png"));
 			sprites[(int)SPRITE::bgTitle].Load(TEXT("resource/startBack(구).png"));
-			sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/lobby.png"));
+			sprites[(int)SPRITE::bgLobby].Load(TEXT("resource/lobby.png"));
+			sprites[(int)SPRITE::bgStage1].Load(TEXT("resource/stage1.png"));
 			sprites[(int)SPRITE::bgEnd].Load(TEXT("resource/endBack.png"));
 
 			sprites[(int)SPRITE::Izuna].Load(TEXT("resource/Izuna_move.png"));
@@ -109,7 +110,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::uzi].Load(TEXT("resource/attack_uzi.png"));
 			sprites[(int)SPRITE::shotgun].Load(TEXT("resource/attack_shotgun.png"));
 			sprites[(int)SPRITE::box].Load(TEXT("resource/box.png"));
-
 
 			sprites[(int)SPRITE::uiPistol].Load(TEXT("resource/ui_pistol.png"));
 			sprites[(int)SPRITE::uiUzi].Load(TEXT("resource/ui_uzi.png"));
@@ -187,7 +187,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dc.Create(win_x_size * 2, win_y_size * 2, 24);	// == CreateCompatibleBitmap
 			memdc1 = dc.GetDC();							// == CreateComaptibleDC
 
-			sprites[(int)SPRITE::bgStage1].BitBlt(memdc1, 0, 0, SRCCOPY); //배경
+			sprites[(int)SPRITE::bgLobby].BitBlt(memdc1, 0, 0, SRCCOPY); //배경
 
 			////////////////////////////////////////// Render ///////////////////////////////////////////////
 
@@ -282,6 +282,100 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		else if (scene == SCENE::stage1)
 		{
+			dc.Create(win_x_size * 2, win_y_size * 2, 24);	// == CreateCompatibleBitmap
+			memdc1 = dc.GetDC();							// == CreateComaptibleDC
+
+			sprites[(int)SPRITE::bgStage1].BitBlt(memdc1, 0, 0, SRCCOPY); //배경
+
+			////////////////////////////////////////// Render ///////////////////////////////////////////////
+
+			for (const auto& gameobj : gameObject)
+			{
+				gameobj->Render(memdc1);
+			}
+
+			////////////////////////////////////////// 화면 영역 ///////////////////////////////////////////////
+			// UI 오버레이들만 memdc2에 출력함
+
+			Coordinate playerPos = gameObject[playerID]->GetPos();	// 플레이어 좌표
+
+			dc2.Create(win_x_size, win_y_size, 24);		// 화면 출력용 DC
+			memdc2 = dc2.GetDC();						// 화면 출력용 DC
+
+			if (playerPos.x <= (win_x_size / 2))
+			{
+				play_size_left = 0;
+			}
+			else if (playerPos.x >= (win_x_size * 2) - (win_x_size / 2))
+			{
+				play_size_left = (win_x_size * 2) - win_x_size;
+			}
+			else
+			{
+				play_size_left = playerPos.x - (win_x_size / 2);
+			}
+
+			if (playerPos.y <= (win_y_size / 2))
+			{
+				play_size_top = 0;
+			}
+			else if (playerPos.y >= (win_y_size * 2) - (win_y_size / 2))
+			{
+				play_size_top = (win_y_size * 2) - win_y_size;
+			}
+			else
+			{
+				play_size_top = playerPos.y - (win_y_size / 2);
+			}
+
+			dc.BitBlt(memdc2, 0, 0, win_x_size, win_y_size, play_size_left, play_size_top);
+
+			////////////////////////////////////////// UI ///////////////////////////////////////////////
+
+			TCHAR bullet_num[5] = {};   //총알개수
+			TCHAR weapon_num[2] = {};   //무기번호
+
+			hbrush = CreateSolidBrush(RGB(255, 255, 255));
+			oldbrush = (HBRUSH)SelectObject(memdc2, hbrush);
+
+			Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
+
+			for (int i = 0; i < 5; ++i)
+			{
+				RECT print_rect = weapon_image_rect[i];
+				wsprintf(bullet_num, TEXT("%d"), p->items[i]);
+				wsprintf(weapon_num, TEXT("%d"), i + 1);
+
+				if (selectedWeapon - 1 == i)  //선택된 무기는 25픽셀 위에 출력
+				{
+					print_rect.top -= 25;
+					print_rect.bottom -= 25;
+				}
+				RoundRect(memdc2, print_rect.left, print_rect.top, print_rect.right, print_rect.bottom, 10, 10);
+
+				sprites[(int)SPRITE::uiPistol + i].Draw(memdc2, print_rect);
+
+				SetBkMode(memdc2, TRANSPARENT);  //투명배경
+
+				print_rect.top -= 20;
+				print_rect.bottom -= 20;
+				DrawText(memdc2, bullet_num, _tcslen(bullet_num), &print_rect, DT_CENTER | DT_VCENTER);
+
+				print_rect.top += 70;
+				print_rect.bottom += 70;
+				DrawText(memdc2, weapon_num, _tcslen(weapon_num), &print_rect, DT_CENTER | DT_VCENTER);
+			}
+			SelectObject(memdc2, oldbrush);
+			DeleteObject(hbrush);
+
+			///////////////////////////////////////////////////////////////////////////////////////////
+
+			dc2.Draw(hdc, 0, 0);
+
+			dc.ReleaseDC();		// dc 해제
+			dc.Destroy();		// 썼던 dc 삭제
+			dc2.ReleaseDC();
+			dc2.Destroy();
 
 		}
 
@@ -776,7 +870,9 @@ void Recv(SOCKET sock) {
 	break;
 	case SC_PACKET_CHANGE_SCENE:
 	{
-
+		sc_packet_change_scene recvPacket;
+		retval += recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
+		scene = (SCENE)recvPacket.sceneNum;
 	}
 	break;
 	case SC_PACKET_MOVE_OBJ:

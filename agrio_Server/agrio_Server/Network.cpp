@@ -21,7 +21,7 @@ void Network::GameStart() {
 	sc_packet_change_scene pk;
 	pk.packetSize = sizeof(pk);
 	pk.packetType = SC_PACKET_CHANGE_SCENE;
-	pk.sceneNum = GAMESTART;// 게임 시작에 해당하는 번호
+	pk.sceneNum = (char)Scene::stage1;// 게임 시작에 해당하는 번호
 	for (int i = 0; i < MAX_USER; ++i) {
 		if (false == GameObjects[i]->isActive) continue;
 		reinterpret_cast<Player*>(GameObjects[i])->Send(buf, pk.packetSize);
@@ -190,47 +190,51 @@ void Network::Update(float elapsedTime) {
 		if (false == obj->isActive) continue;
 		obj->Update(elapsedTime, buf, bufstart);
 	}
-
-	int ready_count = 0;
-	for (int i = 0; i < MAX_USER; ++i) {
-		Player* p = reinterpret_cast<Player*>(GameObjects[i]);
-		if (p->isActive && p->isReady) {
-			ready_count++;
-		};
-	}
-	if (ready_count == MAX_USER) {
+	if (MyScene == Scene::lobby) {
+		int ready_count = 0;
 		for (int i = 0; i < MAX_USER; ++i) {
-			//SendChangeScene(i, GAMESTART);
+			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+			if (p->isActive && p->isReady) {
+				ready_count++;
+			};
+		}
+
+		if (ready_count == MAX_USER) {
+			for (int i = 0; i < MAX_USER; ++i) {
+				SendChangeScene(i, (char)Scene::stage1);
+				MyScene = Scene::stage1;
+			}
+		}
+		ready_count = 0;
+	}
+
+	if (MyScene == Scene::stage1) {
+		if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
+		{
+			preItemSpawnTime = std::chrono::system_clock::now();
+
+
+			for (int i = 0; i < MAX_USER; ++i) {
+				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+				if (false == p->isActive) continue;
+
+				int obj_id = GetObjID();
+				GameObject* pistol = GameObjects[obj_id];
+				pistol->direction = rand() % 8;
+				pistol->velocity = VELOCITY;
+				pistol->width = BLOCK_WIDTH;
+				pistol->height = BLOCK_WIDTH;
+				pistol->id = obj_id;
+				pistol->sprite = (char)SPRITE::uiPistol + rand() % 5;
+				pistol->type = ITEM;
+				pistol->isActive = true;
+				pistol->isMove = false;
+				pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
+
+				SendPutObj(i, obj_id);
+			}
 		}
 	}
-	ready_count = 0;
-
-	// 로비 테스트를 위해 잠시 비활성
-	/*if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
-	{
-		preItemSpawnTime = std::chrono::system_clock::now();
-
-		
-		for (int i = 0; i < MAX_USER; ++i) { 
-			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
-			if (false == p->isActive) continue;
-
-			int obj_id = GetObjID();
-			GameObject* pistol = GameObjects[obj_id];
-			pistol->direction = rand() % 8;
-			pistol->velocity = VELOCITY;
-			pistol->width = BLOCK_WIDTH;
-			pistol->height = BLOCK_WIDTH;
-			pistol->id = obj_id;
-			pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
-			pistol->type = ITEM;
-			pistol->isActive = true;
-			pistol->isMove = false;
-			pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
-
-			SendPutObj(i, obj_id);
-		}
-	}*/
 
 	//플레이어의 이벤트 버퍼에 있는 내용을 전송버퍼로 옮김
 	for (int i = 0; i < MAX_USER; ++i) {
