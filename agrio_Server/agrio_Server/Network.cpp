@@ -17,26 +17,8 @@ void Network::ProcessClient(int id)
 
 	return;
 }
-void Network::GameStart() {
-	sc_packet_change_scene pk;
-	pk.packetSize = sizeof(pk);
-	pk.packetType = SC_PACKET_CHANGE_SCENE;
-	pk.sceneNum = (char)Scene::stage1;// 게임 시작에 해당하는 번호
-	for (int i = 0; i < MAX_USER; ++i) {
-		if (false == GameObjects[i]->isActive) continue;
-		reinterpret_cast<Player*>(GameObjects[i])->Send(buf, pk.packetSize);
-	}
-	for (int i = 8; i < 20; ++i) {
-		GameObjects[i]->isActive = true;
-		GameObjects[i]->pos = Coordinate{ short(BLOCK_WIDTH * rand() % WINDOW_WIDTH),  short(BLOCK_HEIGHT * rand() % WINDOW_HEIGHT) };
-		GameObjects[i]->width = BLOCK_WIDTH;
-		GameObjects[i]->height = BLOCK_HEIGHT;
-		GameObjects[i]->sprite = (int)SPRITE::box;
-		GameObjects[i]->id = i;
-	}
-}
 
-void Network::AcceptThread() {
+void Network::LobbyThread() {
 	SOCKADDR_IN ClientAddr;
 	int addrlen;
 	int id = 0;

@@ -239,9 +239,9 @@ void Player::UpdateBuf(void* Packet, int packSize) {
 	bufSize += packSize;
 	buf_lock.unlock();
 }
-void Player::Send(void* Packet, int packSize)
+void Player::Send(void* buf, int bufSize)
 {
-	int retval = send(sock, reinterpret_cast<char*>(Packet), packSize, 0);
+	int retval = send(sock, reinterpret_cast<char*>(buf), bufSize, 0);
 	if (retval == SOCKET_ERROR) {
 		std::cout << "오류 발생" << (int)id << std::endl;
 	}
@@ -381,7 +381,7 @@ bool Player::Recv() {
 		case (char)STATE::attack:
 		{
 			state = STATE::attack;
-			nMagazine++;
+			//nMagazine++;
 		}
 		break;
 		default:

@@ -56,7 +56,7 @@ public:
 	short items[5];
 	SOCKET sock;
 
-	int nMagazine = 0;//ÃÖ´ë ÃÑ¾Ë °¹¼ö
+
 	char eventPacketBuf[BUFSIZE];
 	int bufSize = 0;
 	std::mutex buf_lock;
@@ -78,7 +78,7 @@ public:
 		hp = std::clamp(hp, 0, MAX_HP);
 	}
 	void UpdateBuf(void* Packet, int packetSize);
-	void Send(void* Packet, int packetSize);
+	void Send(void* buf, int bufSize);
 	bool Recv();
 
 };

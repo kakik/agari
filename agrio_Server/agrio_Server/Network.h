@@ -113,7 +113,7 @@ public:
 			delete go;
 		}
 	}
-	void GameStart();
+
 	void Disconnect(int id) {
 		Player* p = reinterpret_cast<Player*>(GameObjects[id]);
 		p->isActive = false;
@@ -145,7 +145,7 @@ public:
 		return (id >= 0) && (id < 3);
 	}
 	void StartAccept() {
-		threads.emplace_back(&Network::AcceptThread, this);
+		threads.emplace_back(&Network::LobbyThread, this);
 	}
 	bool IsCollision(int a_id, int b_id) {
 		GameObject* a = GameObjects[a_id];
@@ -160,6 +160,7 @@ public:
 		else
 			return false;
 	}
+
 	void SendLoginOk(int id);
 	void SendPutObj(int id, int target);
 	void SendMoveObj(int id, int mover);
@@ -173,6 +174,6 @@ public:
 
 
 	void ProcessClient(int id);
-	void AcceptThread();
+	void LobbyThread();
 };
 
