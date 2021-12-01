@@ -128,8 +128,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::bulletW].Load(TEXT("resource/b6.png"));
 			sprites[(int)SPRITE::bulletNW].Load(TEXT("resource/b7.png"));
 
-			sprites[(int)SPRITE::wallCol].Load(TEXT("resource/wall_col1.png"));
-			sprites[(int)SPRITE::wallRow].Load(TEXT("resource/wall_row1.png"));
+			sprites[(int)SPRITE::wallCol].Load(TEXT("resource/wall_col.png"));
+			sprites[(int)SPRITE::wallRow].Load(TEXT("resource/wall_row.png"));
 
 			sprites[(int)SPRITE::bgWinner].Load(TEXT("resource/ui_you_win.png"));
 			sprites[(int)SPRITE::bgGameover].Load(TEXT("resource/ui_game_over.png"));
