@@ -53,19 +53,20 @@ const RECT exit2_button_rect = //exit버튼 위치       (게임엔드화면)    //exit버�
 // enum
 enum class SCENE
 {
-	title, lobby, stage1, gameover
+	title, lobby, stage1, gameover, winner
 };
 
 // 스프라이트
 enum class SPRITE
 {
-	bgTitle, bgLobby ,bgStage1, bgEnd, btnPlay, btnExit, btnReplay,
+	bgTitle, bgLobby, bgStage1, bgEnd, btnPlay, btnExit, btnReplay,
 	Izuna, Izuna_Atk, GenAn, GenAn_Atk, Hinagiku, Hinagiku_Atk, Ichika, Ichika_Atk, Kagen, Kagen_Atk, Mitsumoto, Mitsumoto_Atk, Shino, Shino_Atk, Sizune, Sizune_Atk,
 	pistol, uzi, shotgun, box,
 	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
 	itemBox,
 	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW,
-	wallCol, wallRow
+	wallCol, wallRow,
+	bgWinner, bgGameover
 };
 
 // Win API
