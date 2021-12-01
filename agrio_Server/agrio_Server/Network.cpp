@@ -12,7 +12,7 @@ Network* Network::GetInstance()
 void Network::ProcessClient(int id)
 {
 	Player* client = reinterpret_cast<Player*>(GameObjects[id]);
-	
+
 	while (client->Recv());
 
 	return;
@@ -41,10 +41,10 @@ void Network::AcceptThread() {
 	int addrlen;
 	int id = 0;
 	while (true) {
-		
+
 		id = GetPlayerId();
 		if (id == -1) {
-			
+
 			std::this_thread::sleep_for(std::chrono::seconds(1));
 			// 게임 시작 패킷 보내고
 			// 게임시작
@@ -95,7 +95,7 @@ void err_display(const char* msg)
 		(LPSTR)&lpMsgBuf, 0, NULL
 	);
 	MessageBoxA(NULL, (LPCSTR)lpMsgBuf, (LPCSTR)msg, MB_ICONERROR);
-	
+
 	LocalFree(lpMsgBuf);
 }
 
@@ -108,7 +108,7 @@ void Network::SendLoginOk(int id) {
 	sendPacket.y = (short)900;
 	sendPacket.width = PLAYER_WIDTH;
 	sendPacket.height = PLAYER_HEIGHT;
-	
+
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 void Network::SendPutObj(int id, const int target) {
@@ -212,30 +212,32 @@ void Network::Update(float elapsedTime) {
 		if (std::chrono::system_clock::now() - preItemSpawnTime > std::chrono::seconds(ItemSpawnTime))
 		{
 			preItemSpawnTime = std::chrono::system_clock::now();
+			int obj_id = GetObjID();
 
+
+			if (obj_id == -1) {
+				std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
+				return;
+			}
+
+			GameObject* pistol = GameObjects[obj_id];
+			pistol->direction = rand() % 8;
+			pistol->velocity = VELOCITY;
+			pistol->width = BLOCK_WIDTH;
+			pistol->height = BLOCK_WIDTH;
+			pistol->id = obj_id;
+			pistol->sprite = (char)SPRITE::uiPistol + rand() % 5;
+			pistol->type = ITEM;
+			pistol->isActive = true;
+			pistol->isMove = false;
+			pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
 
 			for (int i = 0; i < MAX_USER; ++i) {
 				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
-        if (false == p->isActive) continue;
+				if (false == p->isActive) continue;
 
-        int obj_id = GetObjID();
-        if (obj_id == -1) {
-          std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
-          break;
-        }
-        GameObject* pistol = GameObjects[obj_id];
-        pistol->direction = rand() % 8;
-        pistol->velocity = VELOCITY;
-        pistol->width = BLOCK_WIDTH;
-        pistol->height = BLOCK_WIDTH;
-        pistol->id = obj_id;
-        pistol->sprite = (char)SPRITE::uiPistol + rand()%5;
-        pistol->type = ITEM;
-        pistol->isActive = true;
-        pistol->isMove = false;
-        pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
 
-        SendPutObj(i, obj_id);
+				SendPutObj(i, obj_id);
 			}
 		}
 	}
@@ -250,8 +252,8 @@ void Network::Update(float elapsedTime) {
 		//bufstart += p->bufSize;
 		p->bufSize = 0;
 	}
-	
-	
+
+
 	if (0 < bufstart) {
 		for (int i = 0; i < MAX_USER; ++i) {
 			if (false == GameObjects[i]->isActive) continue;
