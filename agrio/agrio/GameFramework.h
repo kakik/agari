@@ -39,5 +39,3 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime);
 void Send(void* Packet);
 void Recv(SOCKET sock);
 DWORD WINAPI ProcessClient(LPVOID arg);
-
-void SetBulletPos(DIR direction, Coordinate& pos, short dist);
