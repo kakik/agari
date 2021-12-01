@@ -434,6 +434,16 @@ bool Player::Recv() {
 		retval = recv(sock, reinterpret_cast<char*>(&recvPacket) + 2, pkSize.packetSize - 2, MSG_WAITALL);
 		switch (recvPacket.itemNum)
 		{
+		case (char)ITEM::pistol:
+		case (char)ITEM::uzi:
+		case (char)ITEM::shotgun:
+			curEquip = (char)recvPacket.itemNum;
+			for (int i = 0; i < MAX_USER; ++i) {
+				if (false == net->GameObjects[i]->isActive) continue;
+				net->SendChangeWeapon(i, id);
+			}
+			break;
+
 		case (char)ITEM::potion:
 		{
 			ChangeHp(HEALING);

@@ -38,7 +38,7 @@ const char SC_PACKET_PUT_OBJ = 5;
 const char SC_PACKET_REMOVE_OBJ = 6;
 const char SC_PACKET_CHANGE_HP = 7;
 const char SC_PACKET_GET_ITEM = 8;
-const char SC_PACKET_ITEM_COUNT = 9;
+//const char SC_PACKET_ITEM_COUNT = 9;
 const char SC_PACKET_CHAGE_WEAPON = 10;
 
 
