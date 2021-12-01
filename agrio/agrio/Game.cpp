@@ -130,6 +130,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 			sprites[(int)SPRITE::wallCol].Load(TEXT("resource/wall_col1.png"));
 			sprites[(int)SPRITE::wallRow].Load(TEXT("resource/wall_row1.png"));
+
+			sprites[(int)SPRITE::uiWinner].Load(TEXT("resource/ui_you.png"));
+			sprites[(int)SPRITE::uiGameover].Load(TEXT("resource/wall_row1.png"));
 		}
 
 		/*********************************************이미지 로드*****************************************************/
@@ -399,6 +402,24 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			dc.ReleaseDC();		// dc 해제
 			dc.Destroy();		// 썼던 dc 삭제
 		}
+
+		else if (scene == SCENE::winner)
+		{
+			dc.Create(win_x_size, win_y_size, 24);
+			memdc1 = dc.GetDC();
+			sprites[(int)SPRITE::bgEnd].Draw(memdc1, 0, 0, win_x_size, win_y_size);
+
+
+			sprites[(int)SPRITE::btnReplay].Draw(memdc1, replay_button_rect);	//replay버튼
+			sprites[(int)SPRITE::btnExit].Draw(memdc1, exit2_button_rect);		//exit버튼
+
+			dc.Draw(hdc, 0, 0, win_x_size, win_y_size);
+
+			dc.ReleaseDC();		// dc 해제
+			dc.Destroy();		// 썼던 dc 삭제
+		}
+
+
 		EndPaint(hWnd, &ps);
 	}
 	break;
