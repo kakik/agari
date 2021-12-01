@@ -153,6 +153,7 @@ void Network::SendRemoveObj(int id, int victm) {
 	sendPacket.packetType = SC_PACKET_REMOVE_OBJ;
 	sendPacket.objectID = victm;
 	GameObjects[victm]->collisionCount = 0;
+	GameObjects[victm]->isActive = false;
 	reinterpret_cast<Player*>(GameObjects[id])->UpdateBuf(&sendPacket, sendPacket.packetSize);
 }
 void Network::SendGetItem(int id, int itemtype) {

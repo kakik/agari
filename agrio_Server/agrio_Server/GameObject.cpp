@@ -129,12 +129,12 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 
 				}
 				else {// 플레이어가 아닌(총알, 아이템, 벽)오브젝트가 충돌했을 때 충돌타입이(obj->type)이라면
-
-					switch (obj->type)
-					{
-					case PLAYER:
-					{
-						if (type == BULLET) {
+					switch (type) {
+					case BOX:
+					case WALL:
+						break;
+					case BULLET:
+						if (obj->type == PLAYER) {
 							reinterpret_cast<Player*>(net->GameObjects[obj->id])->ChangeHp(ATTACKHP);
 
 							GameObject* Object = (net->GameObjects[id]);
@@ -151,18 +151,13 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 								}
 							}
 						}
-					}
-					break;
-					case BOX:
-					case WALL:
-						if (type == BULLET) {
+						else if (obj->type == WALL) {
 
 							if (collisionCount > 2) {
 								for (int i = 0; i < MAX_USER; ++i) {
 									if (false == net->GameObjects[i]->isActive) continue;
 									net->SendRemoveObj(i, id);
 								}
-
 							}
 							else
 							{
@@ -180,58 +175,48 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 									break;
 								}
 							}
+
+
 						}
-						else if (type == BOX)
-						{
-							if (collisionCount > 2) {
+						else if (obj->type == BOX) {
+							if (collisionCount > 1) {
 								for (int i = 0; i < MAX_USER; ++i) {
 									if (false == net->GameObjects[i]->isActive) continue;
 									net->SendRemoveObj(i, id);
 								}
 							}
-							else {
+							else
+							{
 								collisionCount++;
+								switch (direction)
+								{
+								case (int)DIR::N:
+								case (int)DIR::E:
+								case (int)DIR::S:
+								case (int)DIR::W:
+									direction = (direction + 4) % 8;
+									break;
+								default:
+									direction = (direction + 2) % 8;
+									break;
+								}
+							}
+							if (obj->collisionCount > 1) {
+								for (int i = 0; i < MAX_USER; ++i) {
+									if (false == net->GameObjects[i]->isActive) continue;
+									net->SendRemoveObj(i, obj->id);
+								}
+							}
+							else
+							{
+ 								obj->collisionCount++;
+
 							}
 						}
 						break;
-
-					case BULLET:
-						break;
-					default:
-						break;
 					}
+					
 				}
-
-				/* {
-					if (Network::GetInstance()->IsPlayer(id)) {
-						pos.x = pk.x;
-						pos.y = pk.y;
-					}
-					else {
-						std::cout << "충돌\n";
-
-						if (Network::GetInstance()->IsPlayer(obj->id) || collisionCount > 2)
-						{
-							// 체력 감소 패킷 보낼 것
-							reinterpret_cast<Player*>(Network::GetInstance()->GameObjects[obj->id])->ChangeHp(ATTACKHP);
-
-							isActive = false;
-							isMove = false;
-							for (int i = 0; i < MAX_USER; ++i) {
-
-								if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-								Network::GetInstance()->SendChangeHp(i, obj->id);
-								Network::GetInstance()->SendRemoveObj(i, id);
-							}
-						}
-						else {
-
-
-						}
-					}
-				}*/
-
-
 			}
 		}
 		pk.x = pos.x;
@@ -312,6 +297,21 @@ void SetPistol(int obj_id, char direction, Coordinate pos) {
 	pistol->type = BULLET;
 	pistol->isActive = true;
 	pistol->isMove = true;
+	pistol->pos = pos;
+	SetBulletPos((DIR)pistol->direction, pistol->pos, 50);
+}
+void SetBox(int obj_id, char direction, Coordinate pos) {
+	if (direction == -1) direction = 7;
+	GameObject* pistol = Network::GetInstance()->GameObjects[obj_id];
+	pistol->direction = direction;
+	pistol->velocity = VELOCITY;
+	pistol->width = BLOCK_WIDTH;
+	pistol->height = BLOCK_HEIGHT;
+	pistol->id = obj_id;
+	pistol->sprite = (char)SPRITE::box;
+	pistol->type = BOX;
+	pistol->isActive = true;
+	pistol->isMove = false;
 	pistol->pos = pos;
 	SetBulletPos((DIR)pistol->direction, pistol->pos, 50);
 }
@@ -480,6 +480,7 @@ bool Player::Recv() {
 
 		case (char)ITEM::potion:
 		{
+			if (items[potion-1] <= 0) break;
 			ChangeHp(HEALING);
 			/*
 			* 각 클라이언트들한테 플레이어가 포션을 사용하였으므로 해당 플레이어의 체력을 Chage 하라고함
@@ -493,7 +494,19 @@ bool Player::Recv() {
 		break;
 		case (char)ITEM::box:
 		{
-
+			if (items[box -1 ] <= 0) break;
+			int obj_id = net->GetObjID();
+			if (obj_id == -1) {
+				std::cout << "모든 오브젝트를 사용하였습니다." << std::endl;
+				break;
+			}
+			SetBox(obj_id, (net->GameObjects[id]->direction), net->GameObjects[id]->pos);
+			for (int i = 0; i < MAX_USER; ++i) {
+				Player* player = reinterpret_cast<Player*>(net->GameObjects[i]);
+				if (false == player->isActive) continue;
+				//if (id == i) continue;
+				net->SendPutObj(i, obj_id);
+			}
 		}
 		break;
 		default:
