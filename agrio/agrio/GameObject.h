@@ -115,8 +115,11 @@ void GameObject::RemoveObj()
 
 void GameObject::Render(HDC& hdc)
 {
-	if (isActive)
+	if (isActive && sprites[sprite])
+	{
 		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height);
+	}
+
 }
 
 /******************************************** Player ********************************************/
@@ -155,11 +158,6 @@ void Player::GetItem(void* pk)
 	items[recvPacket->itemID] = (short)recvPacket->itemCount;
 }
 
-//void Player::ItemCount(void* pk)
-//{
-//
-//}
-
 void Player::UseItem(int index)
 {
 	if (items[index] > 0)
@@ -168,7 +166,7 @@ void Player::UseItem(int index)
 
 void Player::Render(HDC& hdc)
 {
-	if (isActive)
+	if (isActive && sprites[sprite] && sprites[sprite + 1])
 	{
 		// 공격모션
 		if (state == STATE::attack)
@@ -179,6 +177,7 @@ void Player::Render(HDC& hdc)
 			if (curGun != empty)
 				sprites[(int)SPRITE::pistol - pistol + curGun].Draw(hdc, pos.x - ((width + 26) / 2), pos.y - ((height + 22) / 2), width + 32, height + 22,
 					char_weapon_sprite_rect[(int)direction][animFrame].left, char_weapon_sprite_rect[(int)direction][animFrame].top, 50, 52);
+
 		}
 
 		// 일반모션
