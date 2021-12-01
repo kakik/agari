@@ -21,7 +21,10 @@ const short BLOCK_HEIGHT = 30;
 const short WINDOW_WIDTH = 900 * 2;      //윈도우 x사이즈
 const short WINDOW_HEIGHT = 800 * 2;
 const float VELOCITY = 300.0f;
-
+extern short CUR_WINDOW_WIDTH;      //윈도우 x사이즈
+extern short CUR_WINDOW_HEIGHT;
+extern short CUR_WINDOW_START_X;
+extern short CUR_WINDOW_START_Y;
 const int WALL_ID_UP = 4;
 const int WALL_ID_DOWN = 5;
 const int WALL_ID_LEFT = 6;

@@ -5,6 +5,11 @@
 
 Network* Network::instance = nullptr;
 
+short CUR_WINDOW_WIDTH = 900 * 0.75f;      //윈도우 x사이즈
+short CUR_WINDOW_HEIGHT = 800 * 0.75f;
+short CUR_WINDOW_START_X = 15;
+short CUR_WINDOW_START_Y = 15;
+
 Network* Network::GetInstance()
 {
 	return instance;
@@ -200,6 +205,10 @@ void Network::Update(float elapsedTime) {
 			for (int i = 0; i < MAX_USER; ++i) {
 				SendChangeScene(i, (char)Scene::stage1);
 				MyScene = Scene::stage1;
+				CUR_WINDOW_WIDTH = WINDOW_WIDTH * 0.75f;
+				CUR_WINDOW_HEIGHT = WINDOW_HEIGHT * 0.75f;
+				CUR_WINDOW_START_X = 15;
+				CUR_WINDOW_START_Y = 15;
 			}
 		}
 		ready_count = 0;
@@ -227,7 +236,7 @@ void Network::Update(float elapsedTime) {
 			pistol->type = ITEM;
 			pistol->isActive = true;
 			pistol->isMove = false;
-			pistol->pos = Coordinate{ short(rand() % WINDOW_WIDTH), short(rand() % WINDOW_HEIGHT) };
+			pistol->pos = Coordinate{ short(CUR_WINDOW_START_X + rand() % CUR_WINDOW_WIDTH),short(CUR_WINDOW_START_Y + rand() % CUR_WINDOW_HEIGHT) };
 
 			for (int i = 0; i < MAX_USER; ++i) {
 				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
