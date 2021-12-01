@@ -152,7 +152,7 @@ void Player::ChangeHp(void* pk)
 void Player::GetItem(void* pk)
 {
 	sc_packet_get_item* recvPacket = (sc_packet_get_item*)pk;
-	items[recvPacket->itemID] = recvPacket->itemCount;
+	items[recvPacket->itemID] = (short)recvPacket->itemCount;
 }
 
 //void Player::ItemCount(void* pk)
