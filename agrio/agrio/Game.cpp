@@ -720,11 +720,7 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			else if (keyAction.down)
 				p->SetDir(DIR::S);
 
-			cs_packet_player_move sendPacket;
-			sendPacket.packetSize = sizeof(sendPacket);
-			sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
-			sendPacket.dir = (char)p->GetDir();
-			Send(&sendPacket);
+
 
 			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
 			{
@@ -733,6 +729,12 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 			}
 			else
 			{
+				cs_packet_player_move sendPacket;
+				sendPacket.packetSize = sizeof(sendPacket);
+				sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
+				sendPacket.dir = (char)p->GetDir();
+				Send(&sendPacket);
+
 				if (p->GetState() != STATE::move)
 					SendStatePacket(STATE::move);
 			}
