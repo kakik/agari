@@ -91,10 +91,13 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 						Object->isActive = false;
 						Object->isMove = false;
 						for (int i = 0; i < MAX_USER; ++i) {
-
 							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
 							net->SendChangeHp(i, id);
 							net->SendRemoveObj(i, obj->id);
+							if (reinterpret_cast<Player*>(this)->hp <= 0) {
+								net->SendRemoveObj(i, id);
+							}
+
 						}
 					}
 					break;
@@ -107,7 +110,6 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 							reinterpret_cast<Player*>(net->GameObjects[id])->items[item] += 1;
 						net->GameObjects[obj->id]->isActive = false;
 						for (int i = 0; i < MAX_USER; ++i) {
-
 							if (false == net->GameObjects[i]->isActive) continue;
 							net->SendRemoveObj(i, obj->id);
 						}
@@ -137,10 +139,12 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 							Object->isActive = false;
 							Object->isMove = false;
 							for (int i = 0; i < MAX_USER; ++i) {
-
 								if (false == net->GameObjects[i]->isActive) continue;
 								net->SendChangeHp(i, obj->id);
 								net->SendRemoveObj(i, id);
+								if (reinterpret_cast<Player*>(net->GameObjects[obj->id])->hp <= 0) {
+									net->SendRemoveObj(i, obj->id);
+								}
 							}
 						}
 					}
