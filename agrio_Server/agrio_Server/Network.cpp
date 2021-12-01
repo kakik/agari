@@ -216,17 +216,20 @@ void Network::Update(float elapsedTime) {
 				return;
 			}
 
+			std::random_device rd;
+			std::mt19937 mt{ rd() };
+			std::uniform_int_distribution<int> dist{ 1, 32767 };
 			GameObject* pistol = GameObjects[obj_id];
-			pistol->direction = rand() % 8;
+			pistol->direction = dist(mt) % 8;
 			pistol->velocity = VELOCITY;
 			pistol->width = BLOCK_WIDTH;
 			pistol->height = BLOCK_WIDTH;
 			pistol->id = obj_id;
-			pistol->sprite = (char)SPRITE::uiPistol + rand() % 5;
+			pistol->sprite = (char)SPRITE::uiPistol + dist(mt) % 5;
 			pistol->type = ITEM;
 			pistol->isActive = true;
 			pistol->isMove = false;
-			pistol->pos = Coordinate{ short(CUR_WINDOW_START_X + rand() % CUR_WINDOW_WIDTH),short(CUR_WINDOW_START_Y + rand() % CUR_WINDOW_HEIGHT) };
+			pistol->pos = Coordinate{ short(CUR_WINDOW_START_X + (dist(mt) % CUR_WINDOW_WIDTH)),short(CUR_WINDOW_START_Y + (dist(mt) % CUR_WINDOW_HEIGHT)) };
 
 			for (int i = 0; i < MAX_USER; ++i) {
 				Player* p = reinterpret_cast<Player*>(GameObjects[i]);

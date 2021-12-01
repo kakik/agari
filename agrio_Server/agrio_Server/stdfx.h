@@ -10,5 +10,6 @@
 #include <chrono>
 #include <algorithm>
 #include <assert.h>
+#include <random>
 
 #define BUFSIZE		512
