@@ -127,6 +127,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			sprites[(int)SPRITE::bulletSW].Load(TEXT("resource/b5.png"));
 			sprites[(int)SPRITE::bulletW].Load(TEXT("resource/b6.png"));
 			sprites[(int)SPRITE::bulletNW].Load(TEXT("resource/b7.png"));
+
+			sprites[(int)SPRITE::wallCol].Load(TEXT("resource/wall_col1.png"));
+			sprites[(int)SPRITE::wallRow].Load(TEXT("resource/wall_row1.png"));
 		}
 
 		/*********************************************이미지 로드*****************************************************/
