@@ -141,14 +141,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="Client.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="Network.h" />
     <ClInclude Include="Protocol.h" />
     <ClInclude Include="stdfx.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Client.cpp" />
     <ClCompile Include="GameObject.cpp" />
     <ClCompile Include="Network.cpp" />
     <ClCompile Include="main.cpp" />

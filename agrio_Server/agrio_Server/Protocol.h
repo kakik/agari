@@ -1,6 +1,5 @@
 #pragma once
 
-
 enum class STATE
 {
 	idle, move, attack
@@ -13,6 +12,9 @@ const int MAX_OBJECT = 200;
 
 //	총알 발사 방향
 enum class DIR { N, NE, E, SE, S, SW, W, NW };
+
+// Scene
+enum class SCENE { title, lobby, stage1, gameover, winner };
 
 //	아이템 ID
 enum ITEM { empty, pistol, uzi, shotgun, potion, box };
@@ -38,9 +40,7 @@ const char SC_PACKET_PUT_OBJ = 5;
 const char SC_PACKET_REMOVE_OBJ = 6;
 const char SC_PACKET_CHANGE_HP = 7;
 const char SC_PACKET_GET_ITEM = 8;
-//const char SC_PACKET_ITEM_COUNT = 9;
 const char SC_PACKET_CHAGE_WEAPON = 10;
-
 
 //	패킷 정의(Client->Server)
 #pragma pack(push,1)
@@ -73,7 +73,6 @@ struct sc_packet_login_ok : packet {
 struct sc_packet_change_scene : packet {
 	char sceneNum;
 };
-
 struct sc_packet_move_obj : packet {
 	char objectID;
 	char lookDir;
@@ -101,10 +100,6 @@ struct sc_packet_get_item : packet {
 	char itemID;
 	char itemCount;
 };
-//struct sc_packet_item_count : packet {
-//	char playerID;
-//	char itemID;
-//};
 struct sc_packet_change_weapon : packet {
 	char playerID;
 	char gunID; // == itemID
