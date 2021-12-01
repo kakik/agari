@@ -59,7 +59,7 @@ public:
 	void ChangeWeapon(void* pk);
 	void ChangeHp(void* pk);
 	void GetItem(void* pk);
-	void ItemCount(void* pk);
+	//void ItemCount(void* pk);
 	void UseItem(int index);
 	virtual void Render(HDC& hdc);
 };
@@ -139,7 +139,8 @@ void Player::PlayerState(void* pk)
 
 void Player::ChangeWeapon(void* pk)
 {
-
+	sc_packet_change_weapon* recvPacket = (sc_packet_change_weapon*)pk;
+	curGun = recvPacket->gunID;
 }
 
 void Player::ChangeHp(void* pk)
@@ -150,17 +151,19 @@ void Player::ChangeHp(void* pk)
 
 void Player::GetItem(void* pk)
 {
-
+	sc_packet_get_item* recvPacket = (sc_packet_get_item*)pk;
+	items[recvPacket->itemID] = recvPacket->itemCount;
 }
 
-void Player::ItemCount(void* pk)
-{
-
-}
+//void Player::ItemCount(void* pk)
+//{
+//
+//}
 
 void Player::UseItem(int index)
 {
-
+	if (items[index] > 0)
+		items[index]--;
 }
 
 void Player::Render(HDC& hdc)
