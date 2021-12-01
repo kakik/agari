@@ -88,12 +88,14 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 						GameObject* Object = (net->GameObjects[obj->id]);
 						Object->isActive = false;
 						Object->isMove = false;
-						for (int i = 0; i < MAX_USER; ++i) {
-							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
-							net->SendChangeHp(i, id);
-							net->SendRemoveObj(i, obj->id);
-							// 체력이 0이 되면
-							if (reinterpret_cast<Player*>(this)->hp <= 0) {
+
+						if (reinterpret_cast<Player*>(this)->hp <= 0) {
+							net->SendChangeScene(id, (char)SCENE::gameover);
+							for (int i = 0; i < MAX_USER; ++i) {
+								if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+								net->SendChangeHp(i, id);
+								net->SendRemoveObj(i, obj->id);
+								// 체력이 0이 되면
 								CUR_WINDOW_START_X = WINDOW_WIDTH / 4 + 15;
 								CUR_WINDOW_START_Y = WINDOW_HEIGHT / 4 + 15;
 								CUR_WINDOW_WIDTH *= 0.75;
@@ -111,10 +113,16 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 									//net->SendRemoveObj(i, j);
 								}
 								net->SendRemoveObj(i, id);
-								net->SendChangeScene(id, (char)SCENE::gameover);
 							}
-
 						}
+						else {
+							for (int i = 0; i < MAX_USER; ++i) {
+								if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
+								net->SendChangeHp(i, id);
+								net->SendRemoveObj(i, obj->id);
+							}
+						}
+						
 					}
 					break;
 					case ITEM:
@@ -150,16 +158,17 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 					case BULLET:
 						if (obj->type == PLAYER) {
 							reinterpret_cast<Player*>(net->GameObjects[obj->id])->ChangeHp(ATTACKHP);
-
+							
 							GameObject* Object = (net->GameObjects[id]);
 							Object->isActive = false;
 							Object->isMove = false;
-							for (int i = 0; i < MAX_USER; ++i) {
-								if (false == net->GameObjects[i]->isActive) continue;
-								net->SendChangeHp(i, obj->id);
-								net->SendRemoveObj(i, id);
-								// 체력이 0이 되면
-								if (reinterpret_cast<Player*>(net->GameObjects[obj->id])->hp <= 0) {
+
+							if (reinterpret_cast<Player*>(net->GameObjects[obj->id])->hp <= 0) {
+								net->SendChangeScene(obj->id, (char)SCENE::gameover);
+								for (int i = 0; i < MAX_USER; ++i) {
+									if (false == net->GameObjects[i]->isActive) continue;
+									net->SendChangeHp(i, obj->id);
+									net->SendRemoveObj(i, id);
 									CUR_WINDOW_START_X = WINDOW_WIDTH / 4 + 15;
 									CUR_WINDOW_START_Y = WINDOW_HEIGHT / 4 + 15;
 									CUR_WINDOW_WIDTH *= 0.75;
@@ -173,10 +182,16 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 									net->SendMoveObj(i, WALL_ID_LEFT);
 									net->GameObjects[WALL_ID_RIGHT]->pos.x = WINDOW_WIDTH / 4;
 									net->SendMoveObj(i, WALL_ID_RIGHT);
-
-
 									net->SendRemoveObj(i, obj->id);
-									net->SendChangeScene(obj->id, (char)SCENE::gameover);
+								}
+							}
+
+							else {
+								for (int i = 0; i < MAX_USER; ++i) {
+									if (false == net->GameObjects[i]->isActive) continue;
+									net->SendChangeHp(i, obj->id);
+									net->SendRemoveObj(i, id);
+									// 체력이 0이 되면
 								}
 							}
 						}

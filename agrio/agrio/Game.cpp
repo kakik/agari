@@ -77,7 +77,7 @@ void GameLoop(HWND hWnd)
 		}
 	}
 
-	else if (scene == SCENE::gameover)
+	else if (scene == SCENE::gameover || scene == SCENE::winner)
 	{
 
 	}

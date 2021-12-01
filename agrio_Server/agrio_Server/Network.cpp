@@ -250,7 +250,7 @@ void Network::Update(float elapsedTime) {
 				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
 				if (p->hp > 0)
 					SendChangeScene(i, (char)SCENE::winner);
-				MyScene = SCENE::winner;
+				MyScene = SCENE::lobby;
 			}
 		}
 	}

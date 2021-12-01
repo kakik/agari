@@ -187,7 +187,6 @@ void Player::Render(HDC& hdc)
 				char_move_sprite_rect[(int)direction][animFrame].left, char_move_sprite_rect[(int)direction][animFrame].top, 18, 30);
 		}
 
-
 		// 체력바
 		HBRUSH hbrush, oldbrush;
 		Rectangle(hdc, pos.x - 20, pos.y - 40, pos.x + 20, pos.y - 33);  //체력바
