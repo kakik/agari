@@ -94,8 +94,10 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 							if (false == Network::GetInstance()->GameObjects[i]->isActive) continue;
 							net->SendChangeHp(i, id);
 							net->SendRemoveObj(i, obj->id);
+							// 체력이 0이 되면
 							if (reinterpret_cast<Player*>(this)->hp <= 0) {
 								net->SendRemoveObj(i, id);
+								net->SendChangeScene(id, (char)Scene::gameover);
 							}
 
 						}
@@ -142,8 +144,10 @@ void GameObject::Update(float elapsedTime, char* buf, int& bufStart)
 								if (false == net->GameObjects[i]->isActive) continue;
 								net->SendChangeHp(i, obj->id);
 								net->SendRemoveObj(i, id);
+								// 체력이 0이 되면
 								if (reinterpret_cast<Player*>(net->GameObjects[obj->id])->hp <= 0) {
 									net->SendRemoveObj(i, obj->id);
+									net->SendChangeScene(obj->id, (char)Scene::gameover);
 								}
 							}
 						}

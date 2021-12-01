@@ -1,6 +1,5 @@
 #pragma once
 
-
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 #pragma comment(lib, "ws2_32")
 #include <winsock2.h>
@@ -8,9 +7,6 @@
 #include "Protocol.h"
 #include "Client.h"
 #include "GameObject.h"
-
-
-
 
 
 void err_quit(const char* msg);
@@ -27,7 +23,7 @@ const short WINDOW_HEIGHT = 800 * 2;
 const float VELOCITY = 300.0f;
 
 enum class Scene {
-	title, lobby, stage1, gameover, leaderboard
+	title, lobby, stage1, gameover, winner
 };
 
 class Network

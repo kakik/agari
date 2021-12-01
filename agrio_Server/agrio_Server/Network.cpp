@@ -222,6 +222,7 @@ void Network::Update(float elapsedTime) {
 				SendPutObj(i, obj_id);
 			}
 		}
+
 		int playerCount = MAX_USER;
 		for (int i = 0; i < MAX_USER; ++i) {
 			Player* p = reinterpret_cast<Player*>(GameObjects[i]);
@@ -229,11 +230,12 @@ void Network::Update(float elapsedTime) {
 		}
 		if (playerCount == 1) {
 			for (int i = 0; i < MAX_USER; ++i) {
-				SendChangeScene(i, (char)Scene::leaderboard);
-				MyScene = Scene::leaderboard;
+				Player* p = reinterpret_cast<Player*>(GameObjects[i]);
+				if (p->hp > 0)
+					SendChangeScene(i, (char)Scene::winner);
+				MyScene = Scene::winner;
 			}
 		}
-
 	}
 
 	//플레이어의 이벤트 버퍼에 있는 내용을 전송버퍼로 옮김

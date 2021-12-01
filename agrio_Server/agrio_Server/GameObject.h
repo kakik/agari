@@ -16,7 +16,8 @@ enum class SPRITE
 	uiPistol, uiUzi, uiShotgun, uiPotion, uiBox,
 	itemBox,
 	bulletN, bulletNE, bulletE, bulletSE, bulletS, bulletSW, bulletW, bulletNW,
-	wallCol, wallRow
+	wallCol, wallRow,
+	uiWinner, uiGameover
 };
 
 struct Coordinate
@@ -56,7 +57,6 @@ public:
 	int hp = 50; // 힐량 확인을 위해 억지로 50으로 설정
 	short items[5];
 	SOCKET sock;
-
 
 	char eventPacketBuf[BUFSIZE];
 	int bufSize = 0;
