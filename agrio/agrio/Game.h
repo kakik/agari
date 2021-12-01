@@ -100,7 +100,7 @@ unsigned __int64 TIMER;
 const int ANIMATION_TIME = 100;
 
 // 총알 발사 속도
-const int ITEM_TIME[5] = { 200, 0,0,0,0 };
+const int ITEM_TIME[5] = { 500, 100, 500, 100, 100 };
 
 // 타이틀 창에서 캐릭터 선택하게 해주는 변수들
 int selAnimation = 0;

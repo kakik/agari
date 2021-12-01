@@ -145,6 +145,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			gameObject.push_back(obj);
 		}
 
+		//gameObject[99]->test();
 		/////////////////////////////////////////////////////////////////////////////////////////
 
 		TIMER = GetTickCount64();
@@ -697,6 +698,8 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 		Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
 		if (keyAction.reqSend)
 		{
+			STATE oldState = p->GetState();
+
 			if (keyAction.left && keyAction.up)
 				p->SetDir(DIR::NW);
 
@@ -722,34 +725,27 @@ void CALLBACK TimerProc(HWND hWnd, UINT uMSG, UINT idEvent, DWORD dwTime)
 				p->SetDir(DIR::S);
 
 
+
 			if (keyAction.left == false && keyAction.right == false && keyAction.up == false && keyAction.down == false)
 			{
-				p->SetState(STATE::idle);
-
-				if (keyAction.space)
-				{
-					p->SetState(STATE::attack);
-				}
-				SendStatePacket();
+				if (p->GetState() != STATE::idle)
+					SendStatePacket(STATE::idle);
 			}
 			else
 			{
-				if (p->GetState() == STATE::idle || keyAction.space == false)
-				{
-					p->SetState(STATE::move);
-					SendStatePacket();
-				}
-				else if (keyAction.space && p->GetState() != STATE::attack)
-				{
-					p->SetState(STATE::attack);
-					SendStatePacket();
-				}
-
 				cs_packet_player_move sendPacket;
 				sendPacket.packetSize = sizeof(sendPacket);
 				sendPacket.packetType = CS_PACKET_PLAYER_MOVE;
 				sendPacket.dir = (char)p->GetDir();
 				Send(&sendPacket);
+
+				if (p->GetState() != STATE::move)
+					SendStatePacket(STATE::move);
+			}
+
+			if (keyAction.space)
+			{
+				SendStatePacket(STATE::attack);
 			}
 			keyAction.reqSend = false;
 		}
@@ -957,14 +953,12 @@ DWORD WINAPI ProcessClient(LPVOID arg)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-void SendStatePacket()
+void SendStatePacket(STATE state)
 {
 	Player* p = reinterpret_cast<Player*>(gameObject[playerID]);
 	cs_packet_player_state sendPacket;
 	sendPacket.packetSize = sizeof(sendPacket);
 	sendPacket.packetType = CS_PACKET_PLAYER_STATE;
-	sendPacket.playerState = (char)p->GetState();
+	sendPacket.playerState = (char)state;
 	Send(&sendPacket);
 }
-
-
