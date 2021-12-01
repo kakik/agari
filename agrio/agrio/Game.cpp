@@ -142,6 +142,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			gameObject.push_back(obj);
 		}
 
+		//gameObject[99]->test();
 		/////////////////////////////////////////////////////////////////////////////////////////
 
 		TIMER = GetTickCount64();

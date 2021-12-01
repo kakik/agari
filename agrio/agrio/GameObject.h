@@ -116,7 +116,7 @@ void GameObject::RemoveObj()
 void GameObject::Render(HDC& hdc)
 {
 	if (isActive)
-		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y + (height / 2), width, height);
+		sprites[sprite].Draw(hdc, pos.x - (width / 2), pos.y - (height / 2), width, height);
 }
 
 /******************************************** Player ********************************************/
@@ -200,10 +200,10 @@ void Player::Render(HDC& hdc)
 void GameObject::test()
 {
 	isActive = true;
-	width = 30;
-	height = 30;
+	width = 100;
+	height = 800;
 	sprite = (int)SPRITE::box;
-	pos.x = 900;
+	pos.x = 800;
 	pos.y = 900;
 }
 
